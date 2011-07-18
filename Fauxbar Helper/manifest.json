@@ -1,0 +1,19 @@
+{
+	"name": "Fauxbar Memory Helper",
+	"version": "0.0.1",
+	"description": "Occasionally reloads Fauxbar when your computer becomes idle.",
+
+	"minimum_chrome_version": "12",
+
+	"background_page": "helper.html",
+
+	"permissions": [
+		"management",
+		"idle"
+	],
+
+	"icons": {
+		"48": "fauxbarhelper48.png",
+		"128": "fauxbarhelper128.png"
+	}
+}

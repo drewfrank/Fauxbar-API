@@ -1,0 +1,48 @@
+<html>
+<!-- Fauxbar Memory Helper background page -->
+<head>
+<script type="text/javascript">
+	window.doEnable = false;
+	window.newState = "idle";
+
+	chrome.extension.onRequestExternal.addListener(function(request){
+		if (request == "restart fauxbar") {
+			chrome.management.getAll(function(extensions){
+				for (var e in extensions) {
+					if (extensions[e].name == "Fauxbar" && extensions[e].enabled == true) {
+						window.doEnable = true;
+						chrome.management.setEnabled(extensions[e].id, false);
+					}
+				}
+			});
+		}
+	});
+
+	chrome.management.onDisabled.addListener(function(extension) {
+		if (window.doEnable == true && extension.name == "Fauxbar") {
+			chrome.management.setEnabled(extension.id, true, function(){
+				window.doEnable = false;
+			});
+		}
+	});
+
+	setInterval(function() {
+		chrome.idle.queryState(60, function(newState){
+			if (newState == "idle" && window.newState == "active") {
+				window.newState = "idle";
+				chrome.management.getAll(function(extensions){
+					for (var e in extensions) {
+						if (extensions[e].name == "Fauxbar" && extensions[e].enabled == true) {
+							chrome.extension.sendRequest(extensions[e].id, "restart fauxbar?");
+						}
+					}
+				});
+			} else if (newState == "active") {
+				window.newState = "active";
+			}
+		});
+	}, 15000);
+</script>
+</head>
+<body></body>
+</html>

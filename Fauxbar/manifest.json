@@ -1,0 +1,51 @@
+{
+	"name": "Fauxbar",
+	"version": "0.0.2",
+	"description": "An alternative to Chrome's Omnibox.",
+
+	"minimum_chrome_version": "12",
+
+	"background_page": "fauxbar.background.html",
+
+	"options_page": "launchoptions.html",
+
+	"chrome_url_overrides" : {
+		"newtab": "fauxbar.html"
+	},
+
+	"page_action": {
+		"default_title": "Add this site's search engine to Fauxbar",
+		"default_popup": "fauxbar.addsearchengine.html"
+	},
+
+	"content_scripts": [
+		{
+			"matches": ["<all_urls>"],
+			"js": ["jquery-1.6.2.min.js"],
+			"run_at": "document_start"
+		},
+		{
+			"matches": ["<all_urls>"],
+			"js": ["updatetitle.js"],
+			"run_at": "document_end"
+		}
+	],
+
+	"permissions": [
+		"<all_urls>",
+		"tabs",
+		"history",
+		"bookmarks",
+		"chrome://favicon/*",
+		"unlimitedStorage",
+		"management"
+	],
+
+	"icons": {
+		"16": "fauxbar16.png",
+		"48": "fauxbar48.png",
+		"128": "fauxbar128.png"
+	},
+
+	"omnibox": { "keyword" : "f" }
+}
