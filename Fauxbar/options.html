@@ -387,7 +387,7 @@
 						<th>Image URL</th>
 						<td>
 							<label class="legend" style="width:100%; margin-top:1px">
-								<input name="option_bgimg" id="option_bgimg" class="http" type="text" value="http://" style="width:80%" spellcheck="false" autocomplete="on" />
+								<input placeholder="http://" name="option_bgimg" id="option_bgimg" class="http" type="text" value="http://" style="width:80%" spellcheck="false" autocomplete="on" />
 								<div class="optionstip" style="line-height:150%">
 									<b>file:///</b> URLs are currently not supported.<br />
 									If Fauxbar loads slowly after setting the image, the image's filesize is probably too big.
@@ -575,6 +575,9 @@
 					<tr>
 						<th>Omnibox</th>
 						<td style="padding-top:2px">
+							<label class="legend" style="margin-bottom:10px">
+								<input name="option_forceoptionsicon" id="option_forceoptionsicon" type="checkbox" /> Always show the <img src="fauxbar16options.png" style="vertical-align:middle; position:relative; top:-3px; height:19px;width:19px" /> icon when possible
+							</label>
 							When using Fauxbar from Chrome's Omnibox...<br />
 							<label class="legend" style="margin-top:2px">
 								&nbsp;&bull; sometimes shorten result URLs to <input name="option_omniboxurltruncate" id="option_omniboxurltruncate" class="upto inputoption" type="number" min="0" max="999" step="5" spellcheck="false" maxlength="3" size="4" spellcheck="false" style="text-align:center" /> characters

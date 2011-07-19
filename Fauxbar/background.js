@@ -402,12 +402,13 @@ function beginIndexing() {
 	reindex();
 }
 
-// Clear the top site tiles cache every 5 mins
-setInterval(function(){
+// Clear the top site tiles cache every 2 mins
+// But disable this for now
+/*setInterval(function(){
 	if (window.thumbs) {
 		delete window.thumbs;
 	}
-}, 1000 * 60 * 5);
+}, 1000 * 60 * 2);*/
 
 // Background page listens for requests...
 chrome.extension.onRequest.addListener(function(request, sender){
@@ -491,6 +492,15 @@ chrome.extension.onRequest.addListener(function(request, sender){
 					for (var t in tabs) {
 						if (strstr(tabs[t].url, request.hostname)) {
 							chrome.pageAction.hide(tabs[t].id);
+							if (localStorage.option_forceoptionsicon && localStorage.option_forceoptionsicon == 1) {
+								chrome.pageAction.setIcon({tabId:tabs[t].id, path:"fauxbar16options.png"});
+								chrome.pageAction.setTitle({tabId:tabs[t].id, title:"Customize Fauxbar"});
+								chrome.pageAction.setPopup({tabId:tabs[t].id, popup:""});
+								chrome.pageAction.onClicked.addListener(function(theTab) {
+									chrome.tabs.update(theTab.id, {url:"fauxbar.html#options=1"});
+								});
+								chrome.pageAction.show(tabs[t].id);
+							}
 						}
 					}
 				});
@@ -519,6 +529,8 @@ chrome.extension.onRequest.addListener(function(request, sender){
 					var len = results.rows.length, i;
 					if (len == 0) {
 						chrome.pageAction.setIcon({tabId:sender.tab.id, path:"fauxbar16plus.png"});
+						chrome.pageAction.setTitle({tabId:sender.tab.id, title:"Add this site's search engine to Fauxbar"});
+						chrome.pageAction.setPopup({tabId:sender.tab.id, popup:"fauxbar.addsearchengine.html"});
 						chrome.pageAction.show(sender.tab.id);
 					}// else {
 						//console.log('OpenSearch found but already exists within Fauxbar.');
@@ -576,6 +588,17 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 			if (localStorage.option_ctrlk && localStorage.option_ctrlk == 1) {
 				chrome.tabs.executeScript(tabId, {file:"ctrl-k.js"});
 			}
+		}
+
+		// If user's opted to always show the Options icon, make it so
+		if (localStorage.option_forceoptionsicon && localStorage.option_forceoptionsicon == 1) {
+			chrome.pageAction.setIcon({tabId:tabId, path:"fauxbar16options.png"});
+			chrome.pageAction.setTitle({tabId:tabId, title:"Customize Fauxbar"});
+			chrome.pageAction.setPopup({tabId:tabId, popup:""});
+			chrome.pageAction.onClicked.addListener(function(theTab) {
+				chrome.tabs.update(theTab.id, {url:"fauxbar.html#options=1"});
+			});
+			chrome.pageAction.show(tabId);
 		}
 
 		// If user's opted to let Fauxbar look for new search engines to add, make it so

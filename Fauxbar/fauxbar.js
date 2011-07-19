@@ -783,10 +783,11 @@ $(document).ready(function(){
 	$("#awesomeinput").bind("focus", function(){
 		window.navigating = false;
 		$("#opensearch_results").css("display","none").html("");
-
-		// Catch speech input
-		if ($(this).val().length > 0 && $(this).getSelection().length == 0 && $(".glow").length == 0) {
-			getResults();
+		if (window.dontGetResults) {
+			setTimeout(function(){
+				delete window.dontGetResults;
+			}, 50);
+			return true;
 		}
 	});
 
@@ -893,14 +894,23 @@ $(document).ready(function(){
 		});
 		// Since clicking takes focus away from the Address Box, regain focus and possibly reselect auto-filled text/URL
 		setTimeout(function(){
+			window.dontGetResults = true;
 			if ($("#awesomeinput").val().substr(0, window.actualUserInput.length) == window.actualUserInput) {
 				$("#awesomeinput").focus().setSelection(window.actualUserInput.length, $("#awesomeinput").val().length);
 			} else {
 				$("#awesomeinput").focus();
 			}
 		}, 1);
-		window.goingToUrl = $(resultEl).attr("url");
-		return true;
+
+		// Don't let the click go through if the result is a "Switch to tab" result
+		if (strstr($(resultEl).text(), "Switch to tab")) {
+			return false;
+		// But if it's a normal click, let it go through
+		} else {
+			window.goingToUrl = $(resultEl).attr("url");
+			updateHash();
+			return true;
+		}
 	}
 
 	// When user clicks the Address Box or Search Box, if nothing was selected, select all the input to try and help the user out
@@ -1289,13 +1299,6 @@ $(document).ready(function(){
 				$("#opensearch_results").css("display","none").html("");
 			}
 		}, 1);
-	});
-
-	$("#opensearchinput").bind("focus", function(){
-		// Catch speech input
-		if ($(this).val().length > 0 && $(this).getSelection().length == 0) {
-			getSearchSuggestions();
-		}
 	});
 
 	// If the Fauxbar background page has a hash value (not sure why it would... I forget :( ), interpret it
@@ -2558,11 +2561,11 @@ function hideResults() {
 
 // Update the tab's hash value with what's currently in the Address and Search Boxes, so that the input can be restored if the user navigates pages back/forth.
 function updateHash() {
-	var ai = $("#awesomeinput").hasClass("description") ? 'ai=' : 'ai='+urlencode($("#awesomeinput").val());
+	var ai = $("#awesomeinput").hasClass("description") ? 'ai=' : 'ai='+urlencode(window.actualUserInput ? window.actualUserInput : $("#awesomeinput").val());
 	var os = $("#opensearchinput").hasClass("description") ? '&os=' : '&os='+urlencode($("#opensearchinput").val());
 	var sel = '&sel=';
 	var options = "";
-	if ($("#awesomeinput:focus").length) {
+	if ($("#awesomeinput:focus").length || window.goingToUrl) {
 		sel += 'ai';
 	} else if ($("#opensearchinput:focus").length) {
 		sel += 'os';
