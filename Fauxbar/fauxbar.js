@@ -899,6 +899,7 @@ $(document).ready(function(){
 				$("#awesomeinput").focus();
 			}
 		}, 1);
+		window.goingToUrl = $(resultEl).attr("url");
 		return true;
 	}
 
