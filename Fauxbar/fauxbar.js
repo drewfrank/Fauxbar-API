@@ -899,6 +899,7 @@ $(document).ready(function(){
 				$("#awesomeinput").focus();
 			}
 		}, 1);
+		return true;
 	}
 
 	// When user clicks the Address Box or Search Box, if nothing was selected, select all the input to try and help the user out
@@ -2379,7 +2380,7 @@ function getResults(noQuery) {
 										/*if (window.arrowedNumber && window.arrowedNumber == currentRows+1) {
 											arrowedClass = " arrowed ";
 										}*/
-										resultHtml += '<a class="result '+arrowedClass+'" url="'+hI.url+'" href="'+hI.url+'" number="'+(currentRows+1)+'" onmousedown="return window.clickResult(this)" bmid="'+hI.id+'">';
+										resultHtml += '<a class="result '+arrowedClass+'" url="'+hI.url+'" href="'+hI.url+'" number="'+(currentRows+1)+'" onclick="return window.clickResult(this)" bmid="'+hI.id+'">';
 										if (hI.isBookmark) { // bookmark
 											resultHtml += '<img class="favstar" />';
 										}
