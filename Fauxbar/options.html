@@ -533,7 +533,15 @@
 					<tr>
 						<th>Tiles</th>
 						<td>
-							<table style="width:auto; border-collapse:collapse;" cellpadding="0" cellspacing="0">
+							<label class="legend" style="margin-top:-4px">
+								Font size:
+								<input name="option_sappsfontsize" id="option_sappsfontsize" class="fontsize" type="number" min="12" maxlength="2" size="3" spellcheck="false" style="text-align:center" /> pixels
+							</label>
+							<label class="legend" style="margin-top:0px">
+								<input type="checkbox" name="option_showapps" id="option_showapps" />
+								Show my installed Chrome apps
+							</label>
+							<table style="width:auto; border-collapse:collapse; margin-top:5px" cellpadding="0" cellspacing="0">
 								<tr>
 									<td>
 										<label class="legend" style="display:inline-block; clear:none">
@@ -562,12 +570,16 @@
 								</tr>
 							</table>
 							<label class="legend" style="margin-top:5px">
-								<input type="checkbox" name="option_showapps" id="option_showapps" />
-								Show my installed Chrome apps
+								<input type="checkbox" name="option_hidepinnedtiles" id="option_hidepinnedtiles" />
+								Don't show currently pinned URLs
 							</label>
-							<label class="legend">
-								Font size:
-								<input name="option_sappsfontsize" id="option_sappsfontsize" class="fontsize" type="number" min="12" maxlength="2" size="3" spellcheck="false" style="text-align:center" /> pixels
+							<label class="legend" style="margin-top:1px">
+								<input type="checkbox" name="option_hidefiletiles" id="option_hidefiletiles" />
+								Don't show file:/// URLs
+							</label>
+							<label class="legend" style="margin-top:1px">
+								<input type="checkbox" name="option_hideopentiles" id="option_hideopentiles" />
+								Don't show currently opened URLs
 							</label>
 						</td>
 					</tr>
@@ -576,7 +588,7 @@
 						<th>Omnibox</th>
 						<td style="padding-top:2px">
 							<label class="legend" style="margin-bottom:10px">
-								<input name="option_forceoptionsicon" id="option_forceoptionsicon" type="checkbox" /> Always show the <img src="fauxbar16options.png" style="vertical-align:middle; position:relative; top:-3px; height:19px;width:19px" /> icon when possible
+								<input name="option_forceoptionsicon" id="option_forceoptionsicon" type="checkbox" /> Always show the clickable <img src="fauxbar16options.png" style="vertical-align:middle; position:relative; top:-3px; height:19px;width:19px" /> icon when possible
 							</label>
 							When using Fauxbar from Chrome's Omnibox...<br />
 							<label class="legend" style="margin-top:2px">

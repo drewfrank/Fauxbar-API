@@ -2254,6 +2254,7 @@ function getResults(noQuery) {
 						var resultIsOkay = true;
 						var arrowedClass = '';
 						var urlExplode = '';
+						var newHref = '';
 
 						// Another chance to cancel... don't want to waste processing time!
 						if (thisQuery != window.actualUserInput || !noQuery && $(".glow").length == 1) {
@@ -2381,10 +2382,16 @@ function getResults(noQuery) {
 									if (resultIsOkay == true) {
 										resultHtml = "";
 										arrowedClass = '';
-										/*if (window.arrowedNumber && window.arrowedNumber == currentRows+1) {
-											arrowedClass = " arrowed ";
-										}*/
-										resultHtml += '<a class="result '+arrowedClass+'" url="'+hI.url+'" href="'+hI.url+'" number="'+(currentRows+1)+'" onclick="return window.clickResult(this)" bmid="'+hI.id+'">';
+
+										// If URL starts with file:/// handle the URL with Fauxbar, since Chrome doesn't interpret it as a link.
+
+										if (hI.url.length >= 8 && hI.url.substring(0, 8) == "file:///") {
+											newHref = "loadfile.html#"+hI.url;
+										} else {
+											newHref = hI.url;
+										}
+
+										resultHtml += '<a class="result '+arrowedClass+'" url="'+hI.url+'" href="'+newHref+'" number="'+(currentRows+1)+'" onclick="return window.clickResult(this)" bmid="'+hI.id+'">';
 										if (hI.isBookmark) { // bookmark
 											resultHtml += '<img class="favstar" />';
 										}

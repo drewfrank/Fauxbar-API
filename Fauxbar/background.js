@@ -79,7 +79,55 @@ if (localStorage.indexComplete != 1) {
 	if (localStorage.indexedbefore == 1) {
 		setTimeout(clearIndex, 1000);
 	}
+
+// Otherwise update top 50 sites with fresh frecency scores if top scores are older than 2 hours
+} else {
+	$(document).ready(function(){
+		if (!localStorage.lastTopUrlRefresh || getMs() - localStorage.lastTopUrlRefresh > 7200000) {
+			updateTopSites();
+		}
+	});
 }
+
+// Update top sites (one at a time) with fresh frecency scores
+function updateTopSites() {
+	if (openDb()) {
+		window.db.transaction(function(tx){
+			tx.executeSql('SELECT * FROM urls WHERE type = 1 ORDER BY frecency DESC LIMIT 50', [], function(tx, results){
+				var len = results.rows.length, i;
+				if (len > 0) {
+					window.topUrls = new Array;
+					var url = '';
+					for (var i = 0; i < len; i++) {
+						window.topUrls[window.topUrls.length] = results.rows.item(i).url;
+					}
+					updateTopUrl();
+				}
+			});
+		}, errorHandler);
+	}
+}
+
+// Calculate and apply frecency scores for each top URL
+function updateTopUrl() {
+	if (window.topUrls.length > 0) {
+		var url = window.topUrls.pop();
+		chrome.history.getVisits({url:url}, function(visits){
+			visits.reverse();
+			window.db.transaction(function(tx){
+				var frec = calculateFrecency(visits);
+				tx.executeSql('UPDATE urls SET frecency = ? where url = ?', [frec, url]);
+				tx.executeSql('UPDATE thumbs SET frecency = ? where url = ?', [frec, url]);
+				setTimeout(updateTopUrl, 200);
+			}, errorHandler);
+		});
+	} else {
+		localStorage.lastTopUrlRefresh = getMs();
+	}
+}
+
+// Update top site scores every 2 hours, in case user doesn't close Chrome at all
+setInterval(updateTopSites, 7200000);
 
 // Omnibox stuff!
 

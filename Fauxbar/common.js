@@ -111,6 +111,9 @@ function resetOptions() {
 	localStorage.option_font = window.OS == "Mac" ? "Lucida Grande" : "Segoe UI";	// Global font name(s).
 	localStorage.option_forceoptionsicon = 0;				// Always show the options icon on every page. Disabled by default.
 	localStorage.option_hidehttp = 1;						// Hide "http://" from the beginning of URLs.
+	localStorage.option_hidefiletiles = 1;					// Prevent top site tiles from displaying file:/// URLs.
+	localStorage.option_hideopentiles = 0;					// Prevent top site tiles from displaying opened URLs. Disabled by default.
+	localStorage.option_hidepinnedtiles = 1;				// Prevent top site tiles from displaying pinned URLs.
 	localStorage.option_iconcolor = "#3374AB";				// Go Arrow and Magnifying Glass icon color.
 	localStorage.option_ignoretitleless = 1;				// Ignore titleless Address Box results.
 	localStorage.option_inputbgcolor = "#FFFFFF";			// Address Box and Search Box background color.
@@ -348,6 +351,7 @@ function isIndexingFinished() {
 		chrome.extension.sendRequest({message:"currentStatus",status:"Indexing complete.", step:8}); // Step 8
 		localStorage.almostdone = 1;
 		setTimeout(function(){
+			updateTopSites();
 			alert("Success!\n\nFauxbar has finished indexing your history items and bookmarks, and is now ready for use.\n\nFrom here on, Fauxbar's index will be silently updated on-the-fly for you.");
 			chrome.extension.sendRequest("DONE INDEXING");
 		},1200);

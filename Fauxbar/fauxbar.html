@@ -159,12 +159,42 @@
 					//	renderSiteTiles(bgPage.thumbs);
 					// Otherwise, create the HTML
 					//} else {
-						tx.executeSql('select * from thumbs WHERE frecency > 0 order by frecency DESC limit ?', [localStorage.option_topsiterows*localStorage.option_topsitecols], function(tx, results){
+
+						// Don't fetch file:/// URLs?
+						var hideFiles = localStorage.option_hidefiletiles == 1 ? ' url NOT LIKE "file:///%" AND ' : '';
+
+						// Don't fetch pinned URLs?
+						var hidePinned = '';
+						if (localStorage.option_hidepinnedtiles == 1) {
+							for (var t in window.currentTabs) {
+								if (window.currentTabs[t].pinned == true) {
+									hidePinned += ' url NOT LIKE "'+explode("#",window.currentTabs[t].url)[0]+'%" AND ';
+								}
+							}
+						}
+
+						// Don't fetch opened URLs?
+						var hideOpened = '';
+						if (localStorage.option_hideopentiles == 1) {
+							for (var ot in window.currentTabs) {
+								hideOpened += ' url NOT LIKE "'+explode("#",window.currentTabs[ot].url)[0]+'%" AND ';
+							}
+						}
+
+						var statement = 'select * from thumbs WHERE '+hideFiles+hidePinned+hideOpened+' frecency > 0 order by frecency DESC limit ?';
+						tx.executeSql(statement, [localStorage.option_topsiterows*localStorage.option_topsitecols], function(tx, results){
 							var len = results.rows.length, i;
 							var thumbs = '';
+							var newHref = '';
 							// Create HTML for them
 							for (var i = 0; i < len; i++) {
-								thumbs += '<a href="'+results.rows.item(i).url+'">';
+								// Handle file:/// link if needed
+								if (results.rows.item(i).url.length > 8 && results.rows.item(i).url.substring(0, 8) == "file:///") {
+									newHref = "loadfile.html#"+results.rows.item(i).url;
+								} else {
+									newHref = results.rows.item(i).url;
+								}
+								thumbs += '<a href="'+newHref+'">';
 								thumbs += '		<div class="thumb" style="background-image:url(nopic.png); background-position:-2px 0"';
 								if (results.rows.item(i).data) {
 									thumbs += '>	<img src="'+results.rows.item(i).data+'" style="padding-bottom:200px; background-color:#fff" />';
@@ -186,27 +216,30 @@
 				$(document).ready(function(){
 					setTimeout(function(){
 						// Generate top sites if Fauxbar's index is fresh. Either way, show the tiles afterwards
-						if (openDb()) {
-							window.db.transaction(function(tx){
-								if (!localStorage.almostdone || localStorage.almostdone == 1) {
-									tx.executeSql('UPDATE thumbs SET frecency = 0');
-									tx.executeSql('SELECT * FROM urls WHERE type = 1 AND url NOT LIKE "data:%" ORDER BY frecency DESC LIMIT 25', [], function(tx, results){
-										var len = results.rows.length, i;
-										if (len > 0) {
-											for (var i = 0; i < len; i++) {
-												tx.executeSql('INSERT OR REPLACE INTO thumbs (url, title, frecency) VALUES (?, ?, ?)', [results.rows.item(i).url, results.rows.item(i).title, results.rows.item(i).frecency]);
+						chrome.tabs.getAllInWindow(null, function(tabs) {
+							window.currentTabs = tabs;
+							if (openDb()) {
+								window.db.transaction(function(tx){
+									if (!localStorage.almostdone || localStorage.almostdone == 1) {
+										tx.executeSql('UPDATE thumbs SET frecency = 0');
+										tx.executeSql('SELECT * FROM urls WHERE type = 1 AND url NOT LIKE "data:%" ORDER BY frecency DESC LIMIT 25', [], function(tx, results){
+											var len = results.rows.length, i;
+											if (len > 0) {
+												for (var i = 0; i < len; i++) {
+													tx.executeSql('INSERT OR REPLACE INTO thumbs (url, title, frecency) VALUES (?, ?, ?)', [results.rows.item(i).url, results.rows.item(i).title, results.rows.item(i).frecency]);
+												}
 											}
-										}
-										localStorage.almostdone = 0;
+											localStorage.almostdone = 0;
+											displayThumbs(tx);
+										});
+									} else {
 										displayThumbs(tx);
-									});
-								} else {
-									displayThumbs(tx);
-								}
-							}, errorHandler);
-						}
-						$("#customstyle").append("#topthumbs a, #apps a { background-color:"+localStorage.option_resultbgcolor+"; color:"+localStorage.option_titlecolor+"; }");
-						$("#customstyle").append("#topthumbs a:hover, #apps a:hover { background-color:"+localStorage.option_selectedresultbgcolor+"; color:"+localStorage.option_selectedtitlecolor+"; }");
+									}
+								}, errorHandler);
+							}
+							$("#customstyle").append("#topthumbs a, #apps a { background-color:"+localStorage.option_resultbgcolor+"; color:"+localStorage.option_titlecolor+"; }");
+							$("#customstyle").append("#topthumbs a:hover, #apps a:hover { background-color:"+localStorage.option_selectedresultbgcolor+"; color:"+localStorage.option_selectedtitlecolor+"; }");
+						});
 					}, 1);
 				});
 			}
