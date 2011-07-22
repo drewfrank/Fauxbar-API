@@ -1,5 +1,32 @@
 // This file contains mostly contains functions that are used by both the main Fauxbar page and its background page.
 
+// Handle errors that occur with the HTML5 File API.
+// NEED TO DELETE
+/*function fileErrorHandler(e) {
+  var msg = '';
+  switch (e.code) {
+    case FileError.QUOTA_EXCEEDED_ERR:
+      msg = 'QUOTA_EXCEEDED_ERR';
+      break;
+    case FileError.NOT_FOUND_ERR:
+      msg = 'NOT_FOUND_ERR';
+      break;
+    case FileError.SECURITY_ERR:
+      msg = 'SECURITY_ERR';
+      break;
+    case FileError.INVALID_MODIFICATION_ERR:
+      msg = 'INVALID_MODIFICATION_ERR';
+      break;
+    case FileError.INVALID_STATE_ERR:
+      msg = 'INVALID_STATE_ERR';
+      break;
+    default:
+      msg = 'Unknown Error';
+      break;
+  };
+  console.log('File Error: ' + msg);
+  //alert('File Error: ' + msg);
+}*/
 
 // http://stackoverflow.com/questions/4155032/operating-system-detection-by-java-or-javascript/4155078#4155078
 window.OS = "Unknown";
@@ -230,7 +257,7 @@ function selectOpenSearchType(el, focusToo) {
 function populateOpenSearchMenu(force) {
 	if (openDb(force)) {
 		window.db.transaction(function (tx) {
-			tx.executeSql('select * from opensearches order by position DESC, shortname COLLATE NOCASE asc', [], function (tx, results) {
+			tx.executeSql('select shortname, searchurl, method, suggestUrl, iconurl, isdefault from opensearches order by position DESC, shortname COLLATE NOCASE asc', [], function (tx, results) {
 				var menuItems = '';
 				var len = results.rows.length, i;
 				var isDefault = false;
@@ -296,6 +323,8 @@ function clearIndex(reindexing) {
 		window.db.transaction(function(tx){
 			window.indexStatus = "Creating database tables..."; // Step 2
 			chrome.extension.sendRequest({message:"currentStatus",status:"Creating database tables...", step:2}); // Step 2
+
+			// Address Box history items and bookmarks
 			tx.executeSql('DROP TABLE IF EXISTS urls');
 			tx.executeSql('CREATE TABLE urls (url TEXT, type NUMERIC, title TEXT, frecency NUMERIC DEFAULT -1, queuedfordeletion NUMERIC DEFAULT 0, id NUMERIC DEFAULT 0)'); // type1 = history item, type2 = bookmark
 			tx.executeSql('CREATE INDEX IF NOT EXISTS urlindex ON urls (url)');
@@ -305,13 +334,17 @@ function clearIndex(reindexing) {
 			tx.executeSql('CREATE INDEX IF NOT EXISTS typeindex ON urls (type)');
 
 			if (!localStorage.indexedbefore || localStorage.indexedbefore != 1) {
+				// Top site tile thumbnails
 				tx.executeSql('DROP TABLE IF EXISTS thumbs');
 				tx.executeSql('CREATE TABLE thumbs (url TEXT UNIQUE ON CONFLICT REPLACE, data BLOB, date INTEGER, title TEXT, frecency NUMERIC DEFAULT -1)');
 				tx.executeSql('CREATE INDEX IF NOT EXISTS urlindex ON thumbs (url)');
+				tx.executeSql('CREATE INDEX IF NOT EXISTS frecencyindex ON thumbs (frecency)');
 
+				// Search Box search engines
 				tx.executeSql('DROP TABLE IF EXISTS opensearches');
 				tx.executeSql('CREATE TABLE opensearches (shortname TEXT UNIQUE ON CONFLICT REPLACE, iconurl TEXT, searchurl TEXT, xmlurl TEXT, xml TEXT, isdefault NUMERIC DEFAULT 0, method TEXT DEFAULT "get", position NUMERIC DEFAULT 0, suggestUrl TEXT)');
 
+				// Search Box search queries
 				tx.executeSql('DROP TABLE IF EXISTS searchqueries');
 				tx.executeSql('CREATE TABLE searchqueries (id INTEGER PRIMARY KEY AUTOINCREMENT, query TEXT)');
 				tx.executeSql('CREATE INDEX IF NOT EXISTS queryindex ON searchqueries (query)');
@@ -319,6 +352,7 @@ function clearIndex(reindexing) {
 				window.indexStatus = "Adding search engines..."; // Step 3
 				chrome.extension.sendRequest({message:"currentStatus",status:"Adding search engines...", step:3}); // Step 3
 
+				// Add Google, Yahoo! and Bing to the Search Box
 				tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, suggestUrl) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', ["Google", "google.ico", "http://www.google.com/search?q={searchTerms}", "", "", "1", "get", "http://suggestqueries.google.com/complete/search?json&q={searchTerms}"]);
 				tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, suggestUrl) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', ["Yahoo!", "yahoo.ico", "http://search.yahoo.com/search?p={searchTerms}", "", "", "0", "get", "http://ff.search.yahoo.com/gossip?output=fxjson&amp;command={searchTerms}"]);
 				tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, suggestUrl) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', ["Bing", "bing.ico", "http://www.bing.com/search?q={searchTerms}", "", "", "0", "get", "http://api.bing.com/osjson.aspx?query={searchTerms}"]);
@@ -328,13 +362,12 @@ function clearIndex(reindexing) {
 			}
 			window.clearingIndex = false;
 		}, errorHandler);
-		//if (reindexing == true) {
-			setTimeout(function(){
-				if (window.clearingIndex == false) {
-					startIndexing();
-				}
-			}, 500);
-		//}
+
+		setTimeout(function(){
+			if (window.clearingIndex == false) {
+				startIndexing();
+			}
+		}, 500);
 	}
 }
 

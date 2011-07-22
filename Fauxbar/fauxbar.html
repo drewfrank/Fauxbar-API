@@ -4,6 +4,7 @@
 	<link href="fauxbar.css" media="screen" rel="stylesheet" type="text/css" />
 	<style type="text/css" id="customstyle"></style>
 	<script type="text/javascript" src="jquery-1.6.2.min.js"></script>
+	<script type="text/javascript" src="md5-min.js"></script>
 	<script type="text/javascript" src="common.js"></script>
 	<script type="text/javascript" src="jquery.hotkeys.js"></script>
 	<script type="text/javascript" src="jquery.rangyinputs.js"></script>
@@ -117,8 +118,8 @@
 		<!-- Top site thumb tiles -->
 		<div id="topthumbs"></div>
 		<script type="text/javascript">
-
 			function renderSiteTiles(thumbs) {
+
 				// Hide the site tiles if we're showing Chrome's installed apps instead
 				if (localStorage.sapps == 2) {
 					$("#topthumbs").css("opacity",0);
@@ -148,69 +149,90 @@
 				}
 			}
 
+			// If user's opted to show top site tiles...
 			if (localStorage.option_showtopsites == 1) {
 				function displayThumbs(tx) {
+
 					// Get top sites (Disabled for now)
-					//var bgPage = chrome.extension.getBackgroundPage();
+					var bgPage = chrome.extension.getBackgroundPage();
 
-					// If a cached copy of the tile HTML exists in the BG page, use it
-					// Disable the use of the cache for now; it does seem a bit useless.
-					//if (bgPage.thumbs) {
-					//	renderSiteTiles(bgPage.thumbs);
-					// Otherwise, create the HTML
-					//} else {
+					// Don't fetch file:/// URLs?
+					var hideFiles = localStorage.option_hidefiletiles == 1 ? ' url NOT LIKE "file:///%" AND ' : '';
 
-						// Don't fetch file:/// URLs?
-						var hideFiles = localStorage.option_hidefiletiles == 1 ? ' url NOT LIKE "file:///%" AND ' : '';
-
-						// Don't fetch pinned URLs?
-						var hidePinned = '';
-						if (localStorage.option_hidepinnedtiles == 1) {
-							for (var t in window.currentTabs) {
-								if (window.currentTabs[t].pinned == true) {
-									hidePinned += ' url NOT LIKE "'+explode("#",window.currentTabs[t].url)[0]+'%" AND ';
-								}
+					// Don't fetch pinned URLs?
+					var hidePinned = '';
+					if (localStorage.option_hidepinnedtiles == 1) {
+						for (var t in window.currentTabs) {
+							if (window.currentTabs[t].pinned == true) {
+								hidePinned += ' url NOT LIKE "'+explode("#",window.currentTabs[t].url)[0]+'%" AND ';
 							}
 						}
+					}
 
-						// Don't fetch opened URLs?
-						var hideOpened = '';
-						if (localStorage.option_hideopentiles == 1) {
-							for (var ot in window.currentTabs) {
-								hideOpened += ' url NOT LIKE "'+explode("#",window.currentTabs[ot].url)[0]+'%" AND ';
-							}
+					// Don't fetch opened URLs?
+					var hideOpened = '';
+					if (localStorage.option_hideopentiles == 1) {
+						for (var ot in window.currentTabs) {
+							hideOpened += ' url NOT LIKE "'+explode("#",window.currentTabs[ot].url)[0]+'%" AND ';
 						}
+					}
 
-						var statement = 'select * from thumbs WHERE '+hideFiles+hidePinned+hideOpened+' frecency > 0 order by frecency DESC limit ?';
-						tx.executeSql(statement, [localStorage.option_topsiterows*localStorage.option_topsitecols], function(tx, results){
-							var len = results.rows.length, i;
-							var thumbs = '';
-							var newHref = '';
-							// Create HTML for them
-							for (var i = 0; i < len; i++) {
-								// Handle file:/// link if needed
-								if (results.rows.item(i).url.length > 8 && results.rows.item(i).url.substring(0, 8) == "file:///") {
-									newHref = "loadfile.html#"+results.rows.item(i).url;
-								} else {
-									newHref = results.rows.item(i).url;
-								}
-								thumbs += '<a href="'+newHref+'">';
-								thumbs += '		<div class="thumb" style="background-image:url(nopic.png); background-position:-2px 0"';
-								if (results.rows.item(i).data) {
-									thumbs += '>	<img src="'+results.rows.item(i).data+'" style="padding-bottom:200px; background-color:#fff" />';
-								} else {
-									thumbs += '>';
-								}
-								thumbs += '		</div>';
-								thumbs += '		<span class="toptitle"><img src="chrome://favicon/'+results.rows.item(i).url+'" style="height:16px; width:16px;" />';
-								thumbs += '		<span class="toptitletext">'+results.rows.item(i).title+'</span></span>';
-								thumbs += '</a>';
+					// Get top sites
+					var statement = 'select url, title from thumbs WHERE '+hideFiles+hidePinned+hideOpened+' frecency > 0 order by frecency DESC limit ?';
+					tx.executeSql(statement, [localStorage.option_topsiterows*localStorage.option_topsitecols], function(tx, results){
+						var len = results.rows.length, i;
+						var thumbs = '';
+						var newHref = '';
+						var thumbUrl = '';
+						var urlMd5 = '';
+						//window.urlMd5s = new Array;
+
+						// Create HTML for each site tile
+						for (var i = 0; i < len; i++) {
+							thumbUrl = results.rows.item(i).url;
+							urlMd5 = hex_md5(thumbUrl);
+
+							// Handle file:/// link if needed
+							if (results.rows.item(i).url.length > 8 && results.rows.item(i).url.substring(0, 8) == "file:///") {
+								newHref = "loadfile.html#"+results.rows.item(i).url;
+							} else {
+								newHref = results.rows.item(i).url;
 							}
-							renderSiteTiles(thumbs);
-							// Have the background save the tiles HTML as a cache
-							//chrome.extension.sendRequest({action:"thumbsHtml", content:$("#topthumbs").html()});
-						});
-					//}
+							thumbs += '<a href="'+newHref+'">';
+							thumbs += '		<div class="thumb" ';
+							if (bgPage.md5thumbs[urlMd5]) {
+								thumbs += '>	<img src="'+bgPage.md5thumbs[urlMd5]+'" />';
+							} else {
+								thumbs += '>';
+							}
+							thumbs += '		</div>';
+							thumbs += '		<span class="toptitle"><img src="chrome://favicon/'+results.rows.item(i).url+'" />';
+							thumbs += '		<span class="toptitletext">'+results.rows.item(i).title+'</span></span>';
+							thumbs += '</a>';
+							//$("#topthumbs").append(newThumb);
+
+							/*if (bgPage.md5thumbs[urlMd5]) {
+								$("#md5_"+urlMd5+" div.thumb").html('<img src="'+bgPage.md5thumbs[urlMd5]+'" style="padding-bottom:200px; background-color:#fff" />');
+							}*/ /*else {
+								window.urlMd5s[window.urlMd5s.length] = urlMd5;
+								window.webkitRequestFileSystem(window.PERSISTENT, 10*1024*1024, function(fs){
+									var urlMd52 = window.urlMd5s.pop();
+									console.log(urlMd52);
+									fs.root.getFile(urlMd52+'.png', {}, function(fileEntry) {
+										fileEntry.file(function(file) {
+											var reader = new FileReader();
+											reader.onloadend = function(e) {
+												$("#md5_"+urlMd52+" div.thumb").html('<img src="'+this.result+'" style="padding-bottom:200px; background-color:#fff" />');
+												chrome.extension.sendRequest({action:"md5thumb", md5:urlMd52, data:this.result});
+											};
+											reader.readAsText(file);
+										}, fileErrorHandler);
+									}, fileErrorHandler);
+								}, fileErrorHandler);
+							}*/
+						}
+						renderSiteTiles(thumbs);
+					});
 				}
 
 				$(document).ready(function(){
@@ -222,7 +244,7 @@
 								window.db.transaction(function(tx){
 									if (!localStorage.almostdone || localStorage.almostdone == 1) {
 										tx.executeSql('UPDATE thumbs SET frecency = 0');
-										tx.executeSql('SELECT * FROM urls WHERE type = 1 AND url NOT LIKE "data:%" ORDER BY frecency DESC LIMIT 25', [], function(tx, results){
+										tx.executeSql('SELECT url, title, frecency FROM urls WHERE type = 1 AND url NOT LIKE "data:%" ORDER BY frecency DESC LIMIT 25', [], function(tx, results){
 											var len = results.rows.length, i;
 											if (len > 0) {
 												for (var i = 0; i < len; i++) {

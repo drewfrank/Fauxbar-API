@@ -1,5 +1,23 @@
 // This file gets loaded into Fauxbar's background page.
 
+window.md5thumbs = {}
+
+// Load top site thumb tiles into memory upload load
+$(document).ready(function(){
+	if (openDb()) {
+		window.db.transaction(function(tx){
+			tx.executeSql('select url, data from thumbs', [], function(tx, results){
+				var len = results.rows.length, i;
+				if (len > 0) {
+					for (var i = 0; i < len; i++) {
+						window.md5thumbs[hex_md5(results.rows.item(i).url)] = results.rows.item(i).data;
+					}
+				}
+			});
+		}, errorHandler);
+	}
+});
+
 // Reload Fauxbar Memory Helper if it's running
 chrome.management.getAll(function(extensions){
 	for (var e in extensions) {
@@ -44,11 +62,17 @@ chrome.extension.onRequestExternal.addListener(function(request){
 	}
 });
 
-// Delete top sites (eg top tiles) that have fallen below the frecency threshold
+
 $(document).ready(function(){
 	if (openDb()) {
+		// Add frecency index to thumbs. Added in v0.0.7
 		window.db.transaction(function(tx){
-			tx.executeSql('SELECT frecency FROM urls WHERE type = 1 ORDER BY frecency DESC LIMIT 25,25', [], function(tx, results){
+			tx.executeSql('CREATE INDEX IF NOT EXISTS frecencyindex ON thumbs (frecency)');
+		}, errorHandler);
+
+		// Delete top sites (eg top tiles) that have fallen below the frecency threshold
+		window.db.transaction(function(tx){
+			tx.executeSql('SELECT frecency FROM urls WHERE type = 1 ORDER BY frecency DESC LIMIT 50,50', [], function(tx, results){
 				window.frecencyThreshold = results.rows.item(0).frecency;
 				tx.executeSql('DELETE FROM thumbs WHERE frecency < ? AND frecency > -1', [window.frecencyThreshold]);
 			});
@@ -93,7 +117,7 @@ if (localStorage.indexComplete != 1) {
 function updateTopSites() {
 	if (openDb()) {
 		window.db.transaction(function(tx){
-			tx.executeSql('SELECT * FROM urls WHERE type = 1 ORDER BY frecency DESC LIMIT 50', [], function(tx, results){
+			tx.executeSql('SELECT url FROM urls WHERE type = 1 ORDER BY frecency DESC LIMIT 50', [], function(tx, results){
 				var len = results.rows.length, i;
 				if (len > 0) {
 					window.topUrls = new Array;
@@ -129,7 +153,7 @@ function updateTopUrl() {
 // Update top site scores every 2 hours, in case user doesn't close Chrome at all
 setInterval(updateTopSites, 7200000);
 
-// Omnibox stuff!
+// Omnibox stuff! //
 
 // When user starts using Fauxbar from the Omnibox, record the current tabs and set the default suggestion
 chrome.omnibox.onInputStarted.addListener(function() {
@@ -202,15 +226,15 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 
 				// If there's no input...
 				if (text.length == 0) {
-					var selectStatement = 'SELECT * FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
+					var selectStatement = 'SELECT url, title, type FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
 				}
 				// Else, If we have words...
 				else if (urltitleWords.length > 0) {
-					var selectStatement = 'SELECT *, (url||" "||title) AS urltitle FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' AND '+implode(" and ", urltitleQMarks)+' AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
+					var selectStatement = 'SELECT url, title, type, (url||" "||title) AS urltitle FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' AND '+implode(" and ", urltitleQMarks)+' AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
 				}
 				// Else, this probably doesn't ever get used.
 				else {
-					var selectStatement = 'SELECT * FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
+					var selectStatement = 'SELECT url, title, type FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
 				}
 
 				// If user text no longer equals the text we're processing, cancel.
@@ -263,9 +287,6 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 					// For each result...
 					for (var i in sortedHistoryItems) {
 						truncated = 0;
-						/*if (window.currentOmniboxText != origText) {
-							return false;
-						}*/
 						if (currentRows < maxRows) {
 							hI = sortedHistoryItems[i];
 							resultIsOkay = true;
@@ -279,7 +300,6 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 
 							if (resultIsOkay == true) {
 								// If result is titleless, make the title be the URL
-																/*titleText = hI.title == "" ? hI.url : hI.title;*/
 								if (hI.title == "") {
 									urlExplode = explode("/", hI.url);
 									titleText = urldecode(urlExplode[urlExplode.length-1]);
@@ -450,14 +470,6 @@ function beginIndexing() {
 	reindex();
 }
 
-// Clear the top site tiles cache every 2 mins
-// But disable this for now
-/*setInterval(function(){
-	if (window.thumbs) {
-		delete window.thumbs;
-	}
-}, 1000 * 60 * 2);*/
-
 // Background page listens for requests...
 chrome.extension.onRequest.addListener(function(request, sender){
 	// Generate top site tile thumbnail for page if page reports page has not been scrolled at all
@@ -478,11 +490,39 @@ chrome.extension.onRequest.addListener(function(request, sender){
 											var context = myCanvas.getContext('2d');
 											var img = new Image;
 											img.onload = function(){
-												var width = 430;
-												var height = Math.round(img.height * width / img.width)
+												var width = 430; // Double width than the actual displayed tile size, so that it gets shrunk and looks nice.
+												var height = Math.round(img.height * width / img.width);
 												myCanvas.width = width;
 												myCanvas.height = height;
 												context.drawImage(img,0,0, width, height);
+												// Save image data
+
+												window.md5thumbs[hex_md5(sender.tab.url)] = myCanvas.toDataURL("image/png");
+
+												// HTML5 File API:
+												//var pngName = hex_md5(sender.tab.url)+'.png';
+												/*window.webkitRequestFileSystem(window.PERSISTENT, 10*1024*1024, function(fs){
+													fs.root.getFile(pngName, {create: true}, function(fileEntry) {
+														// Create a FileWriter object for our FileEntry (log.txt).
+														fileEntry.createWriter(function(fileWriter) {
+															fileWriter.onwriteend = function(e) {
+																console.log('Thumbnail write completed for '+pngName);
+															};
+															fileWriter.onerror = function(e) {
+																console.log('Thumbnail write failed: ' + e.toString());
+															};
+															// Create a new Blob and write it to log.txt.
+															//var bb = new BlobBuilder(); // Note: window.WebKitBlobBuilder in Chrome 12.
+															var bb = new window.WebKitBlobBuilder(); // Note: window.WebKitBlobBuilder in Chrome 12.
+															bb.append(myCanvas.toDataURL("image/png"));
+															window.md5thumbs[hex_md5(sender.tab.url)] = myCanvas.toDataURL("image/png");
+															fileWriter.write(bb.getBlob('image/png'));
+														}, fileErrorHandler);
+
+													}, fileErrorHandler);
+												}, fileErrorHandler);*/
+
+												// SQLite database:
 												window.db.transaction(function(tx){
 													tx.executeSql('DELETE FROM thumbs WHERE url = ?', [sender.tab.url]);
 													tx.executeSql('INSERT INTO thumbs (url, data, date, title, frecency) VALUES (?, ?, ?, ?, ?)', [sender.tab.url, myCanvas.toDataURL("image/png"), microtime(true), sender.tab.title, frecency]);
@@ -500,10 +540,15 @@ chrome.extension.onRequest.addListener(function(request, sender){
 		}
 	}
 
-	// Store top site thumbs html
-	else if (request.action && request.action == "thumbsHtml") {
-		window.thumbs = request.content;
+	// Store top site thumbs html II
+	else if (request.action && request.action == "md5thumb") {
+		window.md5thumbs[request.md5] = request.data;
 	}
+
+	// Store top site thumbs html
+	/*else if (request.action && request.action == "thumbsHtml") {
+		window.thumbs = request.content;
+	}*/
 
 	// Request received to do the indexing process
 	else if (request.action && request.action == "reindex") {
@@ -560,11 +605,11 @@ chrome.extension.onRequest.addListener(function(request, sender){
 	else if (request.action && request.action == "showPageAction") {
 		if (openDb()) {
 			if (request.xmlurl && request.xmlurl != '') {
-				var myStatement = 'SELECT * FROM opensearches WHERE xmlurl = ?';
+				var myStatement = 'SELECT shortname FROM opensearches WHERE xmlurl = ?';
 				var myArray = [request.xmlurl];
 			}
 			else if (request.improper && request.improper == true && request.actionAttr && request.actionAttr != '') {
-				var myStatement = 'SELECT * FROM opensearches WHERE searchurl LIKE ?';
+				var myStatement = 'SELECT shortname FROM opensearches WHERE searchurl LIKE ?';
 				var myArray = ['%'+request.hostname+'%'];
 			}
 			else {
@@ -575,14 +620,14 @@ chrome.extension.onRequest.addListener(function(request, sender){
 			window.db.transaction(function (tx) {
 				tx.executeSql(myStatement, myArray, function (tx, results) {
 					var len = results.rows.length, i;
+
+					// If this site's search engine hasn't already been added to Fauxbar...
 					if (len == 0) {
 						chrome.pageAction.setIcon({tabId:sender.tab.id, path:"fauxbar16plus.png"});
 						chrome.pageAction.setTitle({tabId:sender.tab.id, title:"Add this site's search engine to Fauxbar"});
 						chrome.pageAction.setPopup({tabId:sender.tab.id, popup:"fauxbar.addsearchengine.html"});
 						chrome.pageAction.show(sender.tab.id);
-					}// else {
-						//console.log('OpenSearch found but already exists within Fauxbar.');
-					//}
+					}
 				});
 			}, errorHandler);
 		}
@@ -592,10 +637,10 @@ chrome.extension.onRequest.addListener(function(request, sender){
 // Tabs! //
 
 // When tab is removed or created, refresh any current Address Box results so they can show/hide any "Switch to tab" texts
-chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
+chrome.tabs.onRemoved.addListener(function() {
 	refreshResults();
 });
-chrome.tabs.onCreated.addListener(function(tabId) {
+chrome.tabs.onCreated.addListener(function() {
 	refreshResults();
 });
 
@@ -614,7 +659,9 @@ chrome.tabs.onSelectionChanged.addListener(function(tabId, selectInfo){
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 
 	// Refresh results for "Switch to tab" texts
-	refreshResults();
+	if (tab.status == "complete") {
+		refreshResults();
+	}
 
 	// If URL is a web page...
 	if (tab.url.substr(0,7) == 'http://' || tab.url.substr(0,8) == 'https://') {
@@ -665,10 +712,10 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 });
 
 // When tab moves to a new Window, refresh Address Box results "Switch to tab" texts
-chrome.tabs.onDetached.addListener(function(tabId, detachInfo) {
+chrome.tabs.onDetached.addListener(function() {
 	refreshResults();
 });
-chrome.tabs.onAttached.addListener(function(tabId, attachInfo) {
+chrome.tabs.onAttached.addListener(function() {
 	refreshResults();
 });
 
@@ -689,7 +736,7 @@ chrome.history.onVisited.addListener(function(historyItem) {
 	else if (openDb()) {
 		window.db.transaction(function (tx) {
 			// See if it exists...
-			tx.executeSql('SELECT * FROM urls WHERE url = ? AND type = 1 AND queuedfordeletion = 0', [historyItem.url], function(tx, results){
+			tx.executeSql('SELECT url FROM urls WHERE url = ? AND type = 1 AND queuedfordeletion = 0', [historyItem.url], function(tx, results){
 				var len = results.rows.length, i;
 				// If URL doesn't exist in Fauxbar's database, add it
 				if (len == 0) {
@@ -716,7 +763,7 @@ chrome.history.onVisited.addListener(function(historyItem) {
 						}, errorHandler);
 					});
 				}
-				tx.executeSql('SELECT frecency FROM urls WHERE type = 1 ORDER BY frecency DESC LIMIT 25,25', [], function(tx, results){
+				tx.executeSql('SELECT frecency FROM urls WHERE type = 1 ORDER BY frecency DESC LIMIT 50,50', [], function(tx, results){
 					window.frecencyThreshold = results.rows.item(0).frecency;
 				});
 			}, errorHandler);

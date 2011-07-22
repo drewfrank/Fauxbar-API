@@ -12,6 +12,7 @@
 			<div id="option_section_general" class="section_selected" optionbox="generaloptions">General</div>
 			<div id="option_section_addressbox" class="section_general" optionbox="addressoptions">Address Box</div>
 			<div id="option_section_searchengines" class="section_general" optionbox="searchoptions">Search Box</div>
+			<div id="option_section_tiles" class="section_general" optionbox="tilesoptions">Tiles</div>
 			<div id="option_section_results" class="section_general" optionbox="resultoptions">Results &amp; Suggestions</div>
 			<div id="option_section_background" class="section_general" optionbox="backgroundoptions">Page Background</div>
 			<div id="option_section_frecency" class="section_general" optionbox="frecencyoptions">Frecency Scoring</div>
@@ -32,6 +33,94 @@
 		</td>
 		<!-- Options subpages container -->
 		<td id="option_boxes">
+
+			<!-- Tile options -->
+			<div id="tilesoptions" class="optionbox">
+				<img src="cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<h1>
+					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
+					Fauxbar Options: Tiles
+				</h1>
+				Tiles let you quickly access your top sites and Chrome apps.
+				<table>
+					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr>
+						<th>Page Tiles</th>
+						<td>
+							<label class="legend">
+								<input type="checkbox" name="option_showtopsites" id="option_showtopsites" />
+								Show my top pages as tiles
+							</label>
+							<!--<label class="legend" style="margin-top:5px">
+								Selected pages:
+								<select>
+									<option>Automatic</option>
+									<option>Custom</option>
+								</select>
+							</label>-->
+							<table style="width:auto; border-collapse:collapse;" cellpadding="0" cellspacing="0">
+								<tr>
+									<td>
+										<label class="legend" style="margin-top:-2px">
+											Layout:&nbsp;
+										</label>
+									</td>
+									<td>
+										<select name="option_topsiterows" id="option_topsiterows">
+											<option value="1">1</option>
+											<option value="2">2</option>
+											<option value="3">3</option>
+											<option value="4">4</option>
+											<option value="5">5</option>
+										</select>
+										rows &times;
+										<select name="option_topsitecols" id="option_topsitecols">
+											<option value="1">1</option>
+											<option value="2">2</option>
+											<option value="3">3</option>
+											<option value="4">4</option>
+											<option value="5">5</option>
+										</select>
+										columns
+									</td>
+								</tr>
+							</table>
+							<label class="legend" style="margin-top:5px">
+								<input type="checkbox" name="option_hidepinnedtiles" id="option_hidepinnedtiles" />
+								Don't show currently pinned URLs
+							</label>
+							<label class="legend" style="margin-top:1px">
+								<input type="checkbox" name="option_hidefiletiles" id="option_hidefiletiles" />
+								Don't show file:/// URLs
+							</label>
+							<label class="legend" style="margin-top:1px">
+								<input type="checkbox" name="option_hideopentiles" id="option_hideopentiles" />
+								Don't show currently opened URLs
+							</label>
+						</td>
+					</tr>
+					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr>
+						<th>App Tiles</th>
+						<td>
+							<label class="legend" style="margin-top:1px">
+								<input type="checkbox" name="option_showapps" id="option_showapps" />
+								Show my installed Chrome apps as tiles
+							</label>
+						</td>
+					</tr>
+					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr>
+						<th>All Tiles</th>
+						<td>
+							<label class="legend" style="margin-top:-4px">
+								Font size:
+								<input name="option_sappsfontsize" id="option_sappsfontsize" class="fontsize" type="number" min="12" maxlength="2" size="3" spellcheck="false" style="text-align:center" /> pixels
+							</label>
+						</td>
+					</tr>
+				</table>
+			</div>
 
 			<!-- Address Box options -->
 			<div id="addressoptions" class="optionbox">
@@ -500,6 +589,15 @@
 					<tr>
 						<th>Input Boxes</th>
 						<td>
+							<label class="legend">
+								<input name="option_speech" id="option_speech" type="checkbox" onchange="$('#speechtip').css('display','inline-block')" /> Show speech input icons
+								<span id="speechtip" style="display:none">
+									&ndash; <b><a onclick="javascript:window.location.reload(); return false" style="text-decoration:underline; cursor:pointer; color:#06c">Reload this page</a> to apply</b>
+								</span>
+							</label>
+							<!--<div class="optionstip" id="speechtip" style="display:none">
+								<a onclick="javascript:window.location.reload()" style="text-decoration:underline; cursor:pointer">Reload this page</a> to apply.
+							</div>-->
 							<label class="legend" style="margin-top:-4px">
 								Font size: <input name="option_inputfontsize" id="option_inputfontsize" class="fontsize" type="number" min="12" maxlength="2" size="3" spellcheck="false" style="text-align:center" /> pixels
 							</label>
@@ -520,66 +618,6 @@
 									<option value="addressonly">Address Box only</option>
 									<option value="searchonly">Search Box only</option>
 								</select>
-							</label>
-							<label class="legend">
-								<input name="option_speech" id="option_speech" type="checkbox" onchange="$('#speechtip').css('display','block')" /> Show speech input icons
-							</label>
-							<div class="optionstip" id="speechtip" style="display:none">
-								<a onclick="javascript:window.location.reload()" style="text-decoration:underline; cursor:pointer">Reload this page</a> to apply.
-							</div>
-						</td>
-					</tr>
-					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
-					<tr>
-						<th>Tiles</th>
-						<td>
-							<label class="legend" style="margin-top:-4px">
-								Font size:
-								<input name="option_sappsfontsize" id="option_sappsfontsize" class="fontsize" type="number" min="12" maxlength="2" size="3" spellcheck="false" style="text-align:center" /> pixels
-							</label>
-							<label class="legend" style="margin-top:0px">
-								<input type="checkbox" name="option_showapps" id="option_showapps" />
-								Show my installed Chrome apps
-							</label>
-							<table style="width:auto; border-collapse:collapse; margin-top:5px" cellpadding="0" cellspacing="0">
-								<tr>
-									<td>
-										<label class="legend" style="display:inline-block; clear:none">
-											<input type="checkbox" name="option_showtopsites" id="option_showtopsites" />
-											Show my top sites,&nbsp;
-										</label>
-									</td>
-									<td>
-										<select name="option_topsiterows" id="option_topsiterows">
-											<option value="1">1</option>
-											<option value="2">2</option>
-											<option value="3">3</option>
-											<option value="4">4</option>
-											<option value="5">5</option>
-										</select>
-										rows &times;
-										<select name="option_topsitecols" id="option_topsitecols">
-											<option value="1">1</option>
-											<option value="2">2</option>
-											<option value="3">3</option>
-											<option value="4">4</option>
-											<option value="5">5</option>
-										</select>
-										columns
-									</td>
-								</tr>
-							</table>
-							<label class="legend" style="margin-top:5px">
-								<input type="checkbox" name="option_hidepinnedtiles" id="option_hidepinnedtiles" />
-								Don't show currently pinned URLs
-							</label>
-							<label class="legend" style="margin-top:1px">
-								<input type="checkbox" name="option_hidefiletiles" id="option_hidefiletiles" />
-								Don't show file:/// URLs
-							</label>
-							<label class="legend" style="margin-top:1px">
-								<input type="checkbox" name="option_hideopentiles" id="option_hideopentiles" />
-								Don't show currently opened URLs
 							</label>
 						</td>
 					</tr>

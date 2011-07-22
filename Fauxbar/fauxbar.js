@@ -39,6 +39,15 @@ chrome.extension.onRequest.addListener(function (request, sender) {
 		window.location.reload();
 	}
 
+	// Change to options page if user wants to open Fauxbar's options
+	else if (request.action && request.action == "openOptions") {
+		chrome.tabs.getCurrent(function(tab){
+			if (tab.id == request.tabId) {
+				window.location.reload();
+			}
+		});
+	}
+
 	// Update the index progress meter bar and status message
 	else if (request.message && request.message == "currentStatus") {
 		$("button").prop("disabled",true);
@@ -399,7 +408,7 @@ function sortSearchEnginesAlphabetically() {
 function getSearchEngines() {
 	if (openDb()){
 		window.db.transaction(function(tx){
-			tx.executeSql('SELECT * FROM opensearches ORDER BY position DESC, shortname COLLATE NOCASE ASC', [], function(tx,results){
+			tx.executeSql('SELECT iconurl, shortname, searchurl FROM opensearches ORDER BY position DESC, shortname COLLATE NOCASE ASC', [], function(tx,results){
 				var openEngines = '';
 				var len = results.rows.length, i;
 				var iconUrl = "";
@@ -2157,15 +2166,15 @@ function getResults(noQuery) {
 					// And now to create the statement.
 					// If we're just getting the top sites...
 					if (noQuery) {
-						var selectStatement = 'SELECT * FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless+' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
+						var selectStatement = 'SELECT url, title, type, id FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless+' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
 					}
 					// If we're searching using the words from the Address Box's input...
 					else if (urltitleWords.length > 0) {
-						var selectStatement = 'SELECT *, (url||" "||title) AS urltitle FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' AND '+implode(" and ", urltitleQMarks)+' AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless+' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
+						var selectStatement = 'SELECT url, title, type, id, (url||" "||title) AS urltitle FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' AND '+implode(" and ", urltitleQMarks)+' AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless+' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
 					}
 					// Not sure if this actually ever gets used.
 					else {
-						var selectStatement = 'SELECT * FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless+' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
+						var selectStatement = 'SELECT url, title, type, id FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless+' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
 					}
 
 					// If the user's computer is lagging and taking a while to retrieve the results, display a loading on the left side of the Address Box
