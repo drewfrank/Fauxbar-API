@@ -41,62 +41,120 @@
 					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Fauxbar Options: Tiles
 				</h1>
-				Tiles let you quickly access your top sites and Chrome apps.
+				Tiles let you quickly access your top websites and Chrome apps.
 				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
-						<th>Page Tiles</th>
+						<th>Site Tiles</th>
 						<td>
 							<label class="legend">
 								<input type="checkbox" name="option_showtopsites" id="option_showtopsites" />
-								Show my top pages as tiles
+								Show my top sites as tiles
 							</label>
-							<!--<label class="legend" style="margin-top:5px">
-								Selected pages:
-								<select>
-									<option>Automatic</option>
-									<option>Custom</option>
-								</select>
-							</label>-->
-							<table style="width:auto; border-collapse:collapse;" cellpadding="0" cellspacing="0">
-								<tr>
-									<td>
-										<label class="legend" style="margin-top:-2px">
-											Layout:&nbsp;
-										</label>
-									</td>
-									<td>
-										<select name="option_topsiterows" id="option_topsiterows">
-											<option value="1">1</option>
-											<option value="2">2</option>
-											<option value="3">3</option>
-											<option value="4">4</option>
-											<option value="5">5</option>
-										</select>
-										rows &times;
-										<select name="option_topsitecols" id="option_topsitecols">
-											<option value="1">1</option>
-											<option value="2">2</option>
-											<option value="3">3</option>
-											<option value="4">4</option>
-											<option value="5">5</option>
-										</select>
-										columns
-									</td>
-								</tr>
-							</table>
-							<label class="legend" style="margin-top:5px">
-								<input type="checkbox" name="option_hidepinnedtiles" id="option_hidepinnedtiles" />
-								Don't show currently pinned URLs
-							</label>
-							<label class="legend" style="margin-top:1px">
-								<input type="checkbox" name="option_hidefiletiles" id="option_hidefiletiles" />
-								Don't show file:/// URLs
-							</label>
-							<label class="legend" style="margin-top:1px">
-								<input type="checkbox" name="option_hideopentiles" id="option_hideopentiles" />
-								Don't show currently opened URLs
-							</label>
+							<div id="topSiteOptions" style="margin-top:8px; display:none">
+								<label class="legend">
+									Choose tiles:
+									<select id="option_pagetilearrangement" name="option_pagetilearrangement">
+										<!--<option value="bookmarkbar">Based on Chrome's Bookmark Bar</option>-->
+										<option value="frecency">Automatically by frecency score</option>
+										<!--<option value="visitcount">By visit count</option>-->
+										<option value="manual">Manually</option>
+									</select>
+								</label>
+								<table style="width:auto; border-collapse:collapse; margin-top:0px" cellpadding="0" cellspacing="0">
+									<tr>
+										<td>
+											<label class="legend" style="margin-top:-2px">
+												Layout:&nbsp;
+											</label>
+										</td>
+										<td>
+											<span id="infiniterows"></span>
+											<select name="option_topsiterows" id="option_topsiterows">
+												<option value="1">1</option>
+												<option value="2">2</option>
+												<option value="3">3</option>
+												<option value="4">4</option>
+												<option value="5">5</option>
+											</select>
+											rows &times;
+											<select name="option_topsitecols" id="option_topsitecols">
+												<option value="1">1</option>
+												<option value="2">2</option>
+												<option value="3">3</option>
+												<option value="4">4</option>
+												<option value="5">5</option>
+											</select>
+											columns maximum
+										</td>
+									</tr>
+								</table>
+								<div id="siteTileCheckboxes" style="margin-top:6px" style="display:none">
+									<label class="legend">
+										<input type="checkbox" name="option_hidepinnedtiles" id="option_hidepinnedtiles" />
+										Don't show tiles for sites that are pinned
+									</label>
+									<label class="legend">
+										<input type="checkbox" name="option_hideopentiles" id="option_hideopentiles" />
+										Don't show tiles for sites that are opened
+									</label>
+									<label class="legend">
+										<input type="checkbox" name="option_hidefiletiles" id="option_hidefiletiles" />
+										Don't show file:/// URLs
+									</label>
+								</div>
+								<div id="siteTileEditInfo" style="margin-top:6px" style="display:none;">
+									<button onclick="editSiteTiles()" style="font-size:12px">Edit Tiles...</button>
+									<div class="optionstip" style="margin-top:0px">
+										Site tiles can also be edited by clicking the <img src="fauxbar16options.png" style="vertical-align:middle; margin-top:-3px; padding-left:2px" /> icon in Chrome's Omnibox.
+									</div>
+								</div>
+							</div>
+							<script type="text/javascript">
+							<!--
+								function editSiteTiles() {
+									chrome.tabs.getAllInWindow(null, function(tabs){
+										for (var t in tabs) {
+											console.log(tabs[t].title+" - "+tabs[t].url);
+											if (tabs[t].title == "Fauxbar: Edit Tiles" && (strstr(tabs[t].url, chrome.extension.getURL("fauxbar.html")) || strstr(tabs[t].url, "chrome://newtab"))) {
+												chrome.tabs.update(tabs[t].id, {selected:true});
+												return;
+											}
+										}
+										chrome.tabs.create({url:"fauxbar.html#edittiles=1"});
+									});
+								}
+								function toggleSiteTileOptions(el) {
+									if ($(el).val() == "manual") {
+										$("#option_topsiterows").css("display","none");
+										$("#infiniterows").html("&nbsp;&#8734;").css("display","");
+										$("#siteTileCheckboxes").css("display","none");
+										$("#siteTileEditInfo").css("display","");
+									} else {
+										$("#option_topsiterows").css("display","");
+										$("#infiniterows").css("display","none");
+										$("#siteTileCheckboxes").css("display","");
+										$("#siteTileEditInfo").css("display","none");
+									}
+								}
+								$(document).ready(function(){
+									$("#option_showtopsites").live("change", function(){
+										if ($("#option_showtopsites").prop("checked") == true) {
+											$("#topSiteOptions").css("display","");
+										} else {
+											$("#topSiteOptions").css("display","none");
+										}
+									});
+									$("#option_pagetilearrangement").live("change", function(){
+										toggleSiteTileOptions(this);
+									});
+									setTimeout(function(){
+										$("#option_pagetilearrangement").trigger("change");
+										$("#option_showtopsites").trigger("change");
+									}, 10);
+								});
+							-->
+							</script>
 						</td>
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
@@ -551,9 +609,9 @@
 							<label class="legend">
 								When Fauxbar opens, focus:
 								<select name="option_openfauxbarfocus" id="option_openfauxbarfocus">
+									<option value="chrome">Chrome's Omnibox<!-- (if overriding the New Tab page)--></option>
 									<option value="addressbox">Fauxbar's Address Box</option>
 									<option value="searchbox">Fauxbar's Search Box</option>
-									<option value="chrome">Chrome's Omnibox<!-- (if overriding the New Tab page)--></option>
 								</select>
 							</label>
 							<label class="legend" style="margin-top:1px">

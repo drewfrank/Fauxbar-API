@@ -132,7 +132,7 @@ function resetOptions() {
 	localStorage.option_frecency_link = 100;
 	localStorage.option_frecency_reload = 100;
 	localStorage.option_frecency_start_page = 100;
-	localStorage.option_frecency_typed = 125;
+	localStorage.option_frecency_typed = 100;
 	localStorage.option_frecency_unvisitedbookmark = 140;
 
 	localStorage.option_font = window.OS == "Mac" ? "Lucida Grande" : "Segoe UI";	// Global font name(s).
@@ -149,14 +149,15 @@ function resetOptions() {
 	localStorage.option_leftcellwidthpercentage = 66;		// Width percentage of the Address Box.
 	localStorage.option_maxaddressboxresults = 16;			// Max Address Box results to display to the user at a time.
 	localStorage.option_maxaddressboxresultsshown = 8;		// Max Address Box results to be shown at a time; extra results will have to be scrolled to see.
-	localStorage.option_maxretrievedsuggestions = 20;		// Max Search Box saved queries to retrieve. This option name is misleading; suggestions are generally JSON results from the search engine.
-	localStorage.option_maxsuggestionsvisible = 30;			// Max queries/suggestions to display before needing to scroll. So with these 2 default options, 10 JSON suggestions will probably be displayed.
+	localStorage.option_maxretrievedsuggestions = 10;		// Max Search Box saved queries to retrieve. This option name is misleading; suggestions are generally JSON results from the search engine.
+	localStorage.option_maxsuggestionsvisible = 20;			// Max queries/suggestions to display before needing to scroll. So with these 2 default options, 10 JSON suggestions will probably be displayed.
 	localStorage.option_maxwidth = 1100;					// Max-width for the Fauxbar('s wrapper).
 	localStorage.option_omniboxurltruncate = 55;			// Truncate Omnibox+Fauxbar URLs so that the titles can still be seen (hopefully).
 	localStorage.option_openfauxbarfocus = "addressbox";	// Focus the Address Box when Fauxbar opens.
 	localStorage.option_optionpage = "option_section_general";	// Option section/subpage to load when Options are shown.
 	localStorage.option_osimproper = 1;						// Scan webpages for non-OpenSearch search engines; eg scan just lone input boxes.
 	localStorage.option_osproper = 1;						// Scan webpages for proper OpenSearch declarations.
+	localStorage.option_pagetilearrangement = "frecency";	// Page tile arrangement. Possible values: "frecency" "visitcount" "manual" "bookmarkbar"
 	localStorage.option_quickdelete = "0";					// Don't enable Quick Delete by default. Don't want the user randomly deleting their history without knowing it.
 	localStorage.option_recentvisits = 10;					// Number of recent visits to sample when calculating frecency scores for URLs.
 	localStorage.option_recordsearchboxqueries = 1;			// Keep a record of the user's Search Box queries, to suggest them to the user later on if they search for something similar.
@@ -334,9 +335,9 @@ function clearIndex(reindexing) {
 			tx.executeSql('CREATE INDEX IF NOT EXISTS typeindex ON urls (type)');
 
 			if (!localStorage.indexedbefore || localStorage.indexedbefore != 1) {
-				// Top site tile thumbnails
+				// Site tile thumbnails
 				tx.executeSql('DROP TABLE IF EXISTS thumbs');
-				tx.executeSql('CREATE TABLE thumbs (url TEXT UNIQUE ON CONFLICT REPLACE, data BLOB, date INTEGER, title TEXT, frecency NUMERIC DEFAULT -1)');
+				tx.executeSql('CREATE TABLE thumbs (url TEXT UNIQUE ON CONFLICT REPLACE, data BLOB, date INTEGER, title TEXT, frecency NUMERIC DEFAULT -1, manual NUMERIC DEFAULT 0)'); // "manual" meaning, is the thumb a user-defined site tile, not necessarily a top frecency scored one
 				tx.executeSql('CREATE INDEX IF NOT EXISTS urlindex ON thumbs (url)');
 				tx.executeSql('CREATE INDEX IF NOT EXISTS frecencyindex ON thumbs (frecency)');
 
@@ -460,7 +461,7 @@ function openDb(force) {
 
 // Catches errors when SQL statements don't work
 function errorHandler(transaction, error) {
-	console.log(error);
+	console.log(transaction);
 	if (localStorage.option_alert && localStorage.option_alert != true) {
 		return false;
 	}
@@ -468,6 +469,8 @@ function errorHandler(transaction, error) {
 	if ((!window.goingToUrl || window.goingToUrl.length == 0) && localStorage.indexComplete == 1) {
 		if (error && error.message) {
 			alert('Fauxbar SQLite error: '+error.message+' (code '+error.code+')');
+		} else if (transaction && transaction.message){
+			alert('Oops! Fauxbar encountered a database error:\n\n"'+transaction.message+'"\n\nIf you can reproduce the error, please go to www.fauxbar.org and report it. Either way, sorry!\n\n(Note: these error alerts can be disabled by going to Fauxbar\'s Options > Management)');
 		} else {
 			alert('Oops! Fauxbar failed to execute an SQL statement, either due to some bad code or a locked database.\n\nPlease retry what you were doing, but if the issue persists, please visit www.fauxbar.org and file a bug report.\n\nSorry about that!');
 		}
@@ -570,7 +573,7 @@ function calculateFrecency(visitItems) {
 					bonus = 100;
 					break;
 				case "typed":
-					bonus = 125;
+					bonus = 100;
 					break;
 				case "auto_bookmark":
 					bonus = 75;
@@ -703,14 +706,6 @@ function replacePercents(text) {
 
 // http://phpjs.org/functions/strstr:551
 function strstr (haystack, needle, bool) {
-	// *     example 1: strstr('Kevin van Zonneveld', 'van');
-	// *     returns 1: 'van Zonneveld'
-	// *     example 2: strstr('Kevin van Zonneveld', 'van', true);
-	// *     returns 2: 'Kevin '
-	// *     example 3: strstr('name@example.com', '@');
-	// *     returns 3: '@example.com'
-	// *     example 4: strstr('name@example.com', '@', true);
-	// *     returns 4: 'name'
 	var pos = 0;
 
 	haystack += '';
@@ -728,10 +723,6 @@ function strstr (haystack, needle, bool) {
 
 // http://phpjs.org/functions/explode:396
 function explode (delimiter, string, limit) {
-	// *     example 1: explode(' ', 'Kevin van Zonneveld');
-	// *     returns 1: {0: 'Kevin', 1: 'van', 2: 'Zonneveld'}
-	// *     example 2: explode('=', 'a=bc=d', 2);
-	// *     returns 2: ['a', 'bc=d']
 	var emptyArray = {
 		0: ''
 	};
@@ -767,10 +758,6 @@ function explode (delimiter, string, limit) {
 
 // https://github.com/kvz/phpjs/raw/master/functions/strings/implode.js
 function implode (glue, pieces) {
-    // *     example 1: implode(' ', ['Kevin', 'van', 'Zonneveld']);
-    // *     returns 1: 'Kevin van Zonneveld'
-    // *     example 2: implode(' ', {first:'Kevin', last: 'van Zonneveld'});
-    // *     returns 2: 'Kevin van Zonneveld'
     var i = '',
         retVal = '',
         tGlue = '';
@@ -795,12 +782,6 @@ function implode (glue, pieces) {
 
 // http://phpjs.org/functions/substr_count:559
 function substr_count (haystack, needle, offset, length) {
-    // *     example 1: substr_count('Kevin van Zonneveld', 'e');
-    // *     returns 1: 3
-    // *     example 2: substr_count('Kevin van Zonneveld', 'K', 1);
-    // *     returns 2: 0
-    // *     example 3: substr_count('Kevin van Zonneveld', 'Z', 0, 10);
-    // *     returns 3: false
     var pos = 0,
         cnt = 0;
 
@@ -827,12 +808,6 @@ function substr_count (haystack, needle, offset, length) {
 
 // http://phpjs.org/functions/str_replace:527
 function str_replace (search, replace, subject, count) {
-	// %          note 1: The count parameter must be passed as a string in order
-	// %          note 1:  to find a global variable in which the result will be given
-	// *     example 1: str_replace(' ', '.', 'Kevin van Zonneveld');
-	// *     returns 1: 'Kevin.van.Zonneveld'
-	// *     example 2: str_replace(['{name}', 'l'], ['hello', 'm'], '{name}, lars');
-	// *     returns 2: 'hemmo, mars'
 	var i = 0,
 		j = 0,
 		temp = '',
@@ -867,15 +842,6 @@ function str_replace (search, replace, subject, count) {
 
 // http://phpjs.org/functions/urlencode:573
 function urlencode (str) {
-    // %          note 1: This reflects PHP 5.3/6.0+ behavior
-    // %        note 2: Please be aware that this function expects to encode into UTF-8 encoded strings, as found on
-    // %        note 2: pages served as UTF-8
-    // *     example 1: urlencode('Kevin van Zonneveld!');
-    // *     returns 1: 'Kevin+van+Zonneveld%21'
-    // *     example 2: urlencode('http://kevin.vanzonneveld.net/');
-    // *     returns 2: 'http%3A%2F%2Fkevin.vanzonneveld.net%2F'
-    // *     example 3: urlencode('http://www.google.nl/search?q=php.js&ie=utf-8&oe=utf-8&aq=t&rls=com.ubuntu:en-US:unofficial&client=firefox-a');
-    // *     returns 3: 'http%3A%2F%2Fwww.google.nl%2Fsearch%3Fq%3Dphp.js%26ie%3Dutf-8%26oe%3Dutf-8%26aq%3Dt%26rls%3Dcom.ubuntu%3Aen-US%3Aunofficial%26client%3Dfirefox-a'
     str = (str + '').toString();
 
     // Tilde should be allowed unescaped in future versions of PHP (as reflected below), but if you want to reflect current
@@ -886,24 +852,11 @@ function urlencode (str) {
 
 // http://phpjs.org/functions/urldecode:572
 function urldecode (str) {
-    // %        note 1: info on what encoding functions to use from: http://xkr.us/articles/javascript/encode-compare/
-    // %        note 2: Please be aware that this function expects to decode from UTF-8 encoded strings, as found on
-    // %        note 2: pages served as UTF-8
-    // *     example 1: urldecode('Kevin+van+Zonneveld%21');
-    // *     returns 1: 'Kevin van Zonneveld!'
-    // *     example 2: urldecode('http%3A%2F%2Fkevin.vanzonneveld.net%2F');
-    // *     returns 2: 'http://kevin.vanzonneveld.net/'
-    // *     example 3: urldecode('http%3A%2F%2Fwww.google.nl%2Fsearch%3Fq%3Dphp.js%26ie%3Dutf-8%26oe%3Dutf-8%26aq%3Dt%26rls%3Dcom.ubuntu%3Aen-US%3Aunofficial%26client%3Dfirefox-a');
-    // *     returns 3: 'http://www.google.nl/search?q=php.js&ie=utf-8&oe=utf-8&aq=t&rls=com.ubuntu:en-US:unofficial&client=firefox-a'
     return decodeURIComponent((str + '').replace(/\+/g, '%20'));
 }
 
 // http://phpjs.org/functions/str_ireplace:524
 function str_ireplace (search, replace, subject) {
-    // *     example 1: str_ireplace('l', 'l', 'HeLLo');
-    // *     returns 1: 'Hello'
-    // *     example 2: str_ireplace('$', 'foo', '$bar');
-    // *     returns 2: 'foobar'
     var i, k = '';
     var searchl = 0;
     var reg;
@@ -956,32 +909,6 @@ function str_ireplace (search, replace, subject) {
 
 // http://phpjs.org/functions/number_format:481
 function number_format (number, decimals, dec_point, thousands_sep) {
-    // *     example 1: number_format(1234.56);
-    // *     returns 1: '1,235'
-    // *     example 2: number_format(1234.56, 2, ',', ' ');
-    // *     returns 2: '1 234,56'
-    // *     example 3: number_format(1234.5678, 2, '.', '');
-    // *     returns 3: '1234.57'
-    // *     example 4: number_format(67, 2, ',', '.');
-    // *     returns 4: '67,00'
-    // *     example 5: number_format(1000);
-    // *     returns 5: '1,000'
-    // *     example 6: number_format(67.311, 2);
-    // *     returns 6: '67.31'
-    // *     example 7: number_format(1000.55, 1);
-    // *     returns 7: '1,000.6'
-    // *     example 8: number_format(67000, 5, ',', '.');
-    // *     returns 8: '67.000,00000'
-    // *     example 9: number_format(0.9, 0);
-    // *     returns 9: '1'
-    // *    example 10: number_format('1.20', 2);
-    // *    returns 10: '1.20'
-    // *    example 11: number_format('1.20', 4);
-    // *    returns 11: '1.2000'
-    // *    example 12: number_format('1.2000', 3);
-    // *    returns 12: '1.200'
-    // *    example 13: number_format('1 000,50', 2, '.', ' ');
-    // *    returns 13: '100 050.00'
     // Strip all characters but numerical ones.
     number = (number + '').replace(/[^0-9+\-Ee.]/g, '');
     var n = !isFinite(+number) ? 0 : +number,

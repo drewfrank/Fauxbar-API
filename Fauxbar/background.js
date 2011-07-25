@@ -44,7 +44,7 @@ chrome.extension.onRequestExternal.addListener(function(request){
 			var okayToRestart = true;
 			for (var w in windows) {
 				for (var t in windows[w].tabs) {
-					if (windows[w].tabs[t].title == "Fauxbar" || windows[w].tabs[t].title == "Fauxbar Options") {
+					if (windows[w].tabs[t].title == "Fauxbar" || windows[w].tabs[t].title == "Fauxbar: Options") {
 						okayToRestart = false;
 					}
 				}
@@ -64,7 +64,17 @@ chrome.extension.onRequestExternal.addListener(function(request){
 
 
 $(document).ready(function(){
+	// Default tile arrangement. Added in v0.1.0
+	if (!localStorage.option_pagetilearrangement) {
+		localStorage.option_pagetilearrangement = "frecency";
+	}
+
 	if (openDb()) {
+		// Add "manual" column to "thumbs". Added in v0.1.0
+		window.db.transaction(function(tx){
+			tx.executeSql('ALTER TABLE thumbs ADD COLUMN manual NUMERIC DEFAULT 0');
+		});
+
 		// Add frecency index to thumbs. Added in v0.0.7
 		window.db.transaction(function(tx){
 			tx.executeSql('CREATE INDEX IF NOT EXISTS frecencyindex ON thumbs (frecency)');
@@ -73,10 +83,14 @@ $(document).ready(function(){
 		// Delete top sites (eg top tiles) that have fallen below the frecency threshold
 		window.db.transaction(function(tx){
 			tx.executeSql('SELECT frecency FROM urls WHERE type = 1 ORDER BY frecency DESC LIMIT 50,50', [], function(tx, results){
-				window.frecencyThreshold = results.rows.item(0).frecency;
-				tx.executeSql('DELETE FROM thumbs WHERE frecency < ? AND frecency > -1', [window.frecencyThreshold]);
+				if (results.rows.length > 0) {
+					window.frecencyThreshold = results.rows.item(0).frecency;
+				} else {
+					window.frecencyThreshold = 75;
+				}
+				tx.executeSql('DELETE FROM thumbs WHERE frecency < ? AND frecency > -1 AND manual != 1', [window.frecencyThreshold]);
 			});
-		}, errorHandler);
+		});
 	}
 });
 
@@ -472,17 +486,36 @@ function beginIndexing() {
 
 // Background page listens for requests...
 chrome.extension.onRequest.addListener(function(request, sender){
+
 	// Generate top site tile thumbnail for page if page reports page has not been scrolled at all
 	if (request == "scrolltop is 0") {
 		if (openDb()) {
 			window.db.transaction(function(tx){
+
 				// Check to see if page is a top site
 				tx.executeSql('SELECT frecency FROM urls WHERE url = ? LIMIT 1', [sender.tab.url], function(tx, results){
-					if (results.rows.length > 0) {
-						var frecency = results.rows.item(0).frecency;
-						if (frecency >= window.frecencyThreshold) {
+
+					// Check to see if URL is a user-chosen site tile
+					var urlIsManualTile = false;
+					if (localStorage.siteTiles) {
+						var siteTiles = jQuery.parseJSON(localStorage.siteTiles);
+						for (var st in siteTiles) {
+							if (siteTiles[st].url == sender.tab.url) {
+								urlIsManualTile = true;
+								break;
+							}
+						}
+					}
+					if (results.rows.length > 0 || urlIsManualTile == true) {
+						if (results.rows.length > 0) {
+							var frecency = results.rows.item(0).frecency;
+						} else {
+							var frecency = -1;
+						}
+						if (frecency >= window.frecencyThreshold || urlIsManualTile == true) {
 							chrome.tabs.getSelected(null, function(selectedTab){
 								if (selectedTab.id == sender.tab.id) {
+
 									// Take a screenshot and save the image
 									chrome.tabs.captureVisibleTab(null, {format:"png"}, function(dataUrl){
 										if (dataUrl != "") {
@@ -495,37 +528,15 @@ chrome.extension.onRequest.addListener(function(request, sender){
 												myCanvas.width = width;
 												myCanvas.height = height;
 												context.drawImage(img,0,0, width, height);
+
 												// Save image data
-
 												window.md5thumbs[hex_md5(sender.tab.url)] = myCanvas.toDataURL("image/png");
-
-												// HTML5 File API:
-												//var pngName = hex_md5(sender.tab.url)+'.png';
-												/*window.webkitRequestFileSystem(window.PERSISTENT, 10*1024*1024, function(fs){
-													fs.root.getFile(pngName, {create: true}, function(fileEntry) {
-														// Create a FileWriter object for our FileEntry (log.txt).
-														fileEntry.createWriter(function(fileWriter) {
-															fileWriter.onwriteend = function(e) {
-																console.log('Thumbnail write completed for '+pngName);
-															};
-															fileWriter.onerror = function(e) {
-																console.log('Thumbnail write failed: ' + e.toString());
-															};
-															// Create a new Blob and write it to log.txt.
-															//var bb = new BlobBuilder(); // Note: window.WebKitBlobBuilder in Chrome 12.
-															var bb = new window.WebKitBlobBuilder(); // Note: window.WebKitBlobBuilder in Chrome 12.
-															bb.append(myCanvas.toDataURL("image/png"));
-															window.md5thumbs[hex_md5(sender.tab.url)] = myCanvas.toDataURL("image/png");
-															fileWriter.write(bb.getBlob('image/png'));
-														}, fileErrorHandler);
-
-													}, fileErrorHandler);
-												}, fileErrorHandler);*/
-
-												// SQLite database:
 												window.db.transaction(function(tx){
-													tx.executeSql('DELETE FROM thumbs WHERE url = ?', [sender.tab.url]);
-													tx.executeSql('INSERT INTO thumbs (url, data, date, title, frecency) VALUES (?, ?, ?, ?, ?)', [sender.tab.url, myCanvas.toDataURL("image/png"), microtime(true), sender.tab.title, frecency]);
+													tx.executeSql('UPDATE thumbs SET data = ?, title = ?, frecency = ? WHERE url = ?', [myCanvas.toDataURL("image/png"), sender.tab.title, frecency, sender.tab.url], function(tx, results){
+														if (results.rowsAffected == 0) {
+															tx.executeSql('INSERT INTO thumbs (url, data, title, frecency) VALUES (?, ?, ?, ?)', [sender.tab.url, myCanvas.toDataURL("image/png"), sender.tab.title, frecency]);
+														}
+													});
 												}, errorHandler);
 											};
 											img.src = dataUrl;
@@ -544,11 +555,6 @@ chrome.extension.onRequest.addListener(function(request, sender){
 	else if (request.action && request.action == "md5thumb") {
 		window.md5thumbs[request.md5] = request.data;
 	}
-
-	// Store top site thumbs html
-	/*else if (request.action && request.action == "thumbsHtml") {
-		window.thumbs = request.content;
-	}*/
 
 	// Request received to do the indexing process
 	else if (request.action && request.action == "reindex") {
@@ -764,7 +770,11 @@ chrome.history.onVisited.addListener(function(historyItem) {
 					});
 				}
 				tx.executeSql('SELECT frecency FROM urls WHERE type = 1 ORDER BY frecency DESC LIMIT 50,50', [], function(tx, results){
-					window.frecencyThreshold = results.rows.item(0).frecency;
+					if (results.rows.length > 0) {
+						window.frecencyThreshold = results.rows.item(0).frecency;
+					} else {
+						window.frecencyThreshold = 75;
+					}
 				});
 			}, errorHandler);
 
@@ -775,24 +785,42 @@ chrome.history.onVisited.addListener(function(historyItem) {
 // If Chrome removes a visit from its history, update frecency scores in Fauxbar for the URL, or delete the URL completely if all visits have been removed.
 chrome.history.onVisitRemoved.addListener(function(removed) {
 	if (openDb()) {
+
+		// If user has chosen to remove their entire history from Chrome, do the same to Fauxbar's index
 		if (removed.allHistory == true) {
 			window.db.transaction(function(tx){
 				tx.executeSql('DELETE FROM urls WHERE type = 1');
-				tx.executeSql('DELETE FROM thumbs');
+				tx.executeSql('DELETE FROM thumbs WHERE manual != 1');
+				tx.executeSql('UPDATE thumbs SET frecency = -1');
 				tx.executeSql('UPDATE urls SET frecency = ? WHERE type = 2', [localStorage.option_frecency_unvisitedbookmark]);
 			}, errorHandler);
 		}
+
+		// But if only a single URL has been removed...
 		else {
 			for (var r in removed.urls) {
 				removedUrl = removed.urls[r];
 				chrome.history.getVisits({url:removedUrl}, function(visitItems){
-					visitItems.reverse();
-					window.db.transaction(function (tx) {
-						tx.executeSql('DELETE FROM urls WHERE type = 1 AND url = ?', [removedUrl]);
-						tx.executeSql('DELETE FROM thumbs WHERE url = ?', [removedUrl]);
-						var frecency = calculateFrecency(visitItems);
-						tx.executeSql('UPDATE urls SET frecency = ? WHERE url = ? AND type = 2', [frecency, removedUrl]);
-					}, errorHandler);
+
+					// If all instances of the URL have been removed from Chrome's history, do the same for Fauxbar's index
+					if (visitItems.length == 0) {
+						window.db.transaction(function (tx) {
+							tx.executeSql('DELETE FROM urls WHERE type = 1 AND url = ?', [removedUrl]);
+							tx.executeSql('DELETE FROM thumbs WHERE url = ? AND manual != 1', [removedUrl]);
+							tx.executeSql('UPDATE thumbs SET frecency = -1 WHERE url = ?', [removedUrl]);
+							tx.executeSql('UPDATE urls SET frecency = ? WHERE url = ? AND type = 2', [localStorage.option_frecency_unvisitedbookmark, removedUrl]);
+						}, errorHandler);
+					}
+
+					// But if some instances of the URL still exist, just update frecency scores
+					else {
+						visitItems.reverse();
+						window.db.transaction(function (tx) {
+							var frec = calculateFrecency(visitItems);
+							tx.executeSql('UPDATE urls SET frecency = ? WHERE url = ?', [calculateFrecency(visitItems), removedUrl]);
+							tx.executeSql('UPDATE thumbs SET frecency = ? WHERE url = ?', [calculateFrecency(visitItems), removedUrl]);
+						}, errorHandler);
+					}
 				});
 			}
 		}

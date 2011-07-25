@@ -111,7 +111,7 @@ table { border:0; border-collapse:collapse; width:100%; display:table; }
 #opensearch_menufocus { position:absolute; z-index:-999; opacity:0; display:none; }
 
 /* "Switch to tab" text in front of the Address Box's input box, used when user has navigated to a "Switch to tab"-laden result */
-.switchtext { white-space:nowrap; border-right:0px solid rgba(0,0,0,.2); color:rgba(0,0,0,.6); font-family:Segoe UI, Arial, sans-serif; font-size:15px; padding-right:4px; padding-left:2px; display:none; }
+.switchtext, td.addtile { white-space:nowrap; border-right:0px solid rgba(0,0,0,.2); color:rgba(0,0,0,.6); font-family:Segoe UI, Arial, sans-serif; font-size:15px; padding-right:4px; padding-left:2px; display:none; width:1px; }
 
 /* The hidden URL of a "Switch to tab" replacement text */
 .result_url_hidden { display:none; }
@@ -136,8 +136,8 @@ progress { width:100%; margin-top:6px; }
 #topthumbs div.thumb img { width:215px; border:0px solid rgba(0,0,0,.12); padding-bottom:200px; background-color:#fff; }
 #topthumbs .toptitle { white-space:nowrap; overflow:hidden; display:inline-block; }
 #topthumbs .toptitle img { height:16px; width:16px; vertical-align:middle; margin-top:-4px; }
-#topthumbs a, #topthumbs a * { white-space:normal; }
-#topthumbs a:hover, #apps a:hover { box-shadow:0 2px 12px -1px rgba(0,0,0,.85); background-color:#3399FF; color:#fff; }
+#topthumbs a, #topthumbs a * { white-space:normal; position:relative; }
+#topthumbs a:hover, #apps a:hover, #topthumbs a.draggingTile { box-shadow:0 2px 12px -1px rgba(0,0,0,.85); background-color:#3399FF; color:#fff; }
 
 /* App tiles */
 #apps { display:none; }
@@ -160,3 +160,17 @@ progress { width:100%; margin-top:6px; }
 	box-shadow:0px 1px 5px rgba(0,0,0,.5);
 	display:none;
 }
+
+/* Manual site tile edit mode */
+#manualmode { font-size:14px; padding:6px 7px 7px 7px;  background-color:#fcef80; color:#000; padding-left:38px; }
+#manualmode img { position:absolute; top:3px; left:7px; height:25px; }
+.editstripes { background:url(editstripes.png) #FFE100 -5px 0 repeat-x; height:2px; border:1px solid #000; border-width:1px 0 1px 0; box-shadow:0 2px 2px rgba(0,0,0,.3); }
+#topthumbs a.draggingTile { position:absolute; margin:0; z-index:1000; }
+#topthumbs span.tileCross { background-color:#fff; position:absolute; z-index:2000; margin-left:196px; margin-top:-3px; border-radius:3px; cursor:default; display:none; }
+#topthumbs span.tileCross img { opacity:.5; padding:2px; float:right;}
+#topthumbs span.tileCross:hover img { opacity:1; }
+#topthumbs a:hover span.tileCross { display:inline; }
+#cursorbox { display:inline-block;height:1px;width:1px;position:absolute;z-index:1400; }
+#topthumbs .holderTile { background:#fff; border:4px dashed #000; margin:6px; opacity:.2; box-shadow:none; }
+#editModeButtons {float:right; position:relative; right:1px; top:1px; padding-left:10px; }
+#editModeButtons button { font-size:12px; }

@@ -1,11 +1,304 @@
+//// This file is used by Fauxbar's main page. ////
+
+// Fauxbar-crafted code begins below, after this plugin.
+
+/* http://www.48design.de/news/2009/11/20/kollisionsabfrage-per-jquery-plugin-update-v11-8/
+* Collision Check Plugin v1.1
+* Copyright (c) Constantin Groß, 48design.de
+* v1.2 rewrite with thanks to Daniel
+*
+* @requires jQuery v1.3.2
+* @description Checks single or groups of objects (divs, images or any other block element) for collission / overlapping
+* @returns an object collection with all colliding / overlapping html objects
+*
+* Dual licensed under the MIT and GPL licenses:
+*   http://www.opensource.org/licenses/mit-license.php
+*   http://www.gnu.org/licenses/gpl.html
+*
+*/
+(function($) {
+ $.fn.collidesWith = function(elements) {
+  var rects = this;
+  var checkWith = $(elements);
+  var c = $([]);
+
+  if (!rects || !checkWith) { return false; }
+
+  rects.each(function() {
+   var rect = $(this);
+
+   // define minimum and maximum coordinates
+   var rectOff = rect.offset();
+   var rectMinX = rectOff.left;
+   var rectMinY = rectOff.top;
+   var rectMaxX = rectMinX + rect.outerWidth();
+   var rectMaxY = rectMinY + rect.outerHeight();
+
+   checkWith.not(rect).each(function() {
+    var otherRect = $(this);
+    var otherRectOff = otherRect.offset();
+    var otherRectMinX = otherRectOff.left;
+    var otherRectMinY = otherRectOff.top;
+    var otherRectMaxX = otherRectMinX + otherRect.outerWidth();
+    var otherRectMaxY = otherRectMinY + otherRect.outerHeight();
+
+    // check for intersection
+    if ( rectMinX >= otherRectMaxX ||
+         rectMaxX <= otherRectMinX ||
+         rectMinY >= otherRectMaxY ||
+         rectMaxY <= otherRectMinY ) {
+           return true; // no intersection, continue each-loop
+    } else {
+		// intersection found, add only once
+		if(c.length == c.not(this).length) { c.push(this); }
+    }
+   });
+        });
+   // return collection
+        return c;
+ }
+})(jQuery);
+
+
+//// Begin Fauxbar's code ////
+
+
+// Placeholder text for Address Box
+window.placeholder = "Go to a web site";
 
 // Initial loading calls this function (icon canvas coloring), but it's slow. Real function gets created later
 function processFilters() { }
 
+// Save new site tile configuration/layout
+function saveSiteTiles(justChecking) {
+	var tiles = new Array;
+	$("#topthumbs a").each(function(){
+		tiles[tiles.length] = {url:$(this).attr("url"), title:$(this).attr("origtitle")};
+	});
+	if (justChecking == true) {
+		return JSON.stringify(tiles);
+	} else {
+		$("button").first().prop("disabled",true).text("Saving...").next().remove();
+		if (openDb()) {
+			window.db.transaction(function(tx){
+				tx.executeSql('UPDATE thumbs SET manual = 0');
+				$("#topthumbs a").each(function(){
+					var a = this;
+					tx.executeSql('UPDATE thumbs SET manual = 1 WHERE url = ?', [$(a).attr("url")], function(tx, results){
+						if (results.rowsAffected == 0) {
+							tx.executeSql('INSERT INTO thumbs (url, manual) VALUES (?, 1)', [$(a).attr("url")]);
+						}
+					});
+				});
+				tx.executeSql('DELETE FROM thumbs WHERE frecency < ? AND frecency > -1 AND manual != 1', [window.bgPage.frecencyThreshold]);
+
+			}, errorHandler, function(){
+				// success
+				localStorage.siteTiles = JSON.stringify(tiles);
+				chrome.tabs.getCurrent(function(tab){
+					chrome.tabs.update(tab.id, {url:"fauxbar.html"});
+				});
+			});
+		}
+	}
+}
+
+// Exit tile editing mode without saving changes
+function cancelTiles() {
+	$("button").prop("disabled",true);
+	window.onbeforeunload = '';
+	chrome.tabs.getCurrent(function(tab){
+		chrome.tabs.update(tab.id, {url:"fauxbar.html"});
+	});
+}
+
+// Initialise page tile editing mode
+function enterTileEditMode() {
+	window.document.title = "Fauxbar: Edit Tiles";
+	window.onbeforeunload = function() {
+		if (localStorage.siteTiles && saveSiteTiles(true) != localStorage.siteTiles) {
+			return 'You have not saved your new tile configuration yet.\n\nAre you sure you want to leave this page and discard your changes?';
+		}
+	}
+	window.tileEditMode = true;
+	window.draggingTile = false;
+	window.placeholder = "Add a site as a tile";
+	$("#awesomeinput").val(window.placeholder).blur();
+	hideResults();
+
+	// Prevent links from performing their usual behaviour when user clicks them
+	$("#topthumbs a").live("click", function(){
+		return false;
+	});
+
+	// Prompt user to rename a tile on double-click
+	$("#topthumbs a").live("dblclick", function(){
+		var text = prompt("Rename tile:",$(this).attr("origtitle"));
+		if (text) {
+			$(".toptitletext",this).text(text);
+			$(this).attr("origtitle",text);
+			truncatePageTileTitle($(".toptitle",this));
+		}
+	});
+
+	// Begin dragging a tile
+	$("#topthumbs a").live("mousedown", function(e){
+		window.draggingTile = true;
+		window.topThumbA = this;
+		setTimeout(function(){
+			if (window.draggingTile == true) {
+				$(window.topThumbA).addClass("draggingTile").removeClass("sitetile").css("top",(e.pageY-66)+"px").css("left",(e.pageX-106)+"px").after('<a class="holderTile"><div class="thumb" style="background:none"></div><span class="toptitle">&nbsp;</span></a>');
+				$("body").css("cursor","move").append('<div id="cursorbox" style="top:'+e.pageY+'px;left:'+e.pageX+'"></div>');
+				$(".tileCross").css("display","none");
+			}
+		}, 100);
+		return false;
+	});
+
+	// Drop the dragged tile to its new spot
+	$("body").live("mouseup", function(){
+		window.draggingTile = false;
+		var dest = $(".holderTile").offset();
+		if (dest) {
+			$(".draggingTile").animate({top:dest.top+4+"px", left:dest.left+4+"px"}, 200, function(){
+				$(".draggingTile").addClass("sitetile").removeClass("draggingTile").css("top","").css("left","").insertAfter(".holderTile");
+				$(".holderTile").remove();
+				$("#cursorbox").remove();
+				$("body").css("cursor","");
+				$(".tileCross").css("display","");
+			});
+		}
+	});
+
+	// Keep the dragged tile with the mouse cursor
+	$("body").live("mousemove", function(e){
+		if (window.draggingTile == true) {
+			$(".draggingTile").css("top",(e.pageY-66)+"px").css("left",(e.pageX-106)+"px");
+			$("#cursorbox").css("top",e.pageY+"px").css("left",e.pageX+"px");
+			var hoveredTile = $('#cursorbox').collidesWith('.sitetile');
+			if (hoveredTile.length == 1) {
+				if (hoveredTile.next(".holderTile").length == 0) {
+					$(".holderTile").insertAfter(hoveredTile);
+				} else {
+					$(".holderTile").insertBefore(hoveredTile);
+				}
+			}
+		}
+	});
+
+	// Tile edit mode CSS
+	$("#topthumbs a").attr("title","Click and drag to move.\nDouble-click to rename.");
+	$("#editTileStyle").append('#topthumbs a { cursor:move; }');
+	$("#editTileStyle").append('#topthumbs a:hover, #topthumbs a.draggingTile { background-color:'+localStorage.option_resultbgcolor+'; color:'+localStorage.option_titlecolor+'; }');
+	$("#editTileStyle").append('#address_goarrow { display:none; }');
+	if (navigator.appVersion.indexOf("Mac")!=-1) {
+		$("#editTileStyle").append('#manualmode { font-size:13px; }');
+	}
+	var maxWidth = $("#addresswrapper").parent().outerWidth();
+	$("#handle").css("display","none");
+	$("#addresswrapper").parent().css("display","table-cell");
+	$("#searchwrapper").parent().css("display","none");
+	$(".wrapper").css("max-width",maxWidth+"px");
+	$("#maindiv").before('<div id="editmodeContainer" style="opacity:0; box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="fauxbar48.png" /> <b>Tile editing enabled.</b> Add sites as tiles using the modified Address Box below. Drag tiles to rearrange. Double-click to rename.</div></div>');
+	$("#editmodeContainer").prepend('<div id="editModeButtons"><button onclick="saveSiteTiles()" style="font-family:'+localStorage.option_font+', Lucida Grande, Segoe UI, Arial, sans-serif;">Save</button>&nbsp;<button onclick="cancelTiles()" style="font-family:'+localStorage.option_font+', Lucida Grande, Segoe UI, Arial, sans-serif;">Cancel</button></div>');
+	$("#editmodeContainer").animate({opacity:1}, 700);
+	chrome.tabs.getCurrent(function(tab){
+		chrome.tabs.update(tab.id, {selected:true}, function(){
+			$("#awesomeinput").focus();
+		});
+	});
+
+	$("#sapps").remove();
+	$("#apps").remove();
+	setTimeout(function(){
+		$("#topthumbs").css("display","block").css("opacity",1);
+		$("#topthumbs a .toptitle").each(function(){
+			truncatePageTileTitle(this);
+		});
+	}, 1);
+
+	// Render the user's existing site tiles
+	if (window.tiles) {
+		$("#topthumbs").html("");
+		var thumbs = '';
+		for (var t in window.tiles) {
+			thumbs += renderPageTile(window.tiles[t].url, window.tiles[t].title, true);
+		}
+		renderSiteTiles(thumbs);
+		$("#topthumbs a").css("opacity",1);
+	}
+}
+
+// Truncate a page tile title and add "..." to its end
+function truncatePageTileTitle(tileTitle) {
+	if ($(tileTitle).outerWidth() > 212) {
+		var origTitle = $(".toptitletext",tileTitle).text();
+		while ($(tileTitle).outerWidth() > 200) {
+			$(".toptitletext",tileTitle).text($(".toptitletext",tileTitle).text().substring(0,$(".toptitletext",tileTitle).text().length-1));
+		}
+		$(".toptitletext",tileTitle).text($(".toptitletext",tileTitle).text()+"...");
+		$(tileTitle).attr("title",origTitle);
+	}
+}
+
+// Add a new page tile to Fauxbar while in tile editing mode
+function addTile(el) {
+	hideResults();
+	setTimeout(function(){
+		$("#awesomeinput").val(window.actualUserInput).focus().setSelection(0,window.actualUserInput.length);
+	}, 10);
+	toggleSwitchText();
+	$("#awesomeinput").removeClass("description").focus();
+	$("#topthumbs").append(renderPageTile($(el).attr("url"), $(el).attr("origtitle"), true));
+	truncatePageTileTitle($("#topthumbs a .toptitle").last());
+	$("#topthumbs a").last().animate({opacity:1}, 500);
+	$("#topthumbs a").attr("title","Click and drag to move.\nDouble-click to rename.");
+}
+
+function removeTile(el) {
+	$(el).parent().animate({opacity:0}, 350, function(){
+		$(this).remove();
+	});
+}
+
+// Create the HTML for a page tile
+function renderPageTile(url, title, startHidden) {
+	var urlMd5 = hex_md5(url);
+	var thumbs = '';
+
+	// Handle file:/// link if needed
+	if (url.length > 8 && url.substring(0, 8) == "file:///") {
+		var newHref = "loadfile.html#"+url;
+	} else {
+		var newHref = url;
+	}
+
+	var style = startHidden ? ' style="opacity:0" ' : '';
+	thumbs += '<a class="sitetile" href="'+newHref+'" '+style+' url="'+url+'" origtitle="'+title+'">';
+
+	if (startHidden == true) {
+		thumbs += '<span class="tileCross" title="Remove tile" onclick="removeTile(this); return false"><img src="cross.png" /></span>';
+	}
+
+	thumbs += '		<div class="thumb" ';
+	if (window.bgPage.md5thumbs[urlMd5]) {
+		thumbs += '>	<img src="'+window.bgPage.md5thumbs[urlMd5]+'" />';
+	} else {
+		thumbs += '>';
+	}
+	thumbs += '		</div>';
+	thumbs += '		<span class="toptitle"><img src="chrome://favicon/'+url+'" />';
+	thumbs += '		<span class="toptitletext">'+title+'</span></span>';
+	thumbs += '</a>';
+	return thumbs;
+}
+
 // Update the Fauxbar Memory Helper status text on the Options page
 function updateHelperStatus() {
+
 	// Link to Memory Helper on the Chrome Web Store
 	var link = 'https://chrome.google.com/webstore/detail/domhiadbdhomljcdankobiglghedagkm';
+
 	var status = 'not installed. <a style="color:#06c" target="_blank" href="'+link+'">Click here to install.</a>';
 	chrome.management.getAll(function(extensions){
 		for (var e in extensions) {
@@ -34,9 +327,21 @@ function enableHelper() {
 
 // Listen to either the background page, or the Memory Helper...
 chrome.extension.onRequest.addListener(function (request, sender) {
+
 	// If Fauxbar has finished indexing history and bookmarks, reload the Fauxbar page to get rid of the progress div
 	if (request == "DONE INDEXING") {
 		window.location.reload();
+	}
+
+	// Enter manual page tile editing mode
+	else if (request.action && request.action == "editPageTiles") {
+		if (!window.tileEditMode) {
+			chrome.tabs.getCurrent(function(tab){
+				if (request.tabId == tab.id) {
+					enterTileEditMode();
+				}
+			});
+		}
 	}
 
 	// Change to options page if user wants to open Fauxbar's options
@@ -397,7 +702,6 @@ function sortSearchEnginesAlphabetically() {
 	if (openDb()) {
 		window.db.transaction(function(tx){
 			tx.executeSql('UPDATE opensearches SET position = 0');
-			tx.executeSql('SELECT * FROM opensearches ORDER BY shortname DESC');
 			getSearchEngines();
 			populateOpenSearchMenu();
 		}, errorHandler);
@@ -636,11 +940,6 @@ $(document).ready(function(){
 	if (localStorage.option_fauxbarfontcolor && localStorage.option_fauxbarfontcolor.length) {
 		$("#customstyle").append(".inputwrapper input { color:"+localStorage.option_fauxbarfontcolor+"; }");
 	}
-
-	// Originally had the Fauxbar fade in once the custom colors and settings were applied... but the potential time wasted / waiting time might not be ideal.
-	/*var transitionTime = (localStorage.option_bgimg && localStorage.option_bgimg.length) || getHashVar("options") == 1 ? 0 : 250;
-	transitionTime = 0;
-	$(".wrapper").animate({opacity:1}, transitionTime);*/
 
 	// So, just make the Fauxbar appear instantly, now that all the custom colors and stuff have been applied.
 	$(".wrapper").css("opacity",1);
@@ -941,7 +1240,7 @@ $(document).ready(function(){
 
 	// When the Address Box is empty and the user double-clicks it, display the top results
 	$("#awesomeinput").dblclick(function(){
-		if ($(this).val() == "" || $(this).val() == "Go to a web site") {
+		if ($(this).val() == "" || $(this).val() == window.placeholder) {
 			$("#addressbox_triangle").mousedown();
 		}
 	});
@@ -949,13 +1248,13 @@ $(document).ready(function(){
 	// When Address Box loses focus, reinstate the faded look and generic helper text
 	$("#awesomeinput").blur(function() {
 		if ($(this).val() == "") {
-			$(this).val("Go to a web site").addClass("description");
+			$(this).val(window.placeholder).addClass("description");
 		}
 	});
 
 	// If Address Box is faded with generic helper text, and user clicks it, prime it
 	$("#awesomeinput").focus(function() {
-		if ($(this).val() == "Go to a web site") {
+		if ($(this).val() == window.placeholder) {
 			$(this).val("").removeClass("description");
 		}
 	});
@@ -963,7 +1262,7 @@ $(document).ready(function(){
 	// When user clicks the Address Box's go arrow, go to the address if something is entered
 	$("#address_goarrow").bind("mousedown", function(){
 		var aiVal = $("#awesomeinput").val();
-		if (aiVal.length > 0 && aiVal != 'Go to a web site') {
+		if (aiVal.length > 0 && aiVal != window.placeholder) {
 			goToUrl(aiVal);
 			hideResults();
 		}
@@ -1079,7 +1378,8 @@ $(document).ready(function(){
 					window.db.transaction(function(tx){
 						var arrowedUrl = $(".arrowed").attr("url");
 						tx.executeSql('UPDATE urls SET queuedfordeletion = 1 WHERE url = ? AND type = 1', [arrowedUrl]);
-						tx.executeSql('DELETE FROM thumbs WHERE url = ?', [arrowedUrl]);
+						tx.executeSql('DELETE FROM thumbs WHERE url = ? AND manual != 1', [arrowedUrl]);
+						tx.executeSql('UPDATE thumbs SET frecency = -1 WHERE url = ?', [arrowedUrl]);
 						chrome.history.deleteUrl({url:arrowedUrl});
 						var nextNumber = $(".arrowed").next(".result").attr("number");
 						$(".arrowed").remove();
@@ -1355,7 +1655,7 @@ $(document).ready(function(){
 			$("#thefauxbar").after(response);
 
 			// Update the page/tab title
-			document.title = "Fauxbar Options";
+			document.title = "Fauxbar: Options";
 
 			// Make the Address Box lose focus
 			$("#awesomeinput").blur();
@@ -1692,7 +1992,7 @@ $(document).ready(function(){
 		chrome.tabs.getCurrent(function(tab){
 			chrome.pageAction.setIcon({tabId:tab.id, path:"fauxbar16options.png"});
 			chrome.pageAction.setTitle({tabId:tab.id, title:"Customize Fauxbar"});
-			chrome.pageAction.setPopup({tabId:tab.id, popup:""});
+			chrome.pageAction.setPopup({tabId:tab.id, popup:(localStorage.option_pagetilearrangement && localStorage.option_pagetilearrangement == "manual" ? "popup.options.html" : "")});
 			chrome.pageAction.onClicked.addListener(function(theTab) {
 				chrome.tabs.getCurrent(function(currentTab){
 					if (currentTab.id == theTab.id) {
@@ -1729,7 +2029,7 @@ $(document).ready(function(){
 			$("#awesomeinput").css("cursor","wait");
 			$("#searchwrapper *").css("cursor","wait");
 			setTimeout(function(){
-				$("#awesomeinput").prop("disabled",true).addClass("description").val("Go to a web site");
+				$("#awesomeinput").prop("disabled",true).addClass("description").val(window.placeholder);
 				$("#opensearchinput").prop("disabled",true).addClass("description");
 				if (localStorage.indexedbefore != 1) {
 					$("#opensearchinput").val("Search");
@@ -1746,7 +2046,6 @@ $(document).ready(function(){
 		$("head").append('<script type="text/javascript" src="mezzoblue-PaintbrushJS-098389a/paintbrush.js"></script>');
 		processFilters();
 	}, 1);
-
 });
 
 //////////////////////////////
@@ -1879,7 +2178,11 @@ function toggleSwitchText() {
 	var switchUrl = $(".switch").parent('.result_url').parent('.result').attr("url");
 	if ($('.switch').length > 0 && $("#awesomeinput").val() == switchUrl) {
 		$(".switchtext").css("font-size",$("#awesomeinput").css("font-size")).css("display","table-cell");
-	} else {
+	}
+	else if (window.tileEditMode && window.tileEditMode == true && $("#awesomeinput").val().length > 0 && $(".result[url='"+$("#awesomeinput").val()+"']").length > 0) {
+		$(".switchtext").text("Add tile:").css("font-size",$("#awesomeinput").css("font-size")).css("display","table-cell");
+	}
+	else {
 		$(".switchtext").css("display","none");
 	}
 }
@@ -2063,7 +2366,7 @@ function autofillInput(thisQuery) {
 			}
 			//if (thisQuery == window.actualUserInput || !thisQuery) {
 				if ($("#awesomeinput").getSelection().length == 0) {
-					if (!localStorage.option_autofillurl || localStorage.option_autofillurl == 1) {
+					if ((!localStorage.option_autofillurl || localStorage.option_autofillurl == 1) && !window.tileEditMode) {
 						$("#awesomeinput").val(newVal).setSelection(ai.length, $("#awesomeinput").val().length);
 					}
 				}
@@ -2098,13 +2401,13 @@ function getResults(noQuery) {
 	$(".autofillmatch").removeClass("autofillmatch");
 
 	// Define what the user has actually typed
-	if ($("#awesomeinput").val() != "Go to a web site") {
+	if ($("#awesomeinput").val() != window.placeholder) {
 		window.actualUserInput = getAiSansSelected();
 	}
 	var thisQuery = window.actualUserInput;
 
 	// If the user has entered text into the Address Box, or if the user is just getting the top results...
-	if ( ($("#awesomeinput").length > 0 && $("#awesomeinput").val().length > 0 && $("#awesomeinput").val() != "Go to a web site") || noQuery ) {
+	if ( ($("#awesomeinput").length > 0 && $("#awesomeinput").val().length > 0 && $("#awesomeinput").val() != window.placeholder) || noQuery ) {
 
 		// If results exist right now, auto-fill the Address Box's input with a matching URL if possible
 		if ($(".result").length > 0) {
@@ -2139,6 +2442,7 @@ function getResults(noQuery) {
 
 				// If actual words exist in the Address Box's input (or if we're getting just getting the top results)...
 				if (noQuery || urltitleWords.length > 0 || modifiers != "") {
+
 					// Specify for the SQL statement if we're to be getting history items and/or bookmarks
 					var typeOptions = ['type = -1'];
 					if (localStorage.option_showmatchinghistoryitems && localStorage.option_showmatchinghistoryitems == 1) {
@@ -2163,18 +2467,27 @@ function getResults(noQuery) {
 					// Ignore titleless results if user has opted. But still keep proper files like .js, .php, .pdf, .json, .html, etc.
 					var titleless = localStorage.option_ignoretitleless == 1 ? ' AND (title != "" OR url LIKE "%.__" OR url LIKE "%.___" OR url LIKE "%.____") ' : "";
 
+
+					// If user is editing site tiles, don't show results for tiles that have already been added.
+					var editModeUrls = '';
+					if (window.tileEditMode && window.tileEditMode == true) {
+						$("#topthumbs a").each(function(){
+							editModeUrls += ' AND url != "'+$(this).attr("url")+'" ';
+						});
+					}
+
 					// And now to create the statement.
 					// If we're just getting the top sites...
 					if (noQuery) {
-						var selectStatement = 'SELECT url, title, type, id FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless+' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
+						var selectStatement = 'SELECT url, title, type, id FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+ titleless + editModeUrls +' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
 					}
 					// If we're searching using the words from the Address Box's input...
 					else if (urltitleWords.length > 0) {
-						var selectStatement = 'SELECT url, title, type, id, (url||" "||title) AS urltitle FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' AND '+implode(" and ", urltitleQMarks)+' AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless+' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
+						var selectStatement = 'SELECT url, title, type, id, (url||" "||title) AS urltitle FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' AND '+implode(" and ", urltitleQMarks)+' AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless + editModeUrls +' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
 					}
 					// Not sure if this actually ever gets used.
 					else {
-						var selectStatement = 'SELECT url, title, type, id FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless+' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
+						var selectStatement = 'SELECT url, title, type, id FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless + editModeUrls +' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
 					}
 
 					// If the user's computer is lagging and taking a while to retrieve the results, display a loading on the left side of the Address Box
@@ -2251,7 +2564,6 @@ function getResults(noQuery) {
 						text = replaceSpecialChars(text);
 
 						var resultHtml = "";
-
 						var titleText = "";
 						var urlText = "";
 						var urlTextAttr = "";
@@ -2264,6 +2576,15 @@ function getResults(noQuery) {
 						var arrowedClass = '';
 						var urlExplode = '';
 						var newHref = '';
+
+						if (window.tileEditMode && window.tileEditMode == true) {
+							var resultOnClick = 'addTile(this); return false';
+							var addTileText = 'Add tile: ';
+						} else {
+							var resultOnClick = 'return window.clickResult(this)';
+							var addTileText = '';
+						}
+						/*var tileModeTitle = '';*/
 
 						// Another chance to cancel... don't want to waste processing time!
 						if (thisQuery != window.actualUserInput || !noQuery && $(".glow").length == 1) {
@@ -2313,7 +2634,7 @@ function getResults(noQuery) {
 									} else {
 										titleText = hI.title;
 									}
-									//titleText = hI.title == "" ? hI.url : hI.title;
+
 									urlText = urldecode(hI.url);
 
 									// Remove "http://" from the beginning of URL if user has opted for it in the Options
@@ -2381,9 +2702,11 @@ function getResults(noQuery) {
 
 									// Make the URL display the "Switch to tab" text if tab is already open in current window
 									urlTextAttr = urlText;
-									for (var ct in window.currentTabs) {
-										if (currentTabs[ct].url == hI.url) {
-											urlText = '<img src="tabicon.png" style="opacity:.6" /> <span class="switch">Switch to tab</span>';
+									if (!window.tileEditMode) {
+										for (var ct in window.currentTabs) {
+											if (currentTabs[ct].url == hI.url) {
+												urlText = '<img src="tabicon.png" style="opacity:.6" /> <span class="switch">Switch to tab</span>';
+											}
 										}
 									}
 
@@ -2393,20 +2716,19 @@ function getResults(noQuery) {
 										arrowedClass = '';
 
 										// If URL starts with file:/// handle the URL with Fauxbar, since Chrome doesn't interpret it as a link.
-
 										if (hI.url.length >= 8 && hI.url.substring(0, 8) == "file:///") {
 											newHref = "loadfile.html#"+hI.url;
 										} else {
 											newHref = hI.url;
 										}
 
-										resultHtml += '<a class="result '+arrowedClass+'" url="'+hI.url+'" href="'+newHref+'" number="'+(currentRows+1)+'" onclick="return window.clickResult(this)" bmid="'+hI.id+'">';
-										if (hI.isBookmark) { // bookmark
+										resultHtml += '<a class="result '+arrowedClass+'" url="'+hI.url+'" href="'+newHref+'" origtitle="'+hI.title+'" number="'+(currentRows+1)+'" onclick="'+resultOnClick+'" bmid="'+hI.id+'">';
+										if (hI.isBookmark) {
 											resultHtml += '<img class="favstar" />';
 										}
 										resultHtml += '	';
-										resultHtml += '	<div class="result_title" url="'+hI.url+'"><img class="result_favicon" src="chrome://favicon/'+hI.url+'" />'+ titleText+'</div><br />';
-										resultHtml += '	<div class="result_url">'+urlText+'</div>';
+										resultHtml += '	<div class="result_title" url="'+hI.url+'"><img class="result_favicon" src="chrome://favicon/'+hI.url+'" />'+titleText+'</div><br />';
+										resultHtml += '	<div class="result_url">'+addTileText+urlText+'</div>';
 										resultHtml += ' <div class="visitinfo" id="hi_'+hI.id+'" url="'+hI.url+'"></div>';
 										resultHtml += ' <div class="result_url_hidden">'+urlTextAttr+'</div>';
 										resultHtml += ' <div class="result_bottom" height="1px"></div>';
@@ -2616,6 +2938,17 @@ function goToUrl(url, fromClickedResult) {
 				}
 			}
 		});
+		return false;
+
+	// If we're editing tiles and user has pressed Enter, add tile instead of visiting URL.
+	} else if (window.tileEditMode && window.tileEditMode == true) {
+		if ($('.result[href="'+url+'"]').length > 0) {
+			addTile($('.result[href="'+url+'"]'));
+		} else {
+			setTimeout(function(){
+				$("#awesomeinput").focus();
+			}, 10);
+		}
 		return false;
 	}
 
@@ -2978,3 +3311,4 @@ String.prototype.filename= function(){
 	filename = filename.split("#")[0];
 	return filename;
 }
+
