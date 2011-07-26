@@ -59,6 +59,25 @@
  }
 })(jQuery);
 
+// Show update message if it hasn't been read yet
+if (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0) {
+
+	function dismissUpdateMessage(viewChangelog) {
+		localStorage.readUpdateMessage = 1;
+		if (viewChangelog == true) {
+			chrome.tabs.create({url:"http://code.google.com/p/fauxbar/wiki/Changelog", selected:true}, function(){
+				$("#editmodeContainer").remove();
+			});
+		} else {
+			$("#editmodeContainer").remove();
+		}
+	}
+
+	$(document).ready(function(){
+		$("#maindiv").before('<div id="editmodeContainer" style="box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="fauxbar48.png" /> Fauxbar has been updated to version '+localStorage.currentVersion+'. '+localStorage.updateBlurb+'</div></div>');
+		$("#editmodeContainer").prepend('<div id="editModeButtons"><button onclick="dismissUpdateMessage(true)" style="font-family:'+localStorage.option_font+', Lucida Grande, Segoe UI, Arial, sans-serif;">View Changelog</button>&nbsp;<button onclick="dismissUpdateMessage()" style="font-family:'+localStorage.option_font+', Lucida Grande, Segoe UI, Arial, sans-serif;">Dismiss</button></div>');
+	});
+}
 
 //// Begin Fauxbar's code ////
 
@@ -199,6 +218,7 @@ function enterTileEditMode() {
 	$("#addresswrapper").parent().css("display","table-cell");
 	$("#searchwrapper").parent().css("display","none");
 	$(".wrapper").css("max-width",maxWidth+"px");
+	$("#editmodeContainer").remove();
 	$("#maindiv").before('<div id="editmodeContainer" style="opacity:0; box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="fauxbar48.png" /> <b>Tile editing enabled.</b> Add sites as tiles using the modified Address Box below. Drag tiles to rearrange. Double-click to rename.</div></div>');
 	$("#editmodeContainer").prepend('<div id="editModeButtons"><button onclick="saveSiteTiles()" style="font-family:'+localStorage.option_font+', Lucida Grande, Segoe UI, Arial, sans-serif;">Save</button>&nbsp;<button onclick="cancelTiles()" style="font-family:'+localStorage.option_font+', Lucida Grande, Segoe UI, Arial, sans-serif;">Cancel</button></div>');
 	$("#editmodeContainer").animate({opacity:1}, 700);
@@ -683,9 +703,11 @@ function changeTintColors() {
 	$("#address_goarrow img").attr("data-pb-tint-colour",localStorage.option_iconcolor).attr("data-pb-tint-opacity",1);
 	$("#searchicon_cell img").attr("data-pb-tint-colour",localStorage.option_iconcolor).attr("data-pb-tint-opacity",1);
 	processFilters();
-	$("#goarrow_hovered").attr("src",$("#address_goarrow img").attr("src"));
-	$("#searchicon_hovered").attr("src",$("#searchicon_cell img").attr("src"));
-	setTimeout(processFilters, 10);
+	setTimeout(function(){
+		$("#goarrow_hovered").attr("src",$("#address_goarrow img").attr("src"));
+		$("#searchicon_hovered").attr("src",$("#searchicon_cell img").attr("src"));
+		processFilters();
+	}, 200);
 }
 
 // Switch to a new Options subpage
@@ -1610,14 +1632,14 @@ $(document).ready(function(){
 		}, 1);
 	});
 
-	// If the Fauxbar background page has a hash value (not sure why it would... I forget :( ), interpret it
-	var bg = chrome.extension.getBackgroundPage();
-	if (bg.newTabHash) {
-		window.location.hash = '#'+bg.newTabHash;
+	// If the Fauxbar background page has a hash value (because we're autofilling the URL from the page we just came from), interpret it.
+	// This is used in conjunction when the user presses Alt+D, Ctrl+L or Ctrl+K and opens Fauxbar this way.
+	if (window.bgPage.newTabHash) {
+		window.location.hash = '#'+window.bgPage.newTabHash;
 		autofillInput();
 		setTimeout(function(){
 			$("#awesomeinput").select();
-		}, 100);
+		}, 150);
 	}
 
 	///////// OPTIONS //////////////
@@ -1753,13 +1775,18 @@ $(document).ready(function(){
 					var osRow = $(this).parent().parent();
 					window.db.transaction(function(tx){
 						tx.executeSql('UPDATE opensearches SET shortname = ?, searchurl = ? WHERE shortname = ?', [$('.shortname > input',osRow).val(), $('.searchurl > input',osRow).val(), $('.shortname > input',osRow).attr("origvalue")]);
-					}, errorHandler);
-					setTimeout(function() {
+					}, errorHandler, function(){
 						$("#opensearchoptionstable > tbody > tr > td.shortname > input, #opensearchoptionstable > tbody > tr > td.searchurl > input").each(function(){
 							$(this).attr("origvalue",$(this).val());
 						});
 						populateOpenSearchMenu();
-					}, 100);
+					});
+					/*setTimeout(function() {
+						$("#opensearchoptionstable > tbody > tr > td.shortname > input, #opensearchoptionstable > tbody > tr > td.searchurl > input").each(function(){
+							$(this).attr("origvalue",$(this).val());
+						});
+						populateOpenSearchMenu();
+					}, 100);*/
 				}
 			});
 
@@ -1992,7 +2019,7 @@ $(document).ready(function(){
 		chrome.tabs.getCurrent(function(tab){
 			chrome.pageAction.setIcon({tabId:tab.id, path:"fauxbar16options.png"});
 			chrome.pageAction.setTitle({tabId:tab.id, title:"Customize Fauxbar"});
-			chrome.pageAction.setPopup({tabId:tab.id, popup:(localStorage.option_pagetilearrangement && localStorage.option_pagetilearrangement == "manual" ? "popup.options.html" : "")});
+			chrome.pageAction.setPopup({tabId:tab.id, popup:(localStorage.option_pagetilearrangement && localStorage.option_pagetilearrangement == "manual" && localStorage.option_showtopsites == 1 ? "popup.options.html" : "")});
 			chrome.pageAction.onClicked.addListener(function(theTab) {
 				chrome.tabs.getCurrent(function(currentTab){
 					if (currentTab.id == theTab.id) {
@@ -2038,14 +2065,33 @@ $(document).ready(function(){
 		});
 	}
 
-	// Now that the Fauxbar page is pretty much loaded, load the JS files to apply custom colors to the various icons.
+	// Now that the Fauxbar page is pretty much loaded, load the JS files to apply custom colors to the various icons, if they're not the defaults.
 	// Page loads a bit slower if these are loaded first, so that's why we're loading them now.
-	setTimeout(function(){
-		delete processFilters;
-		$("head").append('<script type="text/javascript" src="mezzoblue-PaintbrushJS-098389a/common.js"></script>');
-		$("head").append('<script type="text/javascript" src="mezzoblue-PaintbrushJS-098389a/paintbrush.js"></script>');
-		processFilters();
-	}, 1);
+	if (localStorage.option_iconcolor != "#3374AB" || localStorage.option_favopacity != 0 || getHashVar("options") == 1) {
+		setTimeout(function(){
+			delete processFilters;
+			$("head").append('<script type="text/javascript" src="mezzoblue-PaintbrushJS-098389a/common.js"></script>');
+			$("head").append('<script type="text/javascript" src="mezzoblue-PaintbrushJS-098389a/paintbrush.js"></script>');
+			processFilters();
+		}, 1);
+	}
+	// If user has default colors set, load darkened icons
+	else {
+		$("td#address_goarrow")
+			.live("mouseover", function(){
+				$("img",this).attr("src","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAAAi0lEQVQoU2NkwAGsYmtngqSOLW5Ox6aEEZugbXyt9T8GxiMguf///s/CphmrRpAGy/i6SCYGhmW4NOPUSEgzXo34NDPaxNca4wogmPi/fwzGf///m8nEyMQAtAnsZ0aruNozQAUENf/8/Zfh////YLM4WFkekq+RbKcS8h+uaKF+dJCVAChKcoQSOQCI22/3L6cKGwAAAABJRU5ErkJggg==");
+			})
+			.live("mouseout", function(){
+				$("img",this).attr("src","goarrow.png");
+			});
+		$("td#searchicon_cell")
+			.live("mouseover", function(){
+				$("#searchicon").attr("src","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABdUlEQVQ4T5WTIUzDUBCG7zqWgBpqAgNBYtgWZrAEhSJZQpssm8DjIG0wGCgJDoFDQAitICEBiZ9ZslVNIVAkJAjAzECPu0fbdN1bw6rWvvd/7//vf0P4x1M1nQYhlYtUCLr+cSctwTx91XLOeUMbCGbifQTwxr8P+r57J98mAmo79gMgbighwicQffB7mWFz/P5NBLsC0QLq5uH6D4RPoiWEy77n7sUOapbTZciKOGHAshZQsZwbg2CbTxr0PLeejcmQd3FSAGNTC0jsG3jWuz05GgOY9oBzLYZI+7mAEOE+8NymxsErOyhxjLYWILXxwpUMKyRaDfzTlxiimuEByhrHK01uIcqpIACPBuIzN7ElA0wPdwwQdd8QiyweqtoyTzraCCCxF3XPFhdUHKKWfAoN/CqScZG+jQlgRKzpf9KNVYBkaNGu7OXJu+74J6ZrrmQWAYfTiFXSimkv8YQ7POF5AmzFf5K8U9NrKoJA+PS1acWi/QVHr6EUsRkP6wAAAABJRU5ErkJggg==");
+			})
+			.live("mouseout", function(){
+				$("#searchicon").attr("src","search.png");
+			});
+	}
 });
 
 //////////////////////////////
@@ -2521,15 +2567,18 @@ function getResults(noQuery) {
 						}
 						var newItem = {};
 						// Create each returned row into a new object
+						var jsTest = 'javascript:void';
 						for (var i = 0; i < len; i++) {
 							newItem = {};
-							newItem.url = results.rows.item(i).url;
-							newItem.title = results.rows.item(i).title;
-							newItem.id = results.rows.item(i).id;
-							if (results.rows.item(i).type == 2) {
-								newItem.isBookmark = true;
+							if (results.rows.item(i).url.toLowerCase().substring(0,jsTest.length) != jsTest) {
+								newItem.url = results.rows.item(i).url;
+								newItem.title = results.rows.item(i).title;
+								newItem.id = results.rows.item(i).id;
+								if (results.rows.item(i).type == 2) {
+									newItem.isBookmark = true;
+								}
+								window.sortedHistoryItems[i] = newItem;
 							}
-							window.sortedHistoryItems[i] = newItem;
 						}
 
 						var maxRows = resultLimit / 2;

@@ -39,12 +39,12 @@ chrome.management.onDisabled.addListener(function(extension) {
 // If Helper detects computer is idle, Fauxbar will report back to restart Fauxbar IF no Fauxbar tabs are open.
 chrome.extension.onRequestExternal.addListener(function(request){
 	if (request == "restart fauxbar?" && localStorage.indexComplete == 1) {
-		console.log("got message");
+		console.log("Memory Helper would like to restart Fauxbar.");
 		chrome.windows.getAll({populate:true}, function(windows){
 			var okayToRestart = true;
 			for (var w in windows) {
 				for (var t in windows[w].tabs) {
-					if (windows[w].tabs[t].title == "Fauxbar" || windows[w].tabs[t].title == "Fauxbar: Options") {
+					if (windows[w].tabs[t].title == "Fauxbar" || windows[w].tabs[t].title == "Fauxbar: Options" || windows[w].tabs[t].title == "Fauxbar: Edit Tiles") {
 						okayToRestart = false;
 					}
 				}
@@ -64,6 +64,15 @@ chrome.extension.onRequestExternal.addListener(function(request){
 
 
 $(document).ready(function(){
+
+	// New version info
+	var currentVersion = "0.1.1";
+	localStorage.updateBlurb = "Several bugs have been fixed.";
+	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
+		localStorage.readUpdateMessage = 0;
+	}
+	localStorage.currentVersion = currentVersion;
+
 	// Default tile arrangement. Added in v0.1.0
 	if (!localStorage.option_pagetilearrangement) {
 		localStorage.option_pagetilearrangement = "frecency";
@@ -111,12 +120,12 @@ if (!localStorage.firstrundone || localStorage.firstrundone != 1) {
 
 // Open a Fauxbar tab if the indexing needs to be done
 if (localStorage.indexComplete != 1) {
-	chrome.tabs.create({});
-
-	// User probably disabled/re-enabled Fauxbar during an indexing session, so start indexing again
-	if (localStorage.indexedbefore == 1) {
-		setTimeout(clearIndex, 1000);
-	}
+	chrome.tabs.create({}, function(){
+		// User probably disabled/re-enabled Fauxbar during an indexing session, so start indexing again
+		if (localStorage.indexedbefore == 1) {
+			clearIndex();
+		}
+	});
 
 // Otherwise update top 50 sites with fresh frecency scores if top scores are older than 2 hours
 } else {
@@ -156,8 +165,9 @@ function updateTopUrl() {
 				var frec = calculateFrecency(visits);
 				tx.executeSql('UPDATE urls SET frecency = ? where url = ?', [frec, url]);
 				tx.executeSql('UPDATE thumbs SET frecency = ? where url = ?', [frec, url]);
+			}, errorHandler, function(){
 				setTimeout(updateTopUrl, 200);
-			}, errorHandler);
+			});
 		});
 	} else {
 		localStorage.lastTopUrlRefresh = getMs();
@@ -561,13 +571,13 @@ chrome.extension.onRequest.addListener(function(request, sender){
 		beginIndexing();
 	}
 
-	// Request to open Fauxbar in the current tab. "NewTab" meaning the New Tab page, not an actual new tab.
+	// Content script has requested to open Fauxbar in the current tab. "NewTab" meaning the New Tab page, not an actual new tab.
 	else if (request.action && request.action == "goToNewTab") {
 		window.newTabHash = request.hash;
 		chrome.tabs.update(sender.tab.id, {url:chrome.extension.getURL("fauxbar.html")+"#"+request.hash});
 		setTimeout(function(){
 			delete window.newTabHash;
-		}, 100);
+		}, 300);
 	}
 
 	// Chrome sometimes truncates page titles for its history items. Don't know why.
@@ -856,28 +866,56 @@ chrome.bookmarks.onCreated.addListener(function(id, bookmark){
 	}
 });
 
+function reindexBookmarks(bookmarkTreeNode) {
+	if (bookmarkTreeNode.url) {
+		window.bookmarkNodesToReindex[window.bookmarkNodesToReindex.length] = bookmarkTreeNode;
+		setTimeout(function(){
+			var node = window.bookmarkNodesToReindex.pop();
+			chrome.history.getVisits({url:node.url}, function(visitItems) {
+				visitItems.reverse();
+				window.db.transaction(function(tx){
+					tx.executeSql('INSERT OR REPLACE INTO urls (url, type, title, frecency, id) VALUES (?, ?, ?, ?, ?)', [node.url, 2, node.title, calculateFrecency(visitItems), node.id]);
+				}, errorHandler);
+			});
+		}, 100);
+		//window.db.transaction(function(tx){
+		//	tx.executeSql('INSERT OR REPLACE INTO urls (url, type, title, frecency, id) VALUES (?, ?, ?, ?, ?)', [bookmarkTreeNode.url, 2, bookmarkTreeNode.title, localStorage.option_frecency_unvisitedbookmark, bookmarkTreeNode.id]);
+		//}, errorHandler);
+	}
+	if (bookmarkTreeNode.children) {
+		for (var b in bookmarkTreeNode.children) {
+			reindexBookmarks(bookmarkTreeNode.children[b]);
+		}
+	}
+}
+
 // If bookmark is removed, remove it from Fauxbar
 chrome.bookmarks.onRemoved.addListener(function(id, removeInfo){
 	if (openDb()) {
 		window.db.transaction(function(tx){
 			tx.executeSql('DELETE FROM urls WHERE id = ? AND type = 2', [id], function(tx, results){
 				window.results = results;
+
+				// If no rows get affected from this DELETE statement, it means a folder was deleted.
+				// If a folder was deleted, Fauxbar has no idea what was inside, so need to re-index all bookmarks.
+				// Might be better to keep proper track of bookmarks and folders...
 				if (results.rowsAffected == 0) {
-					tx.executeSql('DELETE FROM urls WHERE type = 2', []);
+					tx.executeSql('DELETE FROM urls WHERE type = 2');
 				}
-				// If a folder was deleted, Fauxbar has no idea what was inside, so need to re-index all bookmarks. Could keep proper track of bookmarks and folders, but meh.
 			});
-		}, errorHandler);
-		setTimeout(function(){
-			if (results.rowsAffected == 0) {
+		}, errorHandler, function(){
+
+			// If a folder was deleted, reindex all bookmarks.
+			if (window.results.rowsAffected == 0) {
+				window.bookmarkNodesToReindex = new Array;
 				chrome.bookmarks.getTree(function(bookmarkTreeNodes){
 					for (var b in bookmarkTreeNodes) {
-						indexBookmarks(bookmarkTreeNodes[b]);
+						reindexBookmarks(bookmarkTreeNodes[b]);
 					}
 				});
-				window.frecencyStatements = new Array();
-				assignFrecencies();
+				/*window.frecencyStatements = new Array();
+				assignFrecencies();*/
 			}
-		}, 1000);
+		});
 	}
 });

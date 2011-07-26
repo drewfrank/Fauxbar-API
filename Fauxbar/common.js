@@ -334,7 +334,9 @@ function clearIndex(reindexing) {
 			tx.executeSql('CREATE INDEX IF NOT EXISTS idindex ON urls (id)');
 			tx.executeSql('CREATE INDEX IF NOT EXISTS typeindex ON urls (type)');
 
+			// If we're setting up the database for the first time, and not just reindexing...
 			if (!localStorage.indexedbefore || localStorage.indexedbefore != 1) {
+
 				// Site tile thumbnails
 				tx.executeSql('DROP TABLE IF EXISTS thumbs');
 				tx.executeSql('CREATE TABLE thumbs (url TEXT UNIQUE ON CONFLICT REPLACE, data BLOB, date INTEGER, title TEXT, frecency NUMERIC DEFAULT -1, manual NUMERIC DEFAULT 0)'); // "manual" meaning, is the thumb a user-defined site tile, not necessarily a top frecency scored one
@@ -361,21 +363,20 @@ function clearIndex(reindexing) {
 				window.indexStatus = "Skipping search engines..."; // Step 3
 				chrome.extension.sendRequest({message:"currentStatus",status:"Skipping search engines...", step:3}); // Step 3
 			}
-			window.clearingIndex = false;
-		}, errorHandler);
+			//window.clearingIndex = false;
+		}, errorHandler, startIndexing);
 
-		setTimeout(function(){
+		/*setTimeout(function(){
 			if (window.clearingIndex == false) {
 				startIndexing();
 			}
-		}, 500);
+		}, 500);*/
 	}
 }
 
 // Check to see if the indexing finished
 function isIndexingFinished() {
 	if (window.sqlLastExecution && getMs() - window.sqlLastExecution > 1500 && window.doneApplyingFrecencyScores == 1) {
-		localStorage.indexComplete = 1;
 		$("#indexing").remove();
 		window.stepsDone++;
 		window.reindexing = false;
@@ -638,7 +639,7 @@ function assignFrecencies() {
 		});
 	}
 	else {
-		console.log("doing frecency updates, please wait...");
+		console.log("Executing frecency updates, please wait...");
 		window.indexStatus = "Applying frecency scores to "+number_format(window.historyItemsToCopyLength)+" different URLs..."; // Step 7
 		chrome.extension.sendRequest({message:"currentStatus",status:"Applying frecency scores to "+number_format(window.historyItemsToCopyLength)+" different URLs...", step:7});
 		window.historyItemsToCopy = null;

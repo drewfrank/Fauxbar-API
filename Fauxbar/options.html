@@ -391,27 +391,27 @@
 						<td>
 							<label class="legend" style="margin-top:1px">
 								Result Title and Suggestion font color:
-								<input name="option_titlecolor" id="option_titlecolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+								<input title="Default: #000000" name="option_titlecolor" id="option_titlecolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
 							</label>
-							<label class="legend">
+							<label class="legend" style="margin-top:-4px">
 								Result Title and Suggestion font size:
 								<input name="option_titlesize" id="option_titlesize" class="fontsize" type="number" min="8" maxlength="2" size="3" spellcheck="false" style="text-align:center" /> pixels
 							</label>
 							<label class="legend">
 								Result URL font color:
-								<input name="option_urlcolor" id="option_urlcolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+								<input title="Default: #0066CC" name="option_urlcolor" id="option_urlcolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
 							</label>
-							<label class="legend">
+							<label class="legend" style="margin-top:-4px">
 								Result URL and Suggestion font size:
 								<input name="option_urlsize" id="option_urlsize" class="fontsize" type="number" min="8" maxlength="2" size="3" spellcheck="false" style="text-align:center" /> pixels
 							</label>
 							<label class="legend">
 								Background color:
-								<input name="option_resultbgcolor" id="option_resultbgcolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+								<input title="Default: #FFFFFF" name="option_resultbgcolor" id="option_resultbgcolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
 							</label>
 							<label class="legend">
 								Separator color:
-								<input name="option_separatorcolor" id="option_separatorcolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+								<input title="Default: #E3E3E3" name="option_separatorcolor" id="option_separatorcolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
 							</label>
 						</td>
 					</tr>
@@ -421,15 +421,15 @@
 						<td>
 							<label class="legend" style="margin-top:1px">
 								Result Title and Suggestion font color:
-								<input name="option_selectedtitlecolor" id="option_selectedtitlecolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+								<input title="Default: #FFFFFF" name="option_selectedtitlecolor" id="option_selectedtitlecolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
 							</label>
 							<label class="legend">
 								Result URL font color:
-								<input name="option_selectedurlcolor" id="option_selectedurlcolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+								<input title="Default: #FFFFFF" name="option_selectedurlcolor" id="option_selectedurlcolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
 							</label>
 							<label class="legend">
 								Background color:
-								<input name="option_selectedresultbgcolor" id="option_selectedresultbgcolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+								<input title="Default: #3399FF" name="option_selectedresultbgcolor" id="option_selectedresultbgcolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
 							</label>
 						</td>
 					</tr>
@@ -437,14 +437,11 @@
 					<tr>
 						<th>Bookmark Icon</th>
 						<td>
-							<label class="legend" style="margin-top:1px">
-								Tint color:
+							<div style="margin-top:-4px">
+								Tint:
 								<input name="option_favcolor" id="option_favcolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
-							</label>
-							<label class="legend">
-								Tint opacity:
-								<input name="option_favopacity" id="option_favopacity" class="opacity" type="number" min="0" max="100" step="5" maxlength="3" size="4" spellcheck="false" style="text-align:center" />%
-							</label>
+								<input title="Default: 0%" name="option_favopacity" id="option_favopacity" class="opacity" type="number" min="0" max="100" step="5" maxlength="3" size="4" spellcheck="false" style="text-align:center" />%
+							</div>
 						</td>
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
@@ -522,10 +519,10 @@
 				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
-						<th>Background color</th>
+						<th>Background Color</th>
 						<td>
 							<label class="legend" style="margin-top:1px">
-								<input name="option_bgcolor" id="option_bgcolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+								<input title="Default: #F0F0F0" name="option_bgcolor" id="option_bgcolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
 							</label>
 						</td>
 					</tr>
@@ -626,19 +623,17 @@
 							<label class="legend" style="margin-top:-4px">
 								Maximum width: <input name="option_maxwidth" id="option_maxwidth" type="number" min="700" max="9999" step="100" spellcheck="false" maxlength="4" size="6" spellcheck="false" style="text-align:center" /> pixels
 							</label>
-							<label class="legend">
-								Top background gradient: <input name="option_topgradient" id="option_topgradient" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
-							</label>
-							<label class="legend">
-								Top background opacity: <input name="option_topopacity" id="option_topopacity" class="opacity" type="number" min="0" max="100" step="5" maxlength="3" size="4" spellcheck="false" style="text-align:center" />%
-							</label>
-							<label class="legend">
-								Bottom background gradient: <input name="option_bottomgradient" id="option_bottomgradient" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
-							</label>
-							<label class="legend">
-								Bottom background opacity: <input name="option_bottomopacity" id="option_bottomopacity" class="opacity" type="number" min="0" max="100" step="5" maxlength="3" size="4" spellcheck="false" style="text-align:center" />%
-							</label>
-							<label class="legend">
+							<div style="margin-top:-4px">
+								Top background gradient:
+								<input title="Default: #000000" name="option_topgradient" id="option_topgradient" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+								<input title="Default: 12%" name="option_topopacity" id="option_topopacity" class="opacity" type="number" min="0" max="100" step="5" maxlength="3" size="4" spellcheck="false" style="text-align:center" />%
+							</div>
+							<div style="margin-top:3px">
+								Bottom background gradient:
+								<input title="Default: #000000" name="option_bottomgradient" id="option_bottomgradient" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+								<input title="Default: 50%" name="option_bottomopacity" id="option_bottomopacity" class="opacity" type="number" min="0" max="100" step="5" maxlength="3" size="4" spellcheck="false" style="text-align:center" />%
+							</div>
+							<label class="legend" style="margin-top:6px">
 								<input name="option_shadow" id="option_shadow" type="checkbox" /> Show a drop shadow
 							</label>
 						</td>
@@ -650,32 +645,32 @@
 							<label class="legend">
 								<input name="option_speech" id="option_speech" type="checkbox" onchange="$('#speechtip').css('display','inline-block')" /> Show speech input icons
 								<span id="speechtip" style="display:none">
-									&ndash; <b><a onclick="javascript:window.location.reload(); return false" style="text-decoration:underline; cursor:pointer; color:#06c">Reload this page</a> to apply</b>
+									&ndash; <a onclick="javascript:window.location.reload(); return false" style="text-decoration:underline; cursor:pointer; color:#06c">Reload this page</a> to apply
 								</span>
 							</label>
-							<!--<div class="optionstip" id="speechtip" style="display:none">
-								<a onclick="javascript:window.location.reload()" style="text-decoration:underline; cursor:pointer">Reload this page</a> to apply.
-							</div>-->
+							<label class="legend">
+								Display:
+								<select id="option_inputboxdisplayorder" name="option_inputboxdisplayorder">
+									<option value="addressleft_searchright">Address Box then Search Box</option>
+									<option value="searchleft_addressright">Search Box then Address Box</option>
+									<option value="addressonly">Address Box only</option>
+									<option value="searchonly">Search Box only</option>
+								</select>
+							</label>
 							<label class="legend" style="margin-top:-4px">
 								Font size: <input name="option_inputfontsize" id="option_inputfontsize" class="fontsize" type="number" min="12" maxlength="2" size="3" spellcheck="false" style="text-align:center" /> pixels
 							</label>
 							<label class="legend">
-								Font color: <input name="option_fauxbarfontcolor" id="option_fauxbarfontcolor" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+								Font color:
+								<input title="Default: #000000" name="option_fauxbarfontcolor" id="option_fauxbarfontcolor" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
 							</label>
 							<label class="legend">
-								Background color: <input name="option_inputbgcolor" id="option_inputbgcolor" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+								Background color:
+								<input title="Default: #FFFFFF" name="option_inputbgcolor" id="option_inputbgcolor" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
 							</label>
 							<label class="legend">
-								Icon color: <input name="option_iconcolor" id="option_iconcolor" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
-							</label>
-							<label class="legend">
-								Display order:
-								<select id="option_inputboxdisplayorder" name="option_inputboxdisplayorder">
-									<option value="addressleft_searchright">Address Box left, Search Box right</option>
-									<option value="searchleft_addressright">Search Box left, Address Box right</option>
-									<option value="addressonly">Address Box only</option>
-									<option value="searchonly">Search Box only</option>
-								</select>
+								Icon color:
+								<input title="Default: #3374AB" name="option_iconcolor" id="option_iconcolor" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
 							</label>
 						</td>
 					</tr>
@@ -688,7 +683,8 @@
 							</label>
 							When using Fauxbar from Chrome's Omnibox...<br />
 							<label class="legend" style="margin-top:2px">
-								&nbsp;&bull; sometimes shorten result URLs to <input name="option_omniboxurltruncate" id="option_omniboxurltruncate" class="upto inputoption" type="number" min="0" max="999" step="5" spellcheck="false" maxlength="3" size="4" spellcheck="false" style="text-align:center" /> characters
+								&nbsp;&bull; sometimes shorten result URLs to
+								<input title="Default: 55" name="option_omniboxurltruncate" id="option_omniboxurltruncate" class="upto inputoption" type="number" min="0" max="999" step="5" spellcheck="false" maxlength="3" size="4" spellcheck="false" style="text-align:center" /> characters
 							</label>
 							<div class="optionstip">
 								To use Fauxbar from Chrome's Omnibox, focus the Omnibox and press <b>F</b>+<b>Spacebar</b>
@@ -749,7 +745,7 @@
 								</div>
 								<textarea id="backup" disabled style="font-size:12px; width:90%; height:200px; margin-top:10px"></textarea>
 								<div class="optionstip" style="margin-top:6px">
-									Backups contain all cosmetic and functionality settings you've chosen, including your Fauxbar search engines.<br />
+									Backups contain all cosmetic and functionality settings you've chosen, including your site tiles and Fauxbar search engines.<br />
 									<div style="margin-top:8px">However, backups do <i>not</i> contain your history items, bookmarks, or search queries.</div>
 								</div>
 							</div>
@@ -763,7 +759,7 @@
 								</div>
 								<textarea id="restore" style="font-size:12px; width:90%; height:200px; margin-top:10px"></textarea>
 								<div class="optionstip" style="margin-top:6px">
-									Backups contain all cosmetic and functionality settings you've chosen, including your Fauxbar search engines.<br />
+									Backups contain all cosmetic and functionality settings you've chosen, including your site tiles and Fauxbar search engines.<br />
 									<div style="margin-top:8px">However, backups do <i>not</i> contain your history items, bookmarks, or search queries.</div>
 								</div>
 							</div>
