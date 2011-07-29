@@ -2,6 +2,7 @@
 <head>
 	<title>fauxbar.popup</title>
 	<link href="fauxbar.css" media="screen" rel="stylesheet" type="text/css" />
+	<script type="text/javascript" src="logerror.js"></script>
 	<script type="text/javascript" src="jquery-1.6.2.min.js"></script>
 	<script type="text/javascript" src="common.js"></script>
 	<script type="text/javascript">
@@ -53,7 +54,9 @@
 						$("#maintext").html('"<b style="font-size:inherit">'+window.openSearchInfo.title+'</b>" has been added to Fauxbar.');
 						$("#note").html('<br />This site can now be used as a Fauxbar search engine,<br />knock on wood.');
 						broadcastClosure();
-					}, errorHandler);
+					}, function(t){
+						errorHandler(t, getLineInfo());
+					});
 				}
 			}
 			else {
@@ -96,7 +99,9 @@
 									$("#maintext").html('"<b style="font-size:inherit">'+window.openSearchInfo.title+'</b>" has been added to Fauxbar.');
 									$("#note").html('<br />This site can now be used as a Fauxbar search engine.');
 									broadcastClosure();
-								}, errorHandler);
+								}, function(t){
+									errorHandler(t, getLineInfo());
+								});
 							});
 						}
 					}

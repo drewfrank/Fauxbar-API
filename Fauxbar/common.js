@@ -1,32 +1,4 @@
-// This file contains mostly contains functions that are used by both the main Fauxbar page and its background page.
-
-// Handle errors that occur with the HTML5 File API.
-// NEED TO DELETE
-/*function fileErrorHandler(e) {
-  var msg = '';
-  switch (e.code) {
-    case FileError.QUOTA_EXCEEDED_ERR:
-      msg = 'QUOTA_EXCEEDED_ERR';
-      break;
-    case FileError.NOT_FOUND_ERR:
-      msg = 'NOT_FOUND_ERR';
-      break;
-    case FileError.SECURITY_ERR:
-      msg = 'SECURITY_ERR';
-      break;
-    case FileError.INVALID_MODIFICATION_ERR:
-      msg = 'INVALID_MODIFICATION_ERR';
-      break;
-    case FileError.INVALID_STATE_ERR:
-      msg = 'INVALID_STATE_ERR';
-      break;
-    default:
-      msg = 'Unknown Error';
-      break;
-  };
-  console.log('File Error: ' + msg);
-  //alert('File Error: ' + msg);
-}*/
+// This file contains functions that are used by both the main Fauxbar page and its background page. //
 
 // http://stackoverflow.com/questions/4155032/operating-system-detection-by-java-or-javascript/4155078#4155078
 window.OS = "Unknown";
@@ -68,7 +40,7 @@ function closeOptions() {
 // Populate the Options' Management page with database table stats
 function loadDatabaseStats() {
 	if (openDb()) {
-		window.db.transaction(function(tx){
+		window.db.readTransaction(function(tx){
 			tx.executeSql('SELECT count(distinct url) as historyitems FROM urls WHERE type = 1 AND queuedfordeletion = 0', [], function(tx, results){
 				$("#stats_historyitems").html(number_format(results.rows.item(0).historyitems));
 				if (results.rows.item(0).historyitems == 1) {
@@ -95,14 +67,16 @@ function loadDatabaseStats() {
 					$("#queriesplural").html('queries');
 				}
 			});
-		}, errorHandler);
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
 	}
 }
 
 // Set localStorage vars with default Fauxbar values.
 // Used when first loading Fauxbar, or when user chooses to reset all the values.
 function resetOptions() {
-	localStorage.option_alert = 1; 							// Alert when there's a database error.
+	localStorage.option_alert = 1; 							// Show a message when there's a database error.
 	localStorage.option_altd = 1; 							// Use Alt+D functionality.
 	localStorage.option_autofillurl = 1; 					// Auto-fill the Address Box's input with a matching URL when typing.
 	localStorage.option_bgcolor = "#F0F0F0"; 				// Page background color.
@@ -113,6 +87,7 @@ function resetOptions() {
 	localStorage.option_bold = 1; 							// Bolden matching words in results.
 	localStorage.option_bottomgradient = "#000000"; 		// Fauxbar wraper bottom gradient color.
 	localStorage.option_bottomopacity = "50"; 				// Fauxbar wrapper bottom gradient opacity.
+	localStorage.option_consolidateBookmarks = 1; 			// Consolidate bookmarks in Address Box results. Means extra duplicate bookmarks won't be shown.
 	localStorage.option_ctrlk = 1; 							// Use Ctrl+K functionality.
 	localStorage.option_ctrll = 1; 							// Use Ctrl+L functionality.
 	localStorage.option_customscoring = 0; 					// Use custom frecency scoring.
@@ -169,6 +144,7 @@ function resetOptions() {
 	localStorage.option_separatorcolor = "#E3E3E3";			// Color of the 1px separator line between results.
 	localStorage.option_shadow = 1;							// Drop shadow for the Fauxbar.
 	localStorage.option_showapps = 1;						// Display app tiles.
+	localStorage.option_showErrorCount = 1;					// Show an error count on the Options' side menu.
 	localStorage.option_showjsonsuggestions = 1;			// Show Search Box suggestions from the selected search engine when user is typing a query.
 	localStorage.option_showmatchingfavs = 1;				// Search for and display matching bookmarks from the Address Box.
 	localStorage.option_showmatchinghistoryitems = 1;		// Search for and display matching history items from the Address Box.
@@ -247,7 +223,9 @@ function selectOpenSearchType(el, focusToo) {
 				tx.executeSql('UPDATE opensearches SET isdefault = 1 WHERE shortname = ?', [window.openSearchShortname]);
 				localStorage.osshortname = window.openSearchShortname;
 				localStorage.osiconsrc = $(".vertline2 img", el).attr("src");
-			}, errorHandler);
+			}, function(t){
+				errorHandler(t, getLineInfo());
+			});
 		}
 	}
 	$('#opensearchmenu .menuitem').removeClass("bold");
@@ -257,7 +235,7 @@ function selectOpenSearchType(el, focusToo) {
 // Fill the search engine menu with the engines that have been added to Fauxbar
 function populateOpenSearchMenu(force) {
 	if (openDb(force)) {
-		window.db.transaction(function (tx) {
+		window.db.readTransaction(function (tx) {
 			tx.executeSql('select shortname, searchurl, method, suggestUrl, iconurl, isdefault from opensearches order by position DESC, shortname COLLATE NOCASE asc', [], function (tx, results) {
 				var menuItems = '';
 				var len = results.rows.length, i;
@@ -302,7 +280,9 @@ function populateOpenSearchMenu(force) {
 					selectOpenSearchType($('.menuitem[shortname="'+defaultShortname+'"]'), false);
 				}
 			});
-		}, errorHandler);
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
 	}
 }
 
@@ -317,7 +297,7 @@ function reindex() {
 	}
 }
 
-// Reset the database
+// Reset or create the database tables
 function clearIndex(reindexing) {
 	if (openDb(true)) {
 		window.clearingIndex = true;
@@ -333,6 +313,9 @@ function clearIndex(reindexing) {
 			tx.executeSql('CREATE INDEX IF NOT EXISTS frecencyindex ON urls (frecency)');
 			tx.executeSql('CREATE INDEX IF NOT EXISTS idindex ON urls (id)');
 			tx.executeSql('CREATE INDEX IF NOT EXISTS typeindex ON urls (type)');
+
+			// Error log table
+			tx.executeSql('CREATE TABLE IF NOT EXISTS errors (id INTEGER PRIMARY KEY, date NUMERIC, version TEXT, url TEXT, file TEXT, line NUMERIC, message TEXT, count NUMERIC)');
 
 			// If we're setting up the database for the first time, and not just reindexing...
 			if (!localStorage.indexedbefore || localStorage.indexedbefore != 1) {
@@ -363,14 +346,9 @@ function clearIndex(reindexing) {
 				window.indexStatus = "Skipping search engines..."; // Step 3
 				chrome.extension.sendRequest({message:"currentStatus",status:"Skipping search engines...", step:3}); // Step 3
 			}
-			//window.clearingIndex = false;
-		}, errorHandler, startIndexing);
-
-		/*setTimeout(function(){
-			if (window.clearingIndex == false) {
-				startIndexing();
-			}
-		}, 500);*/
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		}, startIndexing);
 	}
 }
 
@@ -427,7 +405,9 @@ function startIndexing() {
 				window.indexStatus = "Calculating frecency scores for "+number_format(window.historyItemsToCopy.length)+" different URLs...";
 				window.historyItemsToCopyLength = window.historyItemsToCopy.length;
 				assignFrecencies(true);
-			}, errorHandler);
+			}, function(t){
+				errorHandler(t, getLineInfo());
+			});
 		});
 	}
 }
@@ -460,23 +440,42 @@ function openDb(force) {
 	}
 }
 
-// Catches errors when SQL statements don't work
-function errorHandler(transaction, error) {
-	console.log(transaction);
-	if (localStorage.option_alert && localStorage.option_alert != true) {
-		return false;
-	}
-	// Only alert error if tab is not navigating elsewhere, and if Fauxbar's index is complete.
-	if ((!window.goingToUrl || window.goingToUrl.length == 0) && localStorage.indexComplete == 1) {
-		if (error && error.message) {
-			alert('Fauxbar SQLite error: '+error.message+' (code '+error.code+')');
-		} else if (transaction && transaction.message){
-			alert('Oops! Fauxbar encountered a database error:\n\n"'+transaction.message+'"\n\nIf you can reproduce the error, please go to www.fauxbar.org and report it. Either way, sorry!\n\n(Note: these error alerts can be disabled by going to Fauxbar\'s Options > Management)');
-		} else {
-			alert('Oops! Fauxbar failed to execute an SQL statement, either due to some bad code or a locked database.\n\nPlease retry what you were doing, but if the issue persists, please visit www.fauxbar.org and file a bug report.\n\nSorry about that!');
+// errorHandler catches errors when SQL statements don't work.
+// transaction contains the SQL error code and message
+// lineInfo contains contains the line number and filename for where the error came from
+function errorHandler(transaction, lineInfo) {
+	if (transaction.message) {
+		var code = '';
+		switch (transaction.code) {
+			case 1:
+				code = "database";
+				break;
+			case 2:
+				code = "version";
+				break;
+			case 3:
+				code = '"too large"';
+				break;
+			case 4:
+				code = "quota";
+				break;
+			case 5:
+				code = "syntax";
+				break;
+			case 6:
+				code = "constraint";
+				break;
+			case 7:
+				code = "timeout";
+				break;
+			default: // case 0:
+				break;
 		}
+		var errorMsg = 'SQL '+code+' error: "'+transaction.message+'"';
+		logError(errorMsg, lineInfo.file, lineInfo.line);
+	} else {
+		logError('Generic SQL error (no transaction)', lineInfo.file, lineInfo.line);
 	}
-    return true;
 }
 
 // Current number of seconds since the epoch
@@ -649,7 +648,9 @@ function assignFrecencies() {
 			}
 			window.doneApplyingFrecencyScores = 1;
 			delete window.frecencyStatements;
-		}, errorHandler);
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
 	}
 }
 
@@ -658,7 +659,9 @@ function indexBookmarks(bookmarkTreeNode) {
 	if (bookmarkTreeNode.url) {
 		window.db.transaction(function(tx){
 			tx.executeSql('INSERT OR REPLACE INTO urls (url, type, title, frecency, id) VALUES (?, ?, ?, ?, ?)', [bookmarkTreeNode.url, 2, bookmarkTreeNode.title, localStorage.option_frecency_unvisitedbookmark, bookmarkTreeNode.id]);
-		}, errorHandler);
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
 	}
 	if (bookmarkTreeNode.children) {
 		for (var b in bookmarkTreeNode.children) {

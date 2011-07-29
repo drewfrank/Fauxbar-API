@@ -5,7 +5,7 @@ window.md5thumbs = {}
 // Load top site thumb tiles into memory upload load
 $(document).ready(function(){
 	if (openDb()) {
-		window.db.transaction(function(tx){
+		window.db.readTransaction(function(tx){
 			tx.executeSql('select url, data from thumbs', [], function(tx, results){
 				var len = results.rows.length, i;
 				if (len > 0) {
@@ -14,7 +14,9 @@ $(document).ready(function(){
 					}
 				}
 			});
-		}, errorHandler);
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
 	}
 });
 
@@ -62,16 +64,32 @@ chrome.extension.onRequestExternal.addListener(function(request){
 	}
 });
 
-
 $(document).ready(function(){
 
 	// New version info
-	var currentVersion = "0.1.1";
-	localStorage.updateBlurb = "Several bugs have been fixed.";
+	var currentVersion = "0.2.0";
+	localStorage.updateBlurb = ". New methods for displaying and logging errors are in place.";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
 		localStorage.readUpdateMessage = 0;
 	}
+
+	// Re-enable error alerts for this release (0.2.0)
+	if (!localStorage.currentVersion || (currentVersion == "0.2.0" && localStorage.currentVersion != "0.2.0")) {
+		localStorage.option_alert = 1;
+	}
+
+	// Set current version
 	localStorage.currentVersion = currentVersion;
+
+	// Consolidate duplicate bookmarks. Added in 0.2.0
+	if (!localStorage.option_consolidateBookmarks) {
+		localStorage.option_consolidateBookmarks = 1;
+	}
+	// Unread error count
+	if (!localStorage.option_showErrorCount) {
+		localStorage.option_showErrorCount = 1;
+	}
+
 
 	// Default tile arrangement. Added in v0.1.0
 	if (!localStorage.option_pagetilearrangement) {
@@ -79,6 +97,12 @@ $(document).ready(function(){
 	}
 
 	if (openDb()) {
+
+		// Create `errors` table for error tracking. Added in 0.2.0
+		window.db.transaction(function(tx){
+			tx.executeSql('CREATE TABLE IF NOT EXISTS errors (id INTEGER PRIMARY KEY, date NUMERIC, version TEXT, url TEXT, file TEXT, line NUMERIC, message TEXT, count NUMERIC)');
+		});
+
 		// Add "manual" column to "thumbs". Added in v0.1.0
 		window.db.transaction(function(tx){
 			tx.executeSql('ALTER TABLE thumbs ADD COLUMN manual NUMERIC DEFAULT 0');
@@ -87,7 +111,9 @@ $(document).ready(function(){
 		// Add frecency index to thumbs. Added in v0.0.7
 		window.db.transaction(function(tx){
 			tx.executeSql('CREATE INDEX IF NOT EXISTS frecencyindex ON thumbs (frecency)');
-		}, errorHandler);
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
 
 		// Delete top sites (eg top tiles) that have fallen below the frecency threshold
 		window.db.transaction(function(tx){
@@ -139,7 +165,7 @@ if (localStorage.indexComplete != 1) {
 // Update top sites (one at a time) with fresh frecency scores
 function updateTopSites() {
 	if (openDb()) {
-		window.db.transaction(function(tx){
+		window.db.readTransaction(function(tx){
 			tx.executeSql('SELECT url FROM urls WHERE type = 1 ORDER BY frecency DESC LIMIT 50', [], function(tx, results){
 				var len = results.rows.length, i;
 				if (len > 0) {
@@ -151,7 +177,9 @@ function updateTopSites() {
 					updateTopUrl();
 				}
 			});
-		}, errorHandler);
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
 	}
 }
 
@@ -165,7 +193,9 @@ function updateTopUrl() {
 				var frec = calculateFrecency(visits);
 				tx.executeSql('UPDATE urls SET frecency = ? where url = ?', [frec, url]);
 				tx.executeSql('UPDATE thumbs SET frecency = ? where url = ?', [frec, url]);
-			}, errorHandler, function(){
+			}, function(t){
+				errorHandler(t, getLineInfo());
+			}, function(){
 				setTimeout(updateTopUrl, 200);
 			});
 		});
@@ -203,7 +233,7 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 	var sortedHistoryItems = {};
 	var resultObjects = [];
 	if (openDb()) {
-		window.db.transaction(function(tx) {
+		window.db.readTransaction(function(tx) {
 			// If there is user input, split it into words.
 			if (text.length > 0) { // equivalent to "!noQuery" (see getResults() in fauxbar.js)
 				var words = explode(" ", text);
@@ -270,6 +300,7 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 				tx.executeSql(selectStatement, urltitleWords, function (tx, results) {
 					var len = results.rows.length, i;
 					var newItem = {};
+
 					// Create each result as a new object
 					for (var i = 0; i < len; i++) {
 						newItem = {};
@@ -314,6 +345,7 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 						if (currentRows < maxRows) {
 							hI = sortedHistoryItems[i];
 							resultIsOkay = true;
+
 							// Sort words by longest length to shortest
 							if (text.length > 0) {
 								words = explode(" ", text);
@@ -323,6 +355,7 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 							}
 
 							if (resultIsOkay == true) {
+
 								// If result is titleless, make the title be the URL
 								if (hI.title == "") {
 									urlExplode = explode("/", hI.url);
@@ -404,6 +437,7 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 								if (resultIsOkay == true) {
 									resultString = "";
 									if (urlText.length > 0) {
+
 										// Make a star symbol be the separator if result is a bookmark, otherwise just a dash
 										divvy = hI.isBookmark ? '&#9733;' : '-';
 
@@ -427,9 +461,11 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 					}
 					// Give the results to Chrome to display
 					suggest(resultObjects);
-				}, errorHandler);
+				});
 			}
-		}, errorHandler);
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
 	}
 });
 
@@ -547,7 +583,9 @@ chrome.extension.onRequest.addListener(function(request, sender){
 															tx.executeSql('INSERT INTO thumbs (url, data, title, frecency) VALUES (?, ?, ?, ?)', [sender.tab.url, myCanvas.toDataURL("image/png"), sender.tab.title, frecency]);
 														}
 													});
-												}, errorHandler);
+												}, function(t){
+													errorHandler(t, getLineInfo());
+												});
 											};
 											img.src = dataUrl;
 										}
@@ -557,7 +595,9 @@ chrome.extension.onRequest.addListener(function(request, sender){
 						}
 					}
 				});
-			}, errorHandler);
+			}, function(t){
+				errorHandler(t, getLineInfo());
+			});
 		}
 	}
 
@@ -587,7 +627,9 @@ chrome.extension.onRequest.addListener(function(request, sender){
 			window.db.transaction(function (tx) {
 				tx.executeSql('UPDATE urls SET title = ? WHERE url = ? AND type = 1', [request.urltitle, sender.tab.url]);
 				tx.executeSql('UPDATE thumbs SET title = ? WHERE url = ?', [request.urltitle, sender.tab.url]);
-			}, errorHandler);
+			}, function(t){
+				errorHandler(t, getLineInfo());
+			});
 		}
 	}
 
@@ -633,7 +675,7 @@ chrome.extension.onRequest.addListener(function(request, sender){
 				return false;
 			}
 
-			window.db.transaction(function (tx) {
+			window.db.readTransaction(function (tx) {
 				tx.executeSql(myStatement, myArray, function (tx, results) {
 					var len = results.rows.length, i;
 
@@ -645,7 +687,9 @@ chrome.extension.onRequest.addListener(function(request, sender){
 						chrome.pageAction.show(sender.tab.id);
 					}
 				});
-			}, errorHandler);
+			}, function(t){
+				errorHandler(t, getLineInfo());
+			});
 		}
 	}
 });
@@ -740,20 +784,25 @@ chrome.tabs.onAttached.addListener(function() {
 // When Chrome adds a page visit to its history index, update Fauxbar's index with this information.
 // note: Chrome adds a "visit" as soon as the page starts loading. But this happens before the <title> tag is read, and so visits sometimes aren't recorded with a title in Chrome's history the first time they're loaded.
 chrome.history.onVisited.addListener(function(historyItem) {
+
 	// If the visit is to Fauxbar's page, remove it from Chrome's history. Don't need to litter the user's history with every instance that Fauxbar is opened when they open a new tab.
 	if (strstr(historyItem.url, chrome.extension.getURL(""))) {
 		chrome.history.deleteUrl({url:historyItem.url});
 	}
+
 	// If the visit is a pure data source, like maybe viewing an inline image, don't add it to Fauxbar; it'll slow Fauxbar down too much. Plus it acts as a titleless result, which isn't very helpful.
 	else if (historyItem.url.substr(0, 5) == 'data:') {
 		return false;
 	}
+
 	// Otherwise, we want to add the visit to Fauxbar's database...
 	else if (openDb()) {
-		window.db.transaction(function (tx) {
+		window.db.readTransaction(function (tx) {
+
 			// See if it exists...
 			tx.executeSql('SELECT url FROM urls WHERE url = ? AND type = 1 AND queuedfordeletion = 0', [historyItem.url], function(tx, results){
 				var len = results.rows.length, i;
+
 				// If URL doesn't exist in Fauxbar's database, add it
 				if (len == 0) {
 					chrome.history.getVisits({url:historyItem.url}, function(visitItems){
@@ -764,10 +813,13 @@ chrome.history.onVisited.addListener(function(historyItem) {
 								tx.executeSql('INSERT OR REPLACE INTO urls (url, type, title, frecency, queuedfordeletion) VALUES (?, ?, ?, ?, ?)', [historyItem.url, 1, historyItem.title, frecency, 0]);
 								tx.executeSql('UPDATE urls SET frecency = ? WHERE url = ?', [frecency, historyItem.url]);
 								tx.executeSql('UPDATE thumbs SET frecency = ? WHERE url = ?', [frecency, historyItem.url]);
-							}, errorHandler);
+							}, function(t){
+								errorHandler(t, getLineInfo());
+							});
 						}
 					});
 				}
+
 				// If URL *does* exist, update it with a new frecency score
 				else {
 					chrome.history.getVisits({url:historyItem.url}, function(visitItems){
@@ -776,7 +828,9 @@ chrome.history.onVisited.addListener(function(historyItem) {
 							var frecency = calculateFrecency(visitItems);
 							tx.executeSql('UPDATE urls SET frecency = ? WHERE url = ?', [frecency, historyItem.url]);
 							tx.executeSql('UPDATE thumbs SET frecency = ? WHERE url = ?', [frecency, historyItem.url]);
-						}, errorHandler);
+						}, function(t){
+							errorHandler(t, getLineInfo());
+						});
 					});
 				}
 				tx.executeSql('SELECT frecency FROM urls WHERE type = 1 ORDER BY frecency DESC LIMIT 50,50', [], function(tx, results){
@@ -786,9 +840,10 @@ chrome.history.onVisited.addListener(function(historyItem) {
 						window.frecencyThreshold = 75;
 					}
 				});
-			}, errorHandler);
-
-		}, errorHandler);
+			});
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
 	}
 });
 
@@ -803,7 +858,9 @@ chrome.history.onVisitRemoved.addListener(function(removed) {
 				tx.executeSql('DELETE FROM thumbs WHERE manual != 1');
 				tx.executeSql('UPDATE thumbs SET frecency = -1');
 				tx.executeSql('UPDATE urls SET frecency = ? WHERE type = 2', [localStorage.option_frecency_unvisitedbookmark]);
-			}, errorHandler);
+			}, function(t){
+				errorHandler(t, getLineInfo());
+			});
 		}
 
 		// But if only a single URL has been removed...
@@ -819,7 +876,9 @@ chrome.history.onVisitRemoved.addListener(function(removed) {
 							tx.executeSql('DELETE FROM thumbs WHERE url = ? AND manual != 1', [removedUrl]);
 							tx.executeSql('UPDATE thumbs SET frecency = -1 WHERE url = ?', [removedUrl]);
 							tx.executeSql('UPDATE urls SET frecency = ? WHERE url = ? AND type = 2', [localStorage.option_frecency_unvisitedbookmark, removedUrl]);
-						}, errorHandler);
+						}, function(t){
+							errorHandler(t, getLineInfo());
+						});
 					}
 
 					// But if some instances of the URL still exist, just update frecency scores
@@ -829,7 +888,9 @@ chrome.history.onVisitRemoved.addListener(function(removed) {
 							var frec = calculateFrecency(visitItems);
 							tx.executeSql('UPDATE urls SET frecency = ? WHERE url = ?', [calculateFrecency(visitItems), removedUrl]);
 							tx.executeSql('UPDATE thumbs SET frecency = ? WHERE url = ?', [calculateFrecency(visitItems), removedUrl]);
-						}, errorHandler);
+						}, function(t){
+							errorHandler(t, getLineInfo());
+						});
 					}
 				});
 			}
@@ -849,7 +910,9 @@ chrome.bookmarks.onChanged.addListener(function(id, changeInfo){
 				var frec = calculateFrecency(visits);
 				tx.executeSql('UPDATE urls SET frecency = ? WHERE url = ?', [frec, changeInfo.url]);
 				tx.executeSql('UPDATE thumbs SET frecency = ? WHERE url = ?', [frec, changeInfo.url]);
-			}, errorHandler);
+			}, function(t){
+				errorHandler(t, getLineInfo());
+			});
 		});
 	}
 });
@@ -861,7 +924,9 @@ chrome.bookmarks.onCreated.addListener(function(id, bookmark){
 			visits.reverse();
 			window.db.transaction(function(tx){
 				tx.executeSql('INSERT INTO urls (url, title, type, id, frecency) VALUES (?, ?, ?, ?, ?)', [bookmark.url, bookmark.title, 2, bookmark.id, visits.length > 0 ? calculateFrecency(visits) : localStorage.option_frecency_unvisitedbookmark]);
-			}, errorHandler);
+			}, function(t){
+				errorHandler(t, getLineInfo());
+			});
 		});
 	}
 });
@@ -875,12 +940,11 @@ function reindexBookmarks(bookmarkTreeNode) {
 				visitItems.reverse();
 				window.db.transaction(function(tx){
 					tx.executeSql('INSERT OR REPLACE INTO urls (url, type, title, frecency, id) VALUES (?, ?, ?, ?, ?)', [node.url, 2, node.title, calculateFrecency(visitItems), node.id]);
-				}, errorHandler);
+				}, function(t){
+					errorHandler(t, getLineInfo());
+				});
 			});
 		}, 100);
-		//window.db.transaction(function(tx){
-		//	tx.executeSql('INSERT OR REPLACE INTO urls (url, type, title, frecency, id) VALUES (?, ?, ?, ?, ?)', [bookmarkTreeNode.url, 2, bookmarkTreeNode.title, localStorage.option_frecency_unvisitedbookmark, bookmarkTreeNode.id]);
-		//}, errorHandler);
 	}
 	if (bookmarkTreeNode.children) {
 		for (var b in bookmarkTreeNode.children) {
@@ -906,6 +970,7 @@ chrome.bookmarks.onRemoved.addListener(function(id, removeInfo){
 		}, errorHandler, function(){
 
 			// If a folder was deleted, reindex all bookmarks.
+			console.log('A bookmark or bookmark folder has been removed from Chrome.\nRows affected: '+window.results.rowsAffected);
 			if (window.results.rowsAffected == 0) {
 				window.bookmarkNodesToReindex = new Array;
 				chrome.bookmarks.getTree(function(bookmarkTreeNodes){
@@ -913,8 +978,6 @@ chrome.bookmarks.onRemoved.addListener(function(id, removeInfo){
 						reindexBookmarks(bookmarkTreeNodes[b]);
 					}
 				});
-				/*window.frecencyStatements = new Array();
-				assignFrecencies();*/
 			}
 		});
 	}

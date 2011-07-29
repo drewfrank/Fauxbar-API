@@ -4,6 +4,7 @@
 	<link href="fauxbar.css" media="screen" rel="stylesheet" type="text/css" />
 	<style type="text/css" id="customstyle"></style>
 	<style type="text/css" id="editTileStyle"></style>
+	<script type="text/javascript" src="logerror.js"></script>
 	<script type="text/javascript" src="jquery-1.6.2.min.js"></script>
 	<script type="text/javascript" src="md5-min.js"></script>
 	<script type="text/javascript" src="common.js"></script>
@@ -158,7 +159,6 @@
 								window.db.transaction(function(tx){
 
 									// Get top sites
-
 									var urlMd5 = '';
 									var thumbs = '';
 
@@ -234,11 +234,11 @@
 											} else {
 												processTiles(tx);
 											}
-
-
 											break;
 									}
-								}, errorHandler);
+								}, function(t){
+									errorHandler(t, getLineInfo());
+								});
 							}
 						});
 					}, 1);
@@ -397,5 +397,29 @@
 			$("#sapps").remove();
 		}
 	</script>
+
+	<!-- Error message balloon -->
+	<div id="errorBox" style="display:none">
+		<table style="width:auto">
+			<tr>
+				<td style="padding:10px 0 11px 11px">
+					<img src="fauxbar48sad.png" />
+				</td>
+				<td style="padding:11px 11px 11px 6px">
+					<img class="errorBoxCross" src="cross.png" style="float:right; position:relative; top:-7px; right:-14px" onclick="$('#errorBox').css('display','none'); return true;" />
+					<div style="margin-bottom:5px; font-size:110%;">
+						<b>Fauxbar has encountered an error</b>
+					</div>
+					<div style="max-width:320px" id="errorMessage">
+						SQL error: "the statement callback raised an exception or statement error callback did not return false"
+					</div>
+					<div style="opacity:.43"  id="errorLine">fauxbar.html, line 409</div>
+					<div style="margin-top:7px; font-size:95%; font-weight:bold">
+						<a href="fauxbar.errorlog.html" onclick="$('#errorBox').css('display','none'); return true;" target="_blank" style="color:#06c;">Open the error log</a>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</div>
 </body>
 </html>

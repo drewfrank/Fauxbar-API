@@ -74,8 +74,8 @@ if (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0) {
 	}
 
 	$(document).ready(function(){
-		$("#maindiv").before('<div id="editmodeContainer" style="box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="fauxbar48.png" /> Fauxbar has been updated to version '+localStorage.currentVersion+'. '+localStorage.updateBlurb+'</div></div>');
-		$("#editmodeContainer").prepend('<div id="editModeButtons"><button onclick="dismissUpdateMessage(true)" style="font-family:'+localStorage.option_font+', Lucida Grande, Segoe UI, Arial, sans-serif;">View Changelog</button>&nbsp;<button onclick="dismissUpdateMessage()" style="font-family:'+localStorage.option_font+', Lucida Grande, Segoe UI, Arial, sans-serif;">Dismiss</button></div>');
+		$("#maindiv").before('<div id="editmodeContainer" style="box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="fauxbar48.png" /> Fauxbar has been updated to version '+localStorage.currentVersion + localStorage.updateBlurb+'</div></div>');
+		$("#editmodeContainer").prepend('<div id="editModeButtons"><button onclick="dismissUpdateMessage(true)" style="font-family:'+localStorage.option_font+', Lucida Grande, Segoe UI, Arial, sans-serif;">View Full Changelog</button>&nbsp;<button onclick="dismissUpdateMessage()" style="font-family:'+localStorage.option_font+', Lucida Grande, Segoe UI, Arial, sans-serif;">Dismiss</button></div>');
 	});
 }
 
@@ -111,7 +111,9 @@ function saveSiteTiles(justChecking) {
 				});
 				tx.executeSql('DELETE FROM thumbs WHERE frecency < ? AND frecency > -1 AND manual != 1', [window.bgPage.frecencyThreshold]);
 
-			}, errorHandler, function(){
+			}, function(t){
+				errorHandler(t, getLineInfo());
+			}, function(){
 				// success
 				localStorage.siteTiles = JSON.stringify(tiles);
 				chrome.tabs.getCurrent(function(tab){
@@ -353,6 +355,13 @@ chrome.extension.onRequest.addListener(function (request, sender) {
 		window.location.reload();
 	}
 
+	// Display error message
+	else if (request.action == "displayError") {
+		$("#errorLine").html(request.errorLine);
+		$("#errorMessage").html(request.errorMessage);
+		$("#errorBox").css("display","inline-block");
+	}
+
 	// Enter manual page tile editing mode
 	else if (request.action && request.action == "editPageTiles") {
 		if (!window.tileEditMode) {
@@ -428,7 +437,7 @@ function sortKeys(obj) {
 // Fill the Management Options' "Backup..." textarea with the user's localStorage options in JSON format
 function showBackupInfo() {
 	if (openDb()) {
-		window.db.transaction(function(tx) {
+		window.db.readTransaction(function(tx) {
 			tx.executeSql('SELECT * FROM opensearches', [], function(tx, results) {
 				var backup = {};
 				backup.options = {};
@@ -455,7 +464,9 @@ function showBackupInfo() {
 				backupText = str_replace('"shortname":', '\n\n"shortname":', backupText);
 				$("#backup").text(backupText).select();
 			});
-		}, errorHandler);
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
 	}
 }
 
@@ -499,7 +510,9 @@ function restoreOptions() {
 					alert("The import was successful.\n\nFauxbar will now restore your options.");
 					window.location.reload();
 				}, 500);
-			}, errorHandler);
+			}, function(t){
+				errorHandler(t, getLineInfo());
+			});
 		} else {
 			alert("Oops! Fauxbar is unable to open its database to restore your search engines, but your other options will be restored.");
 			window.location.reload();
@@ -585,7 +598,9 @@ function clearSearchHistory() {
 	if (openDb()) {
 		window.db.transaction(function(tx) {
 			tx.executeSql('DELETE FROM searchqueries');
-		}, errorHandler);
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
 		$("#button_clearsearchhistory").prop("disabled",true);
 		loadDatabaseStats();
 	}
@@ -602,7 +617,9 @@ function submitOpenSearch(query) {
 	if (localStorage.option_recordsearchboxqueries == 1 && openDb()){
 		window.db.transaction(function(tx){
 			tx.executeSql('INSERT INTO searchqueries (query) VALUES (?)', [openSearchInputVal.trim()]);
-		}, errorHandler);
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
 	}
 
 	if ($(selectedMenuItem).attr("method").toLowerCase() == 'get') {
@@ -726,14 +743,16 @@ function sortSearchEnginesAlphabetically() {
 			tx.executeSql('UPDATE opensearches SET position = 0');
 			getSearchEngines();
 			populateOpenSearchMenu();
-		}, errorHandler);
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
 	}
 }
 
 // Update the list of search engines in the Search Box Options page
 function getSearchEngines() {
 	if (openDb()){
-		window.db.transaction(function(tx){
+		window.db.readTransaction(function(tx){
 			tx.executeSql('SELECT iconurl, shortname, searchurl FROM opensearches ORDER BY position DESC, shortname COLLATE NOCASE ASC', [], function(tx,results){
 				var openEngines = '';
 				var len = results.rows.length, i;
@@ -773,7 +792,9 @@ function getSearchEngines() {
 					$("#restorebig3").css("display","block");
 				}
 			});
-		}, errorHandler);
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
 	}
 }
 
@@ -1069,7 +1090,9 @@ $(document).ready(function(){
 							orderCount++;
 							tx.executeSql('UPDATE opensearches SET position = ? WHERE shortname = ?', [orderCount, $("td.shortname input",this).val()]);
 						});
-					}, errorHandler);
+					}, function(t){
+						errorHandler(t, getLineInfo());
+					});
 					populateOpenSearchMenu();
 				}
 			});
@@ -1406,7 +1429,9 @@ $(document).ready(function(){
 						var nextNumber = $(".arrowed").next(".result").attr("number");
 						$(".arrowed").remove();
 						$('.result[number="'+nextNumber+'"]').addClass("arrowed");
-					}, errorHandler);
+					}, function(t){
+						errorHandler(t, getLineInfo());
+					});
 					$(this).val(window.actualUserInput);
 				}
 				return false;
@@ -1575,7 +1600,9 @@ $(document).ready(function(){
 						tx.executeSql('DELETE FROM searchqueries WHERE query = ?', [html_entity_decode($(".arrowed .suggestion").text())]);
 						$(".arrowed").remove();
 						$('.result[tempnum="'+tempNum+'"]').addClass("arrowed");
-					}, errorHandler);
+					}, function(t){
+						errorHandler(t, getLineInfo());
+					});
 				}
 				return false;
 			} else {
@@ -1712,12 +1739,6 @@ $(document).ready(function(){
 				});
 			});
 
-			// Although most checkbox options can be applied instantly without needing to reload the page, Chrome/WebKit's HTML5 speech input icons don't seem to be able to be changed on the fly.
-			// So the page has to actually be reloaded for the user to see the page, so display a link to get the user to click to reload the page so they can see the change.
-			$("#option_speech").live("change", function(){
-				toggleSpeechInputIcons();
-			});
-
 			// When user clicks the little down or up arrow on a number input, trigger that the value has change()'d
 			$('input[type="number"]').live("click",function(){
 				$(this).change();
@@ -1775,18 +1796,14 @@ $(document).ready(function(){
 					var osRow = $(this).parent().parent();
 					window.db.transaction(function(tx){
 						tx.executeSql('UPDATE opensearches SET shortname = ?, searchurl = ? WHERE shortname = ?', [$('.shortname > input',osRow).val(), $('.searchurl > input',osRow).val(), $('.shortname > input',osRow).attr("origvalue")]);
-					}, errorHandler, function(){
+					}, function(t){
+						errorHandler(t, getLineInfo());
+					}, function(){
 						$("#opensearchoptionstable > tbody > tr > td.shortname > input, #opensearchoptionstable > tbody > tr > td.searchurl > input").each(function(){
 							$(this).attr("origvalue",$(this).val());
 						});
 						populateOpenSearchMenu();
 					});
-					/*setTimeout(function() {
-						$("#opensearchoptionstable > tbody > tr > td.shortname > input, #opensearchoptionstable > tbody > tr > td.searchurl > input").each(function(){
-							$(this).attr("origvalue",$(this).val());
-						});
-						populateOpenSearchMenu();
-					}, 100);*/
 				}
 			});
 
@@ -1796,7 +1813,9 @@ $(document).ready(function(){
 					var theCell = this;
 					window.db.transaction(function(tx){
 						tx.executeSql('DELETE FROM opensearches WHERE shortname = ?', [$(theCell).prevAll('td.shortname').children('input').first().val()]);
-					}, errorHandler);
+					}, function(t){
+						errorHandler(t, getLineInfo());
+					});
 					$(theCell).parent().animate({opacity:0}, /*400*/ 0, function() {
 						$(this).remove();
 						populateOpenSearchMenu();
@@ -1841,7 +1860,9 @@ $(document).ready(function(){
 						tx.executeSql('DELETE FROM opensearches WHERE searchurl = ?', [$(button).attr("searchurl")]);
 						tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, suggestUrl) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [$(button).attr("shortname"), $("img",button).attr("src"), $(button).attr("searchurl"), "", "", "0", "get", $(button).attr("suggesturl")]);
 						$(button).css("display","none");
-					}, errorHandler);
+					}, function(t){
+						errorHandler(t, getLineInfo());
+					});
 					getSearchEngines();
 					populateOpenSearchMenu();
 				}
@@ -2133,12 +2154,14 @@ function resizeSearchSuggestions() {
 // Fetch and display queries/suggestions related to the user's Search Box input
 function getSearchSuggestions() {
 	window.mouseHasMoved = false;
+
 	// If user has opted to show queries or suggestions...
 	if ($("#opensearchinput:focus").length && (localStorage.option_showqueryhistorysuggestions == 1 || localStorage.option_showjsonsuggestions == 1)) {
+
 		// Set up the SQL select statement for Fauxbar's `searchqueries` database table
 		window.actualSearchInput = $("#opensearchinput").val();
 		if (openDb()) {
-			window.db.transaction(function(tx){
+			window.db.readTransaction(function(tx){
 				var osWords = explode(" ", $("#opensearchinput").val().trim());
 				var queryLikes = [];
 				var statementParts = [];
@@ -2166,6 +2189,7 @@ function getSearchSuggestions() {
 						actualSuggestUrl = suggestUrl;
 					}
 					var osVal = $("#opensearchinput").val();
+
 					// Setup the JSON URL get...
 					$.getJSON(str_replace("{searchTerms}", urlencode(osVal), actualSuggestUrl)).complete(function(response){
 						response = jQuery.parseJSON(response.responseText);
@@ -2214,7 +2238,9 @@ function getSearchSuggestions() {
 						}
 					});
 				});
-			}, errorHandler);
+			}, function(t){
+				errorHandler(t, getLineInfo());
+			});
 		}
 	}
 }
@@ -2464,7 +2490,7 @@ function getResults(noQuery) {
 		window.sortedHistoryItems = {};
 
 		if (openDb()) {
-			window.db.transaction(function (tx) {
+			window.db.readTransaction(function(tx) {
 
 				// If Address Box input exists, sort out how the SQL select statement should be crafted
 				if (!noQuery) {
@@ -2633,7 +2659,6 @@ function getResults(noQuery) {
 							var resultOnClick = 'return window.clickResult(this)';
 							var addTileText = '';
 						}
-						/*var tileModeTitle = '';*/
 
 						// Another chance to cancel... don't want to waste processing time!
 						if (thisQuery != window.actualUserInput || !noQuery && $(".glow").length == 1) {
@@ -2648,15 +2673,19 @@ function getResults(noQuery) {
 								hI = window.sortedHistoryItems[ii];
 								resultIsOkay = true;
 
-								// When searching the database, Fauxbar returns both history and bookmarks. History items come first.
+								// When searching the database, Fauxbar returns both history and bookmarks. <strike>History items</strike> Bookmarks come first.
 								// If this is a bookmark result, add a bookmark icon to the existing history result.
 								// Then, cancel continuing on with this result.
-								if ($('.result[url="'+hI.url+'"]').length > 0 && $('.result[url="'+hI.url+'"] img.favstar').length == 0) {
-									if (!strstr(getAiSansSelected().toLowerCase(), "is:fav")) {
-										if (hI.isBookmark && !noQuery) { // bookmark
-											$('.result_title[url="'+hI.url+'"]').html('<img class="result_favicon" src="chrome://favicon/'+hI.url+'" />'+titleText);
-											$('.result[url="'+hI.url+'"]').prepend('<img class="favstar" />');
+								if ($('.result[url="'+hI.url+'"]').length > 0) {
+									if ($('.result[url="'+hI.url+'"] img.favstar').length == 0) {
+										if (!strstr(getAiSansSelected().toLowerCase(), "is:fav")) {
+											if (hI.isBookmark && !noQuery) { // bookmark
+												$('.result_title[url="'+hI.url+'"]').html('<img class="result_favicon" src="chrome://favicon/'+hI.url+'" />'+titleText);
+												$('.result[url="'+hI.url+'"]').prepend('<img class="favstar" />');
+											}
+											resultIsOkay = false;
 										}
+									} else if (localStorage.option_consolidateBookmarks && localStorage.option_consolidateBookmarks == 1) {
 										resultIsOkay = false;
 									}
 								}
@@ -2900,9 +2929,11 @@ function getResults(noQuery) {
 
 							///////////////////////////////////////////////////////
 						}
-					}, errorHandler);
+					});
 				}
-			}, errorHandler);
+			}, function(t){
+				errorHandler(t, getLineInfo());
+			});
 		}
 	}
 	else {
@@ -3063,6 +3094,8 @@ function goToUrl(url, fromClickedResult) {
 
 // Below are a lot of copied/pasted functions from other sources.
 // If your code is listed below, thank you!
+
+// And at the very bottom of this file are some Options page functions.
 
 /////////////////////////////////////
 
@@ -3361,3 +3394,95 @@ String.prototype.filename= function(){
 	return filename;
 }
 
+
+////////////// OPTIONS FUNCTIONS ////////////
+
+
+if (getHashVar("options") == 1) {
+	function editSiteTiles() {
+		chrome.tabs.getAllInWindow(null, function(tabs){
+			for (var t in tabs) {
+				console.log(tabs[t].title+" - "+tabs[t].url);
+				if (tabs[t].title == "Fauxbar: Edit Tiles" && (strstr(tabs[t].url, chrome.extension.getURL("fauxbar.html")) || strstr(tabs[t].url, "chrome://newtab"))) {
+					chrome.tabs.update(tabs[t].id, {selected:true});
+					return;
+				}
+			}
+			chrome.tabs.create({url:"fauxbar.html#edittiles=1"});
+		});
+	}
+	function toggleSiteTileOptions(el) {
+		if ($(el).val() == "manual") {
+			$("#option_topsiterows").css("display","none");
+			$("#infiniterows").html("&nbsp;&#8734;").css("display","");
+			$("#siteTileCheckboxes").css("display","none");
+			$("#siteTileEditInfo").css("display","");
+		} else {
+			$("#option_topsiterows").css("display","");
+			$("#infiniterows").css("display","none");
+			$("#siteTileCheckboxes").css("display","");
+			$("#siteTileEditInfo").css("display","none");
+		}
+	}
+
+	$(document).ready(function(){
+		setTimeout(function(){
+			$("#option_showtopsites").live("change", function(){
+				if ($("#option_showtopsites").prop("checked") == true) {
+					$("#topSiteOptions").css("display","");
+				} else {
+					$("#topSiteOptions").css("display","none");
+				}
+			});
+			$("#option_pagetilearrangement").live("change", function(){
+				toggleSiteTileOptions(this);
+			});
+
+			$("#option_pagetilearrangement").trigger("change");
+			$("#option_showtopsites").trigger("change");
+
+			$(".favstar").attr("src", $("#fauxstar").attr("src"));
+
+			var total = localStorage.unreadErrors;
+			if (total > 0) {
+				var words = total == 1 ? 'There is 1 error to report.' : 'There are '+total+' errors to report.';
+				$("#errorLabel").css("font-weight","bold").find("span").html(words);
+			} else {
+				$("#errorLabel span").html('There are no errors to report.');
+			}
+
+			// Error count beside Management menu option
+			$("#option_showErrorCount").bind("change", function(){
+				if ($(this).prop("checked") == 1 && localStorage.unreadErrors && localStorage.unreadErrors > 0) {
+					$("#errorCount").css("display","");
+				} else {
+					$("#errorCount").css("display","none");
+				}
+			});
+			$("#errorCount").html(total);
+			if (!localStorage.option_showErrorCount || localStorage.option_showErrorCount == 0 || !localStorage.unreadErrors || localStorage.unreadErrors == 0) {
+				$("#errorCount").css("display","none");
+			}
+
+			updateHelperStatus();
+
+			if (localStorage.option_customscoring != 1) {
+				$(".customscoring").css("display","none");
+			}
+			$("#option_customscoring").bind("change", function(){
+				if ($(this).prop("checked") == true) {
+					$(".customscoring").css("display","table-row");
+				} else {
+					$(".customscoring").css("display","none");
+				}
+			});
+
+			chrome.extension.onRequest.addListener(function(r){
+				if (r == "reload options") {
+					window.location.reload();
+				}
+			});
+
+		}, 100);
+	});
+}

@@ -18,7 +18,7 @@
 			<div id="option_section_frecency" class="section_general" optionbox="frecencyoptions">Frecency Scoring</div>
 
 			<span class="optionmenucat" style="margin-top:5px">Misc</span>
-			<div id="option_section_management" class="section_general" optionbox="managementoptions">Management</div>
+			<div id="option_section_management" class="section_general" optionbox="managementoptions">Management<span id="errorCount" style="font-size:11px"></span></div>
 			<div id="option_section_tips" class="section_general" optionbox="tipsoptions">Tips &amp; Tricks</div>
 
 			<!-- Donate button -->
@@ -28,8 +28,6 @@
 			</span>
 			<br /><br />
 			<span style="font-size:11px; display:block; text-align:center; line-height:16px; opacity:.5">For support, visit<br /><a href="http://www.fauxbar.org/" target="_blank" style="color:#000">www.fauxbar.org</a></span>
-
-
 		</td>
 		<!-- Options subpages container -->
 		<td id="option_boxes">
@@ -112,7 +110,7 @@
 							</div>
 							<script type="text/javascript">
 							<!--
-								function editSiteTiles() {
+								/*function editSiteTiles() {
 									chrome.tabs.getAllInWindow(null, function(tabs){
 										for (var t in tabs) {
 											console.log(tabs[t].title+" - "+tabs[t].url);
@@ -152,7 +150,7 @@
 										$("#option_pagetilearrangement").trigger("change");
 										$("#option_showtopsites").trigger("change");
 									}, 10);
-								});
+								});*/
 							-->
 							</script>
 						</td>
@@ -205,6 +203,9 @@
 							</label>
 							<label class="legend">
 								<input name="option_showmatchingfavs" id="option_showmatchingfavs" type="checkbox" /> Show matching results from my bookmarks
+							</label>
+							<label class="legend">
+								<input name="option_consolidateBookmarks" id="option_consolidateBookmarks" type="checkbox" /> Consolidate duplicate bookmarks
 							</label>
 							<label class="legend">
 								<input name="option_ignoretitleless" id="option_ignoretitleless" type="checkbox" /> Ignore certain titleless pages
@@ -454,11 +455,11 @@
 								<div class="result_url">http://example.url.com/</div>
 							</div>
 							<script type="text/javascript">
-								$(document).ready(function(){
+								/*$(document).ready(function(){
 									setTimeout(function() {
 										$(".favstar").attr("src", $("#fauxstar").attr("src"));
 									}, 150);
-								});
+								});*/
 							</script>
 						</td>
 					</tr>
@@ -643,6 +644,10 @@
 						<th>Input Boxes</th>
 						<td>
 							<label class="legend">
+								<!--
+									Although most checkbox options can be applied instantly without needing to reload the page, Chrome/WebKit's HTML5 speech input icons don't seem to be able to be changed on the fly.
+									So the page has to actually be reloaded for the user to see the page, so display a link to get the user to click to reload the page so they can see the change.
+								-->
 								<input name="option_speech" id="option_speech" type="checkbox" onchange="$('#speechtip').css('display','inline-block')" /> Show speech input icons
 								<span id="speechtip" style="display:none">
 									&ndash; <a onclick="javascript:window.location.reload(); return false" style="text-decoration:underline; cursor:pointer; color:#06c">Reload this page</a> to apply
@@ -769,8 +774,39 @@
 					<tr>
 						<th>Errors</th>
 						<td>
+							<label class="legend" style="margin-top:1px" id="errorLabel">
+								<span>Checking the error log...</span>
+								<a style="color:#06c" href="fauxbar.errorlog.html" target="_blank">Open the error log</a>
+							</label>
+							<script type="text/javascript">
+								// get error count
+								/*$(document).ready(function(){
+									if (openDb()){
+										window.db.readTransaction(function(tx){
+											tx.executeSql('SELECT count(id) AS total FROM errors', [], function(tx, results){
+												var total = results.rows.item(0).total;
+												if (total > 0) {
+													var words = total == 1 ? 'There is 1 error to report.' : 'There are '+total+' errors to report.';
+													$("#errorLabel")
+														.html(words+' <a href="fauxbar.errorlog.html" target="_blank" style="color:#06c">View error log</a>')
+														.css("font-weight","bold");
+												} else {
+													$("#errorLabel").html('There are no errors to report.');
+												}
+											});
+										}, function(t){
+											errorHandler(t, getLineInfo());
+										});
+									} else {
+										$("#errorLabel").html('Unable to open Fauxbar\'s database to check for errors.');
+									}
+								});*/
+							</script>
 							<label class="legend" style="margin-top:1px">
-								<input name="option_alert" id="option_alert" type="checkbox" /> Alert me if a database error occurs
+								<input name="option_alert" id="option_alert" type="checkbox" /> Show a message if an error occurs
+							</label>
+							<label class="legend" style="margin-top:1px">
+								<input name="option_showErrorCount" id="option_showErrorCount" type="checkbox" /> Show an error count beside the Management menu
 							</label>
 						</td>
 					</tr>
@@ -783,7 +819,7 @@
 								Fauxbar Memory Helper</a> is <span id="helperstatus">???</span>
 							</label>
 							<script type="text/javascript">
-								updateHelperStatus();
+								/*updateHelperStatus();*/
 							</script>
 							<div class="optionstip">
 								To minimize Fauxbar's memory usage, Fauxbar Memory Helper is a Chrome extension that quietly reloads Fauxbar when your computer has been idle for ~60 seconds, as long as the main Fauxbar or Fauxbar Options pages aren't open.
@@ -817,7 +853,7 @@
 							</div>
 							<script type="text/javascript">
 							<!--
-								if (localStorage.option_customscoring != 1) {
+								/*if (localStorage.option_customscoring != 1) {
 									$(".customscoring").css("display","none");
 								}
 								$("#option_customscoring").bind("change", function(){
@@ -826,7 +862,7 @@
 									} else {
 										$(".customscoring").css("display","none");
 									}
-								});
+								});*/
 							-->
 							</script>
 						</td>
