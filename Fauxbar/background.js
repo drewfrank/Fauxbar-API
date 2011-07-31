@@ -4,9 +4,9 @@ window.md5thumbs = {};
 
 function loadThumbsIntoMemory() {
 	if (openDb() && localStorage.option_pagetilearrangement) {
-		delete window.md5thumbs;
-		window.md5thumbs = {};
-		window.db.readTransaction(function(tx){
+		window.db.transaction(function(tx){
+			delete window.md5thumbs;
+			window.md5thumbs = {};
 			var statement = '';
 			if (localStorage.option_pagetilearrangement == "manual") {
 				statement = 'SELECT url, data FROM thumbs WHERE manual = 1';
@@ -26,8 +26,6 @@ function loadThumbsIntoMemory() {
 		});
 	}
 }
-
-// Load top site tile thumbnails into memory upon load
 $(document).ready(loadThumbsIntoMemory);
 
 // Reload Fauxbar Memory Helper if it's running
@@ -77,8 +75,8 @@ chrome.extension.onRequestExternal.addListener(function(request){
 $(document).ready(function(){
 
 	// New version info
-	var currentVersion = "0.2.1";
-	localStorage.updateBlurb = ". Fauxbar tabs now load faster than before.";
+	var currentVersion = "0.2.2";
+	localStorage.updateBlurb = ". Site tile thumbnails should now persist between sessions again.";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
 		localStorage.readUpdateMessage = 0;
 	}
@@ -90,6 +88,26 @@ $(document).ready(function(){
 
 	// Set current version
 	localStorage.currentVersion = currentVersion;
+
+	// Ensure manual site tile URLs are marked accordingly in the `thumbs` table  (this fix/check was added in 0.2.2)
+	if (localStorage.siteTiles && openDb()) {
+		window.db.transaction(function(tx){
+			var siteTiles = jQuery.parseJSON(localStorage.siteTiles);
+			if (siteTiles.length > 0) {
+				tx.executeSql('UPDATE thumbs SET manual = 0');
+				for (var st in siteTiles) {
+					if (siteTiles[st].url) {
+						tx.executeSql('UPDATE thumbs SET manual = 1 WHERE url = ?', [siteTiles[st].url]);
+					}
+				}
+			}
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		}, function(){
+			// Load top site tile thumbnails into memory upon load
+			loadThumbsIntoMemory();
+		});
+	}
 
 	// Consolidate duplicate bookmarks. Added in 0.2.0
 	if (!localStorage.option_consolidateBookmarks) {
