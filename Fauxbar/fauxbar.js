@@ -59,6 +59,8 @@
  }
 })(jQuery);
 
+////// Fauxbar-crafted code below ///////
+
 // Show update message if it hasn't been read yet
 if (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0) {
 
@@ -79,14 +81,11 @@ if (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0) {
 	});
 }
 
-//// Begin Fauxbar's code ////
-
-
 // Placeholder text for Address Box
 window.placeholder = "Go to a web site";
 
 // Initial loading calls this function (icon canvas coloring), but it's slow. Real function gets created later
-function processFilters() { }
+function processFilters() {}
 
 // Save new site tile configuration/layout
 function saveSiteTiles(justChecking) {
@@ -115,6 +114,7 @@ function saveSiteTiles(justChecking) {
 				errorHandler(t, getLineInfo());
 			}, function(){
 				// success
+				chrome.extension.sendRequest("loadThumbsIntoMemory");
 				localStorage.siteTiles = JSON.stringify(tiles);
 				chrome.tabs.getCurrent(function(tab){
 					chrome.tabs.update(tab.id, {url:"fauxbar.html"});
@@ -271,10 +271,24 @@ function addTile(el) {
 	}, 10);
 	toggleSwitchText();
 	$("#awesomeinput").removeClass("description").focus();
-	$("#topthumbs").append(renderPageTile($(el).attr("url"), $(el).attr("origtitle"), true));
-	truncatePageTileTitle($("#topthumbs a .toptitle").last());
-	$("#topthumbs a").last().animate({opacity:1}, 500);
-	$("#topthumbs a").attr("title","Click and drag to move.\nDouble-click to rename.");
+
+	// Load thumbnail img if it exists, then add tile regardless
+	if (openDb()) {
+		window.db.transaction(function(tx){
+			tx.executeSql('SELECT data FROM thumbs WHERE url = ? LIMIT 1', [$(el).attr("url")], function(tx, results){
+				if (results.rows.length == 1) {
+					window.bgPage.md5thumbs[hex_md5($(el).attr("url"))] = results.rows.item(0).data;
+				}
+			});
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		}, function(){
+			$("#topthumbs").append(renderPageTile($(el).attr("url"), $(el).attr("origtitle"), true));
+			truncatePageTileTitle($("#topthumbs a .toptitle").last());
+			$("#topthumbs a").last().animate({opacity:1}, 500);
+			$("#topthumbs a").attr("title","Click and drag to move.\nDouble-click to rename.");
+		});
+	}
 }
 
 function removeTile(el) {
@@ -846,132 +860,152 @@ $(document).ready(function(){
 		changeInputFontSize();
 	}
 
-	// Load the user's font name
-	$("#customstyle").append("#apps, #topthumbs { font-family:"+localStorage.option_font+",Segoe UI, Arial, sans-serif; font-size:"+localStorage.option_sappsfontsize+"px; }");
+	if (!localStorage.customStyles/* || getHashVar("options") == 1*/) {
+		// Load the user's font name
+		$("#customstyle").append("#apps, #topthumbs { font-family:"+localStorage.option_font+",Segoe UI, Arial, sans-serif; font-size:"+localStorage.option_sappsfontsize+"px; }");
 
-	// Show or hide the Fauxbar's drop shadow
-	if (localStorage.option_shadow && localStorage.option_shadow != 1) {
-		$("#customstyle").append(".wrapper { box-shadow:none; } ");
-	}
+		// Show or hide the Fauxbar's drop shadow
+		if (localStorage.option_shadow && localStorage.option_shadow != 1) {
+			$("#customstyle").append(".wrapper { box-shadow:none; } ");
+		}
 
-	// Apply the user's background image, if selected
-	if (localStorage.option_bgimg && localStorage.option_bgimg.length) {
-		$("body").css("background-image", "url("+localStorage.option_bgimg+")");
-	}
+		// Apply the user's background image, if selected
+		if (localStorage.option_bgimg && localStorage.option_bgimg.length) {
+			//$("body").css("background-image", "url("+localStorage.option_bgimg+")");
+			$("#customstyle").append("body { background-image:url("+localStorage.option_bgimg+"); }");
+		}
 
-	// Apply the user's background color, if selected
-	if (localStorage.option_bgcolor && localStorage.option_bgcolor.length) {
-		$("body").css("background-color", localStorage.option_bgcolor);
-	}
+		// Apply the user's background color, if selected
+		if (localStorage.option_bgcolor && localStorage.option_bgcolor.length) {
+			//$("body").css("background-color", localStorage.option_bgcolor);
+			$("#customstyle").append("body { background-color:"+localStorage.option_bgcolor+"; }");
+		}
 
-	// Apply the user's background image position, if selected
-	if (localStorage.option_bgpos && localStorage.option_bgpos.length) {
-		$("body").css("background-position", localStorage.option_bgpos);
-	}
+		// Apply the user's background image position, if selected
+		if (localStorage.option_bgpos && localStorage.option_bgpos.length) {
+			//$("body").css("background-position", localStorage.option_bgpos);
+			$("#customstyle").append("body { background-position:"+localStorage.option_bgpos+"; }");
+		}
 
-	// Apply the user's background-repeat, if selected
-	if (localStorage.option_bgrepeat && localStorage.option_bgrepeat.length) {
-		$("body").css("background-repeat", localStorage.option_bgrepeat);
-	}
+		// Apply the user's background-repeat, if selected
+		if (localStorage.option_bgrepeat && localStorage.option_bgrepeat.length) {
+			//$("body").css("background-repeat", localStorage.option_bgrepeat);
+			$("#customstyle").append("body { background-repeat:"+localStorage.option_bgrepeat+"; }");
+		}
 
-	// Apply the user's background image size, if selected
-	if (localStorage.option_bgsize && localStorage.option_bgsize.length) {
-		$("body").css("background-size", localStorage.option_bgsize);
-	}
+		// Apply the user's background image size, if selected
+		if (localStorage.option_bgsize && localStorage.option_bgsize.length) {
+			//$("body").css("background-size", localStorage.option_bgsize);
+			$("#customstyle").append("body { background-size:"+localStorage.option_bgsize+"; }");
+		}
 
-	// Apply the user's maximum width of the Fauxbar, if selected
-	if (localStorage.option_maxwidth && localStorage.option_maxwidth.length) {
-		$("#customstyle").append(".wrapper { max-width:"+localStorage.option_maxwidth+"px; }");
-	}
+		// Apply the user's maximum width of the Fauxbar, if selected
+		if (localStorage.option_maxwidth && localStorage.option_maxwidth.length) {
+			$("#customstyle").append(".wrapper { max-width:"+localStorage.option_maxwidth+"px; }");
+		}
 
-	// Apply the user's global font name, if selected
-	if (localStorage.option_font && localStorage.option_font.length) {
-		$("#customstyle").append("#thefauxbar *, #options .resultpreview * { font-family:"+localStorage.option_font+", Segoe UI, Arial, sans-serif; }");
-	}
+		// Apply the user's global font name, if selected
+		if (localStorage.option_font && localStorage.option_font.length) {
+			$("#customstyle").append("#thefauxbar *, #options .resultpreview * { font-family:"+localStorage.option_font+", Segoe UI, Arial, sans-serif; }");
+		}
 
-	// Apply the user's specified font size for the Address Box and Search Box
-	if (localStorage.option_inputfontsize && localStorage.option_inputfontsize.length) {
-		$("#customstyle").append("#addresswrapper input, #searchwrapper input { font-size:"+localStorage.option_inputfontsize+"px; }");
-	}
+		// Apply the user's specified font size for the Address Box and Search Box
+		if (localStorage.option_inputfontsize && localStorage.option_inputfontsize.length) {
+			$("#customstyle").append("#addresswrapper input, #searchwrapper input { font-size:"+localStorage.option_inputfontsize+"px; }");
+		}
 
-	// Apply the user's specified color for Address Box result title texts, and Search Box queries/suggestions
-	if (localStorage.option_titlecolor && localStorage.option_titlecolor.length) {
-		$("#customstyle").append(".result_title, #opensearch_results .result, .result_title .dotdotdot { color:"+localStorage.option_titlecolor+"; }");
-	}
+		// Apply the user's specified color for Address Box result title texts, and Search Box queries/suggestions
+		if (localStorage.option_titlecolor && localStorage.option_titlecolor.length) {
+			$("#customstyle").append(".result_title, #opensearch_results .result, .result_title .dotdotdot { color:"+localStorage.option_titlecolor+"; }");
+		}
 
-	// Apply the user's specified color for Address Box result URL texts
-	if (localStorage.option_urlcolor && localStorage.option_urlcolor.length) {
-		$("#customstyle").append(".result_url, .result_url .dotdotdot { color:"+localStorage.option_urlcolor+"; }");
-	}
+		// Apply the user's specified color for Address Box result URL texts
+		if (localStorage.option_urlcolor && localStorage.option_urlcolor.length) {
+			$("#customstyle").append(".result_url, .result_url .dotdotdot { color:"+localStorage.option_urlcolor+"; }");
+		}
 
-	// Apply the user's specified background color for Address Box results and Search Box queries/suggestions
-	if (localStorage.option_resultbgcolor && localStorage.option_resultbgcolor.length) {
-		$("#customstyle").append(".result, .resultpreview, .dotdotdot { background-color:"+localStorage.option_resultbgcolor+"; }");
-	}
+		// Apply the user's specified background color for Address Box results and Search Box queries/suggestions
+		if (localStorage.option_resultbgcolor && localStorage.option_resultbgcolor.length) {
+			$("#customstyle").append(".result, .resultpreview, .dotdotdot { background-color:"+localStorage.option_resultbgcolor+"; }");
+		}
 
-	// Apply the user's sepcified highlighted color for results/queries/suggestions title texts
-	if (localStorage.option_selectedtitlecolor && localStorage.option_selectedtitlecolor.length) {
-		$("#customstyle").append("#opensearch_results .arrowed, .arrowed .result_title, .arrowed .result_title .dotdotdot { color:"+localStorage.option_selectedtitlecolor+"; }");
-	}
+		// Apply the user's sepcified highlighted color for results/queries/suggestions title texts
+		if (localStorage.option_selectedtitlecolor && localStorage.option_selectedtitlecolor.length) {
+			$("#customstyle").append("#opensearch_results .arrowed, .arrowed .result_title, .arrowed .result_title .dotdotdot { color:"+localStorage.option_selectedtitlecolor+"; }");
+		}
 
-	// Apply the user's sepcified highlighted color for result URL texts
-	if (localStorage.option_selectedurlcolor && localStorage.option_selectedurlcolor.length) {
-		$("#customstyle").append(".arrowed .result_url, .arrowed .result_url .dotdotdot { color:"+localStorage.option_selectedurlcolor+"; }");
-	}
+		// Apply the user's sepcified highlighted color for result URL texts
+		if (localStorage.option_selectedurlcolor && localStorage.option_selectedurlcolor.length) {
+			$("#customstyle").append(".arrowed .result_url, .arrowed .result_url .dotdotdot { color:"+localStorage.option_selectedurlcolor+"; }");
+		}
 
-	// Apply the user's sepcified highlighted background color for results/queries/suggestions
-	if (localStorage.option_selectedresultbgcolor && localStorage.option_selectedresultbgcolor.length) {
-		$("#customstyle").append(".arrowed, #options .arrowed .dotdotdot, .arrowed .result_title .dotdotdot, .arrowed .result_url .dotdotdot { background-color:"+localStorage.option_selectedresultbgcolor+"; }");
-	}
+		// Apply the user's sepcified highlighted background color for results/queries/suggestions
+		if (localStorage.option_selectedresultbgcolor && localStorage.option_selectedresultbgcolor.length) {
+			$("#customstyle").append(".arrowed, #options .arrowed .dotdotdot, .arrowed .result_title .dotdotdot, .arrowed .result_url .dotdotdot { background-color:"+localStorage.option_selectedresultbgcolor+"; }");
+		}
 
-	// Apply the user's specified font size for result titles
-	if (localStorage.option_titlesize && localStorage.option_titlesize.length) {
-		$("#customstyle").append(".result_title, #options .result_title { font-size:"+localStorage.option_titlesize+"px; }");
-	}
+		// Apply the user's specified font size for result titles
+		if (localStorage.option_titlesize && localStorage.option_titlesize.length) {
+			$("#customstyle").append(".result_title, #options .result_title { font-size:"+localStorage.option_titlesize+"px; }");
+		}
 
-	// Apply the user's specified font size for result URLs and queries/suggestions
-	if (localStorage.option_urlsize && localStorage.option_urlsize.length) {
-		$("#customstyle").append(".result_url, #options .result_url, .historyresult, .jsonresult { font-size:"+localStorage.option_urlsize+"px; }");
-	}
+		// Apply the user's specified font size for result URLs and queries/suggestions
+		if (localStorage.option_urlsize && localStorage.option_urlsize.length) {
+			$("#customstyle").append(".result_url, #options .result_url, .historyresult, .jsonresult { font-size:"+localStorage.option_urlsize+"px; }");
+		}
 
-	// Apply the user's specified Address Box result separator color
-	if (localStorage.option_separatorcolor && localStorage.option_separatorcolor.length) {
-		$("#customstyle").append(".result { border-color:"+localStorage.option_separatorcolor+"; }");
-	}
+		// Apply the user's specified Address Box result separator color
+		if (localStorage.option_separatorcolor && localStorage.option_separatorcolor.length) {
+			$("#customstyle").append(".result { border-color:"+localStorage.option_separatorcolor+"; }");
+		}
 
-	// Apply the user's specified Address Box and Search Box background color
-	if (localStorage.option_inputbgcolor && localStorage.option_inputbgcolor.length) {
-		$("#customstyle").append(".inputwrapper { background-color:"+localStorage.option_inputbgcolor+"; }");
-	}
+		// Apply the user's specified Address Box and Search Box background color
+		if (localStorage.option_inputbgcolor && localStorage.option_inputbgcolor.length) {
+			$("#customstyle").append(".inputwrapper { background-color:"+localStorage.option_inputbgcolor+"; }");
+		}
 
-	// Apply the bookmark/favorite icon's custom tint opacity strength
-	if (localStorage.option_favopacity && localStorage.option_favopacity.length) {
-		$("#fauxstar").attr("data-pb-tint-opacity", localStorage.option_favopacity / 100);
-	}
-	// Apply the bookmar/favorite icon's tint color
-	if (localStorage.option_favcolor && localStorage.option_favcolor.length) {
-		$("#fauxstar").attr("data-pb-tint-colour",localStorage.option_favcolor);
-		$(".favstar").attr("src",$("#fauxstar").attr("src"));
-	}
+		// Apply the bookmark/favorite icon's custom tint opacity strength
+		if (localStorage.option_favopacity && localStorage.option_favopacity.length) {
+			$("#fauxstar").attr("data-pb-tint-opacity", localStorage.option_favopacity / 100);
+		}
+		// Apply the bookmar/favorite icon's tint color
+		if (localStorage.option_favcolor && localStorage.option_favcolor.length) {
+			$("#fauxstar").attr("data-pb-tint-colour",localStorage.option_favcolor);
+			$(".favstar").attr("src",$("#fauxstar").attr("src"));
+		}
 
-	// Load the Address Box's fallback URL into an element? Not sure why...
-	if (localStorage.option_fallbacksearchurl && localStorage.option_fallbacksearchurl.length) {
-		$("#option_fallbacksearchurl").val(localStorage.option_fallbacksearchurl);
-	}
+		// Load the Address Box's fallback URL into an element? Not sure why...
+		if (localStorage.option_fallbacksearchurl && localStorage.option_fallbacksearchurl.length) {
+			$("#option_fallbacksearchurl").val(localStorage.option_fallbacksearchurl);
+		}
 
-	// In the Options, when deciding on a new color for the input boxes' text, remove the faded/italic CSS class
-	// so that the user can properly see what the text will look like when they're typing into it.
-	$("#option_fauxbarfontcolor").live("focus", function(){
-		$("#awesomeinput").removeClass("description");
-	});
-	// Then reset it back to being faded once the user is done deciding on a color.
-	$("#option_fauxbarfontcolor").live("blur", function(){
-		$("#awesomeinput").val("").blur();
-	});
+		// In the Options, when deciding on a new color for the input boxes' text, remove the faded/italic CSS class
+		// so that the user can properly see what the text will look like when they're typing into it.
+		$("#option_fauxbarfontcolor").live("focus", function(){
+			$("#awesomeinput").removeClass("description");
+		});
+		// Then reset it back to being faded once the user is done deciding on a color.
+		$("#option_fauxbarfontcolor").live("blur", function(){
+			$("#awesomeinput").val("").blur();
+		});
 
-	// Apply custom Fauxbar background gradient colors
-	if (localStorage.option_topgradient && localStorage.option_topgradient.length && localStorage.option_bottomgradient && localStorage.option_bottomgradient.length) {
-		changeFauxbarColors();
+		// Apply custom Fauxbar background gradient colors
+		if (localStorage.option_topgradient && localStorage.option_topgradient.length && localStorage.option_bottomgradient && localStorage.option_bottomgradient.length) {
+			changeFauxbarColors();
+		}
+
+
+
+		// Apply custom Address Box and Search Box font color
+		if (localStorage.option_fauxbarfontcolor && localStorage.option_fauxbarfontcolor.length) {
+			$("#customstyle").append(".inputwrapper input { color:"+localStorage.option_fauxbarfontcolor+"; }");
+		}
+
+		// So, just make the Fauxbar appear instantly, now that all the custom colors and stuff have been applied.
+
+		localStorage.customStyles = $("#customstyle").html();
+	} else {
+		$("#customstyle").append(localStorage.customStyles);
 	}
 
 	// Apply custom icon tint colors
@@ -979,12 +1013,6 @@ $(document).ready(function(){
 		changeTintColors();
 	}
 
-	// Apply custom Address Box and Search Box font color
-	if (localStorage.option_fauxbarfontcolor && localStorage.option_fauxbarfontcolor.length) {
-		$("#customstyle").append(".inputwrapper input { color:"+localStorage.option_fauxbarfontcolor+"; }");
-	}
-
-	// So, just make the Fauxbar appear instantly, now that all the custom colors and stuff have been applied.
 	$(".wrapper").css("opacity",1);
 
 	// Set the var saying that the user is not rearranging the order of the Search Box's search engines (this should probably go under / OPTIONS / below
@@ -1558,6 +1586,7 @@ $(document).ready(function(){
 	// When user clicks on a Search Box query/suggestion...
 	$('.jsonresult, .historyresult').live("mousedown", function(){
 		var query = false;
+
 		// If user Middle-clicks or Ctrl+Clicks, record it as such, so that submitOpenSearch() knows to do the search in a new tab
 		if (event.button == 1 || window.ctrlDown == true) {
 			window.ctrlDown = false;
@@ -1565,11 +1594,13 @@ $(document).ready(function(){
 			window.altReturn = true;
 			query = ($(".suggestion",this).text());
 		}
+
 		// If user hasn't Middle-clicked or Ctrl+Clicked, hide the queries/suggestions from view
 		if (!window.middleMouse) {
 			$("#opensearchinput").val($(".suggestion",this).text());
 			$("#opensearch_results").css("display","none").html("");
 		}
+
 		// And finally, submit the search
 		submitOpenSearch(query);
 		return false;
@@ -1675,6 +1706,11 @@ $(document).ready(function(){
 	// And I decided to show the Options page inline with the normal Fauxbar page, because a lot of the options alter the Fauxbar on the fly, so wanted to have both visible at once,
 	// rather than making a whole new options page by itself.
 	if (getHashVar("options") == 1 && localStorage.indexComplete == 1) {
+
+		// Prevent CSS caching while the options are open
+		setInterval(function(){
+			delete localStorage.customStyles;
+		}, 2000);
 
 		// If and when Fauxbar Memory Helper is un/installed or disabled/enabled, update the text on the Management page
 		chrome.management.onEnabled.addListener(function(extension) {
@@ -2026,6 +2062,8 @@ $(document).ready(function(){
 			// Update the Options Management page with the database stats
 			loadDatabaseStats();
 
+			loadOptionsJS();
+
 			// All the Options have been loaded and primed, so let's show the Options page now
 			$("#options").css("display","block");
 		});
@@ -2036,7 +2074,8 @@ $(document).ready(function(){
 
 	// If we're not reindexing the database...
 	} else if (localStorage.indexComplete == 1) {
-		// Setup and show the Fauxbar... Options icon in the Omnibox
+
+		// Setup and show the Fauxbar[...] icon in the Omnibox
 		chrome.tabs.getCurrent(function(tab){
 			chrome.pageAction.setIcon({tabId:tab.id, path:"fauxbar16options.png"});
 			chrome.pageAction.setTitle({tabId:tab.id, title:"Customize Fauxbar"});
@@ -3399,6 +3438,7 @@ String.prototype.filename= function(){
 
 
 if (getHashVar("options") == 1) {
+
 	function editSiteTiles() {
 		chrome.tabs.getAllInWindow(null, function(tabs){
 			for (var t in tabs) {
@@ -3411,6 +3451,7 @@ if (getHashVar("options") == 1) {
 			chrome.tabs.create({url:"fauxbar.html#edittiles=1"});
 		});
 	}
+
 	function toggleSiteTileOptions(el) {
 		if ($(el).val() == "manual") {
 			$("#option_topsiterows").css("display","none");
@@ -3425,64 +3466,68 @@ if (getHashVar("options") == 1) {
 		}
 	}
 
-	$(document).ready(function(){
-		setTimeout(function(){
-			$("#option_showtopsites").live("change", function(){
-				if ($("#option_showtopsites").prop("checked") == true) {
-					$("#topSiteOptions").css("display","");
-				} else {
-					$("#topSiteOptions").css("display","none");
-				}
-			});
-			$("#option_pagetilearrangement").live("change", function(){
-				toggleSiteTileOptions(this);
-			});
-
-			$("#option_pagetilearrangement").trigger("change");
-			$("#option_showtopsites").trigger("change");
-
-			$(".favstar").attr("src", $("#fauxstar").attr("src"));
-
-			var total = localStorage.unreadErrors;
-			if (total > 0) {
-				var words = total == 1 ? 'There is 1 error to report.' : 'There are '+total+' errors to report.';
-				$("#errorLabel").css("font-weight","bold").find("span").html(words);
+	function loadOptionsJS() {
+		$("#option_showtopsites").live("change", function(){
+			if ($("#option_showtopsites").prop("checked") == true) {
+				$("#topSiteOptions").css("display","");
 			} else {
-				$("#errorLabel span").html('There are no errors to report.');
+				$("#topSiteOptions").css("display","none");
 			}
+		});
+		$("#option_pagetilearrangement").live("change", function(){
+			toggleSiteTileOptions(this);
+		});
 
-			// Error count beside Management menu option
-			$("#option_showErrorCount").bind("change", function(){
-				if ($(this).prop("checked") == 1 && localStorage.unreadErrors && localStorage.unreadErrors > 0) {
-					$("#errorCount").css("display","");
-				} else {
-					$("#errorCount").css("display","none");
-				}
-			});
-			$("#errorCount").html(total);
-			if (!localStorage.option_showErrorCount || localStorage.option_showErrorCount == 0 || !localStorage.unreadErrors || localStorage.unreadErrors == 0) {
+		$("#option_pagetilearrangement").trigger("change");
+		$("#option_showtopsites").trigger("change");
+
+		$(".favstar").attr("src", $("#fauxstar").attr("src"));
+
+		var total = localStorage.unreadErrors;
+		if (total > 0) {
+			var words = total == 1 ? 'There is 1 error to report.' : 'There are '+total+' errors to report.';
+			$("#errorLabel").css("font-weight","bold").find("span").html(words);
+		} else {
+			$("#errorLabel span").html('There are no errors to report.');
+		}
+
+		// Error count beside Management menu option
+		$("#option_showErrorCount").bind("change", function(){
+			if ($(this).prop("checked") == 1 && localStorage.unreadErrors && localStorage.unreadErrors > 0) {
+				$("#errorCount").css("display","");
+			} else {
 				$("#errorCount").css("display","none");
 			}
+		});
+		$("#errorCount").html(total);
+		if (!localStorage.option_showErrorCount || localStorage.option_showErrorCount == 0 || !localStorage.unreadErrors || localStorage.unreadErrors == 0) {
+			$("#errorCount").css("display","none");
+		}
 
-			updateHelperStatus();
+		updateHelperStatus();
 
-			if (localStorage.option_customscoring != 1) {
+		if (localStorage.option_customscoring != 1) {
+			$(".customscoring").css("display","none");
+		}
+		$("#option_customscoring").bind("change", function(){
+			if ($(this).prop("checked") == true) {
+				$(".customscoring").css("display","table-row");
+			} else {
 				$(".customscoring").css("display","none");
 			}
-			$("#option_customscoring").bind("change", function(){
-				if ($(this).prop("checked") == true) {
-					$(".customscoring").css("display","table-row");
-				} else {
-					$(".customscoring").css("display","none");
-				}
-			});
+		});
 
-			chrome.extension.onRequest.addListener(function(r){
-				if (r == "reload options") {
-					window.location.reload();
-				}
-			});
+		chrome.extension.onRequest.addListener(function(r){
+			if (r == "reload options") {
+				window.location.reload();
+			}
+		});
 
-		}, 100);
-	});
+		$("#option_pagetilearrangement, #option_topsiterows, #option_topsitecols").bind("change", function(){
+			setTimeout(function(){
+				chrome.extension.sendRequest("loadThumbsIntoMemory");
+			}, 200);
+		});
+	}
 }
+

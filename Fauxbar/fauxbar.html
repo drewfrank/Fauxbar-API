@@ -149,10 +149,10 @@
 			if (localStorage.option_showtopsites == 1) {
 
 				// Generate top sites if Fauxbar's index is fresh. Either way, show the tiles afterwards
-				$(document).ready(function(){
+				//$(document).ready(function(){
 					$("#customstyle").append("#topthumbs a, #apps a { background-color:"+localStorage.option_resultbgcolor+"; color:"+localStorage.option_titlecolor+"; }");
 					$("#customstyle").append("#topthumbs a:hover, #apps a:hover { background-color:"+localStorage.option_selectedresultbgcolor+"; color:"+localStorage.option_selectedtitlecolor+"; }");
-					setTimeout(function(){
+					//setTimeout(function(){
 						chrome.tabs.getAllInWindow(null, function(tabs) {
 							window.currentTabs = tabs;
 							if (openDb()) {
@@ -241,8 +241,8 @@
 								});
 							}
 						});
-					}, 1);
-				});
+					//}, 1);
+				//});
 			}
 		</script>
 
@@ -252,8 +252,8 @@
 
 				// If enabled to show...
 				if (localStorage.option_showapps == 1) {
-					setTimeout(function(){
-						$(document).ready(function(){
+					//setTimeout(function(){
+						//$(document).ready(function(){
 
 							// Get all apps and set their uninstall link
 							window.uninstall = function(appId) {
@@ -343,8 +343,8 @@
 									$("#apps").css("opacity",1);
 								}
 							});
-						});
-					}, localStorage.sapps == 2 ? 1 : 500);
+						//});
+					//}, localStorage.sapps == 2 ? 1 : 500);
 				}
 			</script>
 
@@ -361,7 +361,7 @@
 	<script type="text/javascript">
 		if (localStorage.option_showapps == 1 && localStorage.option_showtopsites == 1 && localStorage.indexComplete == 1) {
 			window.sapped = false;
-			$(document).ready(function(){
+			//$(document).ready(function(){
 				window.sapps = function (s) {
 					var trans = window.sapped ? 130 : 0;
 					if (s == 1) {
@@ -392,7 +392,7 @@
 					$("#sapps").css("opacity",1);
 				},50);
 				sapps(localStorage.sapps);
-			});
+			//});
 		} else {
 			$("#sapps").remove();
 		}

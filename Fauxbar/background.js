@@ -1,12 +1,19 @@
 // This file gets loaded into Fauxbar's background page.
 
-window.md5thumbs = {}
+window.md5thumbs = {};
 
-// Load top site thumb tiles into memory upload load
-$(document).ready(function(){
-	if (openDb()) {
+function loadThumbsIntoMemory() {
+	if (openDb() && localStorage.option_pagetilearrangement) {
+		delete window.md5thumbs;
+		window.md5thumbs = {};
 		window.db.readTransaction(function(tx){
-			tx.executeSql('select url, data from thumbs', [], function(tx, results){
+			var statement = '';
+			if (localStorage.option_pagetilearrangement == "manual") {
+				statement = 'SELECT url, data FROM thumbs WHERE manual = 1';
+			} else {
+				statement = 'SELECT url, data FROM thumbs ORDER BY frecency DESC LIMIT '+((parseFloat(localStorage.option_topsiterows) * parseFloat(localStorage.option_topsitecols))+4); // 4 for probable pinned tabs
+			}
+			tx.executeSql(statement, [], function(tx, results){
 				var len = results.rows.length, i;
 				if (len > 0) {
 					for (var i = 0; i < len; i++) {
@@ -18,7 +25,10 @@ $(document).ready(function(){
 			errorHandler(t, getLineInfo());
 		});
 	}
-});
+}
+
+// Load top site tile thumbnails into memory upon load
+$(document).ready(loadThumbsIntoMemory);
 
 // Reload Fauxbar Memory Helper if it's running
 chrome.management.getAll(function(extensions){
@@ -67,8 +77,8 @@ chrome.extension.onRequestExternal.addListener(function(request){
 $(document).ready(function(){
 
 	// New version info
-	var currentVersion = "0.2.0";
-	localStorage.updateBlurb = ". New methods for displaying and logging errors are in place.";
+	var currentVersion = "0.2.1";
+	localStorage.updateBlurb = ". Fauxbar tabs now load faster than before.";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
 		localStorage.readUpdateMessage = 0;
 	}
@@ -543,7 +553,7 @@ chrome.extension.onRequest.addListener(function(request, sender){
 
 					// Check to see if URL is a user-chosen site tile
 					var urlIsManualTile = false;
-					if (localStorage.siteTiles) {
+					if (localStorage.option_pagetilearrangement == "manual" && localStorage.siteTiles) {
 						var siteTiles = jQuery.parseJSON(localStorage.siteTiles);
 						for (var st in siteTiles) {
 							if (siteTiles[st].url == sender.tab.url) {
@@ -576,6 +586,9 @@ chrome.extension.onRequest.addListener(function(request, sender){
 												context.drawImage(img,0,0, width, height);
 
 												// Save image data
+												if (urlIsManualTile || localStorage.option_pagetilearrangement == "frecency") {
+													window.md5thumbs[hex_md5(sender.tab.url)] = myCanvas.toDataURL("image/png");
+												}
 												window.md5thumbs[hex_md5(sender.tab.url)] = myCanvas.toDataURL("image/png");
 												window.db.transaction(function(tx){
 													tx.executeSql('UPDATE thumbs SET data = ?, title = ?, frecency = ? WHERE url = ?', [myCanvas.toDataURL("image/png"), sender.tab.title, frecency, sender.tab.url], function(tx, results){
@@ -599,6 +612,11 @@ chrome.extension.onRequest.addListener(function(request, sender){
 				errorHandler(t, getLineInfo());
 			});
 		}
+	}
+
+	// User has switched tile selection type, so reload thumbs data into background page
+	else if (request == "loadThumbsIntoMemory") {
+		loadThumbsIntoMemory();
 	}
 
 	// Store top site thumbs html II
@@ -707,7 +725,7 @@ chrome.tabs.onCreated.addListener(function() {
 // When user changes tabs, send request if the tab has not been scrolled down, to see if the page should have a new top site tile thumbnail generated
 chrome.tabs.onSelectionChanged.addListener(function(tabId, selectInfo){
 	chrome.tabs.get(tabId, function(tab){
-		if (tab.url.substr(0,7) == 'http://' || tab.url.substr(0,8) == 'https://') {
+		if (tab.url && (tab.url.substr(0,7) == 'http://' || tab.url.substr(0,8) == 'https://')) {
 			if (tab.selected == true && tab.status == "complete") {
 				chrome.tabs.executeScript(tab.id, {file:"getscrolltop.js"});
 			}

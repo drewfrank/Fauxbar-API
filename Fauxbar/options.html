@@ -257,7 +257,7 @@
 								Bing.com
 							</button>
 							<div class="optionstip">
-								&bull; Used when an invalid address is submitted from the address box,<br />
+								&bull; Used when an invalid address is submitted from the Address Box,<br />
 								<span style="margin-left:8px;font-size:12px">e.g. when you've entered a search query instead of a URL.</span>
 								<div style="margin-top:5px; font-size:12px">&bull; Must contain <b>{searchTerms}</b></div>
 							</div>
@@ -709,7 +709,8 @@
 					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px;" />
 					Fauxbar Management
 				</h1>
-				<table style="margin-top:-12px">
+				Fauxbar version 0.2.1 <span style="opacity:.5">(1 Aug 2011)</span>
+				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
 						<th>Database</th>
@@ -722,7 +723,7 @@
 								&nbsp;&bull; <span id="stats_searchqueries">???</span> search <span id="queriesplural">queries</span>
 							</label>
 							<br />
-							<button onclick="confirm('Reindex Fauxbar\'s history items and bookmarks?\n\nIf Fauxbar\'s Address Box results seem stale, or if you\'ve just altered the Frecency options, click OK - reindexing will ensure Fauxbar\'s database is up to date.\n\nOtherwise, click Cancel - reindexing probably won\'t accomplish much.\n') ? tellBgToReindex() : ''" style="font-size:12px">Reindex...</button>
+							<button onclick="confirm('Reindex Fauxbar\'s history items and bookmarks?\n\nIf Fauxbar\'s Address Box results seem stale, or if you\'ve just altered the Frecency options, click OK - reindexing will ensure Fauxbar\'s database is up to date.\n\nOtherwise, click Cancel - reindexing probably won\'t accomplish much.\n') ? tellBgToReindex() : ''" style="font-size:95%">Reindex...</button>
 							<button id="button_clearsearchhistory" style="font-size:95%; position:relative;" onclick="confirm('Clear Fauxbar\'s Search Box queries?') ? clearSearchHistory() : null">Clear Search Queries...</button>
 						</td>
 					</tr>
