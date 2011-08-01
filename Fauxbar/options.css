@@ -55,3 +55,6 @@ table#options ul { padding-left:23px; }
 table#options li { margin-top:3px; margin-bottom:3px; }
 
 #errorCount { float:right; background-color:#c00; color:#fff; display:inline-block; padding:0px 4px 1px 4px; font-weight:bold; border-radius:4px; text-shadow:1px 1px 0 #000; position:relative; top:1px; right:-30px; }
+
+#supportoptions a { text-decoration:none; }
+#supportoptions a:hover { text-decoration:underline; }

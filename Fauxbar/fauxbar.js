@@ -748,6 +748,15 @@ function changeOptionPage(el) {
 	$("div.optionbox").css("display","none");
 	$("#"+$(el).attr("optionbox")).css("display","block");
 	localStorage.option_optionpage = $(el).attr("id");
+	if ($(el).attr("id") == "option_section_support" && !window.clickedSupportMenu) {
+		window.clickedSupportMenu = true;
+
+		// Twitter follow button
+		$("head").append('<script src="http://platform.twitter.com/widgets.js" type="text/javascript"></script>');
+
+		// Facebook Like button
+		$("#likeBox").html('<iframe src="http://www.facebook.com/plugins/like.php?app_id=112814858817841&amp;href=http%3A%2F%2Fwww.facebook.com%2Fpages%2FFauxbar%2F147907341953576&amp;send=false&amp;layout=standard&amp;width=450&amp;show_faces=false&amp;action=like&amp;colorscheme=light&amp;font=arial&amp;height=35" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:450px; height:35px;" allowTransparency="true"></iframe>');
+	}
 }
 
 // Remove any custom ordering of the Search Box's search engines, and sort them alphabetically
@@ -3528,6 +3537,51 @@ if (getHashVar("options") == 1) {
 				chrome.extension.sendRequest("loadThumbsIntoMemory");
 			}, 200);
 		});
+
+		// Get Fauxbar's Twitter RSS feed, find the first non-reply, and use it as a news message
+		// If there's no cache or if cache is more than an hour old, fetch news
+		if (!localStorage.latestNewsTime || !localStorage.latestNews || parseFloat(date("U")) - parseFloat(localStorage.latestNewsTime) > 3600) {
+			$.ajax({
+				type: "GET",
+				url: "http://twitter.com/statuses/user_timeline/Fauxbar.rss",
+				dataType: "xml",
+				success: function(data){
+					var newText = '';
+					$("title",data).each(function(){
+						if (newText.length == 0 && $(this).text().substr(0,9) == "Fauxbar: " && $(this).text().substr(0,10) != "@") {
+							var text = $(this).text().substr(9);
+							var words = explode(" ", text);
+							if (words.length) {
+								var newWords = new Array;
+								for (var w in words) {
+									if (words[w].substr(0,4) == "http") {
+										newWords[newWords.length] = '<a href='+words[w]+'" target="_blank" style="color:#06c">'+words[w]+'</a>';
+									} else {
+										newWords[newWords.length] = words[w];
+									}
+								}
+								text = implode(" ",newWords);
+							}
+							newText = text;
+						}
+						if (newText.length > 0) {
+							localStorage.latestNewsTime = date("U");
+							localStorage.latestNews = newText;
+							$("#latestNews").html(newText);
+						} else {
+							$("#latestNews").html('Please view <a href="http://twitter.com/Fauxbar" target="_blank" style="color:#06c">Fauxbar\'s Twitter account</a> for the latest news.');
+						}
+					});
+				},
+				error: function(){
+					$("#latestNews").html('Please view <a href="http://twitter.com/Fauxbar" target="_blank" style="color:#06c">Fauxbar\'s Twitter account</a> for the latest news.');
+				}
+			});
+
+		// Otherwise just use existing news cache
+		} else {
+			$("#latestNews").html(localStorage.latestNews);
+		}
 	}
 }
 

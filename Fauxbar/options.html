@@ -19,16 +19,15 @@
 
 			<span class="optionmenucat" style="margin-top:5px">Misc</span>
 			<div id="option_section_management" class="section_general" optionbox="managementoptions">Management<span id="errorCount" style="font-size:11px"></span></div>
-			<div id="option_section_tips" class="section_general" optionbox="tipsoptions">Tips &amp; Tricks</div>
+			<div id="option_section_support" class="section_general" optionbox="supportoptions">Support</div>
 
 			<!-- Donate button -->
 			<br /><br />
 			<span style="display:block; text-align:center">
-				<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ZXUCR8FU2XGYY" target="_blank" title="Donate to Fauxbar via PayPal"><img src="donate.gif" /></a>
+				<a href="loadpaypal.html" target="_blank" title="Donate to Fauxbar via PayPal"><img src="donate.gif" /></a>
 			</span>
-			<br /><br />
-			<span style="font-size:11px; display:block; text-align:center; line-height:16px; opacity:.5">For support, visit<br /><a href="http://www.fauxbar.org/" target="_blank" style="color:#000">www.fauxbar.org</a></span>
 		</td>
+
 		<!-- Options subpages container -->
 		<td id="option_boxes">
 
@@ -108,51 +107,6 @@
 									</div>
 								</div>
 							</div>
-							<script type="text/javascript">
-							<!--
-								/*function editSiteTiles() {
-									chrome.tabs.getAllInWindow(null, function(tabs){
-										for (var t in tabs) {
-											console.log(tabs[t].title+" - "+tabs[t].url);
-											if (tabs[t].title == "Fauxbar: Edit Tiles" && (strstr(tabs[t].url, chrome.extension.getURL("fauxbar.html")) || strstr(tabs[t].url, "chrome://newtab"))) {
-												chrome.tabs.update(tabs[t].id, {selected:true});
-												return;
-											}
-										}
-										chrome.tabs.create({url:"fauxbar.html#edittiles=1"});
-									});
-								}
-								function toggleSiteTileOptions(el) {
-									if ($(el).val() == "manual") {
-										$("#option_topsiterows").css("display","none");
-										$("#infiniterows").html("&nbsp;&#8734;").css("display","");
-										$("#siteTileCheckboxes").css("display","none");
-										$("#siteTileEditInfo").css("display","");
-									} else {
-										$("#option_topsiterows").css("display","");
-										$("#infiniterows").css("display","none");
-										$("#siteTileCheckboxes").css("display","");
-										$("#siteTileEditInfo").css("display","none");
-									}
-								}
-								$(document).ready(function(){
-									$("#option_showtopsites").live("change", function(){
-										if ($("#option_showtopsites").prop("checked") == true) {
-											$("#topSiteOptions").css("display","");
-										} else {
-											$("#topSiteOptions").css("display","none");
-										}
-									});
-									$("#option_pagetilearrangement").live("change", function(){
-										toggleSiteTileOptions(this);
-									});
-									setTimeout(function(){
-										$("#option_pagetilearrangement").trigger("change");
-										$("#option_showtopsites").trigger("change");
-									}, 10);
-								});*/
-							-->
-							</script>
 						</td>
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
@@ -454,13 +408,6 @@
 								<div class="result_title"><img class="result_favicon" src="chrome://favicon/null" />Example Title</div><br />
 								<div class="result_url">http://example.url.com/</div>
 							</div>
-							<script type="text/javascript">
-								/*$(document).ready(function(){
-									setTimeout(function() {
-										$(".favstar").attr("src", $("#fauxstar").attr("src"));
-									}, 150);
-								});*/
-							</script>
 						</td>
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
@@ -709,7 +656,7 @@
 					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px;" />
 					Fauxbar Management
 				</h1>
-				Fauxbar version 0.2.2 <span style="opacity:.5">(1 Aug 2011)</span>
+				Fauxbar version 0.2.3 &nbsp;<span style="opacity:.5">(2 Aug 2011)</span>
 				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
@@ -779,30 +726,6 @@
 								<span>Checking the error log...</span>
 								<a style="color:#06c" href="fauxbar.errorlog.html" target="_blank">Open the error log</a>
 							</label>
-							<script type="text/javascript">
-								// get error count
-								/*$(document).ready(function(){
-									if (openDb()){
-										window.db.readTransaction(function(tx){
-											tx.executeSql('SELECT count(id) AS total FROM errors', [], function(tx, results){
-												var total = results.rows.item(0).total;
-												if (total > 0) {
-													var words = total == 1 ? 'There is 1 error to report.' : 'There are '+total+' errors to report.';
-													$("#errorLabel")
-														.html(words+' <a href="fauxbar.errorlog.html" target="_blank" style="color:#06c">View error log</a>')
-														.css("font-weight","bold");
-												} else {
-													$("#errorLabel").html('There are no errors to report.');
-												}
-											});
-										}, function(t){
-											errorHandler(t, getLineInfo());
-										});
-									} else {
-										$("#errorLabel").html('Unable to open Fauxbar\'s database to check for errors.');
-									}
-								});*/
-							</script>
 							<label class="legend" style="margin-top:1px">
 								<input name="option_alert" id="option_alert" type="checkbox" /> Show a message if an error occurs
 							</label>
@@ -852,20 +775,6 @@
 							<div class="optionstip">
 								If you're not making changes, leave this unchecked for best performance.
 							</div>
-							<script type="text/javascript">
-							<!--
-								/*if (localStorage.option_customscoring != 1) {
-									$(".customscoring").css("display","none");
-								}
-								$("#option_customscoring").bind("change", function(){
-									if ($(this).prop("checked") == true) {
-										$(".customscoring").css("display","table-row");
-									} else {
-										$(".customscoring").css("display","none");
-									}
-								});*/
-							-->
-							</script>
 						</td>
 					</tr>
 					<tr class="customscoring"><td colspan="2" class="tdhr"><div></div></td></tr>
@@ -988,217 +897,99 @@
 				</table>
 			</div>
 
-			<!-- Tips & Tricks -->
-			<div id="tipsoptions" class="optionbox">
+			<!-- Support links -->
+			<div id="supportoptions" class="optionbox">
 				<img src="cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
 				<h1>
 					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
-					Fauxbar Tips &amp; Tricks
+					Fauxbar Support
 				</h1>
-				Here are the different ways you can use Fauxbar.<br />
-				Some of the features below can be adjusted or toggled within the options.
+				Questions? Feedback? Wanting to donate? Found a bug?<br />Engage with Fauxbar using the links below.
+				<div style="margin-top:11px; font-size:90%; opacity:.55">
+					<b>Latest news:</b> <span id="latestNews" style="font-size:100%;">Loading...</span>
+				</div>
 				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
-						<th>Fauxbar</th>
+						<th>
+							<img src="fauxbar16.png" />
+							Fauxbar
+						</th>
 						<td>
-							<ul style="margin-top:-14px">
-								<li style="margin-top:15px">As long as Fauxbar is enabled:
-									<ul>
-										<li>when you visit a webpage:
-											<ul>
-												<li>Fauxbar will add the page's title and URL to its index.</li>
-												<li>Fauxbar will calculate and assign a new frecency score for that page.</li>
-												<li>if the page is one of your top pages, Fauxbar will generate a new thumbnail preview for the main page tiles.</li>
-												<li>Fauxbar will scan the page to see if it has a usable search engine it can potentially add to the Search Box.</li>
-											</ul>
-										</li>
-										<li>when you delete a webpage from Chrome's history, Fauxbar will also delete that webpage from Fauxbar's index.</li>
-										<li>when you create, modify or remove a bookmark from Chrome, Fauxbar will also create, modify or remove that bookmark's entry in Fauxbar's index.</li>
-										<li>Chrome's default New Tab page will be overridden.</li>
-									</ul>
-									If Fauxbar is disabled and you continue browsing using Chrome, Fauxbar's index will become out of sync. However, reindexing Fauxbar will resolve this.
-								</li>
-								<li style="margin-top:15px">You can resize the Address Box and Search Box by dragging the handle between them.</li>
-								<li style="margin-top:15px">Keep Fauxbar's memory usage to a minimum by making sure
-								<span style="text-decoration:underline; cursor:pointer; color:#06c" class="fakelink" onmouseup='$("#option_menu div").removeClass("section_selected"); $("#option_section_management").addClass("section_selected"); $("div.optionbox").css("display","none"); $("#managementoptions").css("display","block"); localStorage.option_optionpage = "option_section_management";'>Fauxbar Memory Helper</span>
-								is installed and enabled.</li>
-							</ul>
+							<a href="http://code.google.com/p/fauxbar/" target="_blank" style="color:#06c">Project Overview</a><br />
+							<a href="http://code.google.com/p/fauxbar/w/list" target="_blank" style="color:#06c">Wiki (Documentation)</a><br />
+							<a href="http://code.google.com/p/fauxbar/issues/list" target="_blank" style="color:#06c">Issues (To-do List)</a><br />
+							<a href="http://code.google.com/p/fauxbar/source/browse/trunk#trunk%2FFauxbar" target="_blank" style="color:#06c">Source Code</a>
 						</td>
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
-						<th>Address Box</th>
+						<th>
+							<img src="icon-facebook.png" />
+							Facebook
+						</th>
 						<td>
-							<ul style="margin-top:-14px">
-								<li style="margin-top:15px">Focus the Address Box by pressing <b>Alt</b>+<b>D</b> or <b>Ctrl</b>+<b>L</b> within Fauxbar and other webpages.</li>
-								<li style="margin-top:15px">Display your top pages:
-									<ul>
-										<li>by clicking the down-arrow/triangle on the right-side of the Address Box.</li>
-										<li>by double-clicking the Address Box when it's empty.</li>
-										<li>by pressing the <b>Down Arrow</b> when the Address Box is focused and empty.</li>
-									</ul>
-								</li>
-								<li style="margin-top:15px">
-									To find history items and bookmarks, type words into the Address Box.<br />
-									Fauxbar will display results with pages whose titles and/or URLs match your words, ordered by frecency.<br />
-									Fauxbar may also auto-complete your input with a matching URL.<br />
-									Mid-word searching and full character searching is performed.<br />
-									To only search for bookmarks, enter <b>is:fav</b> as a word.
-								</li>
-								<li style="margin-top:15px">
-									If a desired result appears, you can navigate to it by:
-									<ul>
-										<li>pressing the <b>Up Arrow</b> or <b>Down Arrow</b>.
-										<li>pressing <b>Tab</b> or <b>Shift</b>+<b>Tab</b>.
-									</ul>
-									Navigating in this way will put the result's URL into the Address Box.<br />
-									To restore your original input, press <b>Esc</b>, or navigate back to the Address Box.
-								</li>
-								<li style="margin-top:15px">
-									Results also act as clickable hyperlinks:
-									<ul>
-										<li><b>Click</b> a result to open it in the current tab.</li>
-										<li><b>Ctrl</b>+<b>Click</b> or <b>Middle-click</b> a result to open it in a new tab.</li>
-										<li><b>Shift</b>+<b>Click</b> a result to open it in a new window.</li>
-										<li><b>Right-click</b> a result to perform other actions.</li>
-									</ul>
-								</li>
-								<li style="margin-top:15px">
-									If a result is already opened as a tab in the current window, "<img src="tabicon.png" /> Switch to tab" will be displayed.<br />
-									Clicking this result will have Chrome change focus to the existing tab.
-								</li>
-								<li style="margin-top:15px">When you want to go to your Address Box's input:
-									<ul>
-										<li>press <b>Enter</b> to go to the entered address in the current tab.</li>
-										<li>press <b>Alt</b>+<b>Enter</b> to go to the entered address in a new tab.</li>
-										<li>press <b>Ctrl</b>+<b>Enter</b> to wrap "http://www." and ".com" around your input, and go to the address in the current tab.</li>
-										<li>Click the Go Arrow to go to the entered address in the current tab.</li>
-									</ul>
-									If the Address Box's input is a URL, the URL will be visited.<br />
-									But if the input is not a URL, the input will be performed as a search using Fauxbar's "Fallback URL".
-								</li>
-							</ul>
+							<a href="http://www.facebook.com/pages/Fauxbar/147907341953576?sk=wall" target="_blank" style="color:#06c">Fauxbar's Wall</a><br />
+							<a href="http://www.facebook.com/pages/Fauxbar/147907341953576?sk=app_2373072738" target="_blank" style="color:#06c">Discussions</a><br />
+							<a href="http://www.facebook.com/pages/Fauxbar/147907341953576?sk=notes" target="_blank" style="color:#06c">Notes (Blog)</a><br />
+							<div id="likeBox" style="margin-top:10px; margin-bottom:-6px"></div>
 						</td>
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
-						<th>Chrome's Omnibox</th>
+						<th>
+							<img src="icon-twitter.png" />
+							Twitter
+						</th>
 						<td>
-							<ul style="margin-top:-14px">
-								<li style="margin-top:15px">
-									You can use a simplified version of Fauxbar's Address Box from within Chrome's Omnibox.<br />
-									To do so, focus the Omnibox and press <b>F</b>+<b>Spacebar</b>, then you can either:
-									<ul>
-										<li>type some words, and matching results from Fauxbar's index will be displayed, or</li>
-										<li>just press <b>Enter</b> and the tab will open Fauxbar's main page.</li>
-									</ul>
-								</li>
-								<li style="margin-top:15px">
-									"Switch to tab" functionality still works this way, but auto-completing URLs, opening results in new tabs or windows, and Quick Delete are not available when using Fauxbar from within the Omnibox.<br />
-									Chrome's Omnibox may also impose its own limit of how many results can be displayed at once.
-								</li>
-							</ul>
+							<a href="http://twitter.com/Fauxbar" class="twitter-follow-button">Follow @Fauxbar</a>
 						</td>
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
-						<th>Search Box</th>
+						<th>
+							<img src="icon-reddit.png" />
+							Reddit
+						</th>
 						<td>
-							<ul style="margin-top:-14px">
-								<li style="margin-top:15px">
-									The Search Box lets you use a search engine straight from Fauxbar, without needing to visit the search engine's webpage first.
-								</li>
-								<li style="margin-top:15px">
-									To choose which search engine to use, click the down arrow/triangle on the left side of the Search Box.
-								</li>
-								<li style="margin-top:15px">
-									To search, type a query into the Search Box.<br />
-									Then, you can perform your search:
-									<ul>
-										<li>in the current tab:
-											<ul>
-												<li>by pressing <b>Enter</b>, or</li>
-												<li>by clicking the magnifying glass icon.</li>
-											</ul>
-										</li>
-										<li>in a new tab:
-											<ul>
-												<li>by pressing <b>Alt</b>+<b>Enter</b>.</li>
-											</ul>
-										</li>
-									</ul>
-								</li>
-								<li style="margin-top:15px">
-									As you type your query, Fauxbar may display:
-									<ul>
-										<li>past queries that match your input, and/or</li>
-										<li>suggestions from the selected search engine.</li>
-									</ul>
-								</li>
-								<li style="margin-top:15px">
-									If a desired query or suggestion appears, you can navigate to it by:
-									<ul>
-										<li>pressing the <b>Up Arrow</b> or <b>Down Arrow</b>.
-										<li>pressing <b>Tab</b> or <b>Shift</b>+<b>Tab</b>.
-									</ul>
-									Navigating in this way will put the query or suggestion into the Search Box for you.<br />
-									To restore your original input, press <b>Esc</b>, or navigate back to the Search Box.
-								</li>
-								<li style="margin-top:15px">
-									Queries and suggestions displayed in this way also act as mock hyperlinks:
-									<ul>
-										<li><b>Click</b> a query/suggestion to open it in the current tab.</li>
-										<li><b>Ctrl</b>+<b>Click</b> or <b>Middle-click</b> a query/suggestion to open it in a new tab.</li>
-									</ul>
-								</li>
-							</ul>
+							<a href="http://reddit.com/r/Fauxbar" target="_blank" style="color:#06c">r/Fauxbar</a>
 						</td>
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
-						<th>Quick Delete</th>
+						<th>
+							<img src="icon-webstore.png" />
+							Chrome Store
+						</th>
 						<td>
-							<ul style="margin-top:-14px">
-								<li style="margin-top:15px">
-									If Quick Delete is enabled and an Address Box result or Search Box query has been navigated to or hovered over and appears highlighted,
-									pressing <b>Delete</b> will remove the result from both Fauxbar <i>and/or</i> Chrome's history <b>without prompt</b>.
-								</li>
-								<li style="margin-top:15px">
-									Bookmarks can't be removed via Quick Delete. They may disappear from the list of results temporarily, but they will not actually be removed.
-								</li>
-							</ul>
+							<a href="https://chrome.google.com/webstore/detail/hibkhcnpkakjniplpfblaoikiggkopka" target="_blank" style="color:#06c">Fauxbar</a><br />
+							<a href="https://chrome.google.com/webstore/detail/domhiadbdhomljcdankobiglghedagkm" target="_blank" style="color:#06c">Fauxbar Memory Helper</a>
 						</td>
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
-						<th>Search Engines</th>
+						<th>
+							<img src="icon-mail.png" />
+							Email
+						</th>
 						<td>
-							<ul style="margin-top:-14px">
-								<li style="margin-top:15px">
-									Fauxbar's Search Box comes pre-loaded with the Google, Yahoo! and Bing search engines.
-								</li>
-								<li style="margin-top:15px">
-									To add a new search engine to the Search Box, visit a webpage that offers a search engine.<br />
-									Fauxbar should detect the engine and display a clickable <img src="fauxbar16plus.png" style="height:19px;width:19px;vertical-align:middle;position:relative;top:-1px;" /> icon in Chrome's Omnibox,
-									symbolizing that you can add the webpage's search engine to Fauxbar.<br />
-									Click the icon to add the engine to the Search Box.
-								</li>
-								<li style="margin-top:15px">
-									Fauxbar looks for new search engines by scanning each webpage you visit for:
-									<ul>
-										<li>an <a href="http://www.opensearch.org/" target="_blank" style="color:#06c">OpenSearch</a> declaration, or</li>
-										<li>a lone input text box.</li>
-									</ul>
-								</li>
-								<li>If an OpenSearch declaration is found, Fauxbar will check to ensure the webpage's OpenSearch XML code is correct.</li>
-								<li>If an OpenSearch declaration is <i>not</i> found, but a text box is found that looks like it <i>might</i> be used as a search input box, Fauxbar attempts to interpret the text box's HTML form variables to derive a usable search URL.
-									This usually works fine, but not always.
-								</li>
-							</ul>
+							fauxbar.org@gmail.com
+						</td>
+					</tr>
+					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr>
+						<th>
+							<img src="icon-paypal.png" />
+							PayPal
+						</th>
+						<td>
+							<a href="loadpaypal.html" target="_blank" style="color:#06c">Donate</a><br />
 						</td>
 					</tr>
 				</table>
+			</div>
+
+
 
 		</td>
 	</tr>

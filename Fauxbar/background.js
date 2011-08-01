@@ -54,7 +54,7 @@ chrome.extension.onRequestExternal.addListener(function(request){
 			var okayToRestart = true;
 			for (var w in windows) {
 				for (var t in windows[w].tabs) {
-					if (windows[w].tabs[t].title == "Fauxbar" || windows[w].tabs[t].title == "Fauxbar: Options" || windows[w].tabs[t].title == "Fauxbar: Edit Tiles") {
+					if (windows[w].tabs[t].title == "Fauxbar" || windows[w].tabs[t].title == "Fauxbar: Options" || windows[w].tabs[t].title == "Fauxbar: Edit Tiles" || windows[w].tabs[t].title == "Fauxbar: Error Log") {
 						okayToRestart = false;
 					}
 				}
@@ -75,8 +75,8 @@ chrome.extension.onRequestExternal.addListener(function(request){
 $(document).ready(function(){
 
 	// New version info
-	var currentVersion = "0.2.2";
-	localStorage.updateBlurb = ". Site tile thumbnails should now persist between sessions again.";
+	var currentVersion = "0.2.3";
+	localStorage.updateBlurb = ". &nbsp;A new support section has been added to the options.";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
 		localStorage.readUpdateMessage = 0;
 	}
