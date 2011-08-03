@@ -153,6 +153,12 @@
 								</select>
 							</label>
 							<label class="legend">
+								Display up to <input name="option_maxaddressboxresultsshown" id="option_maxaddressboxresultsshown" class="upto inputoption" type="number" min="0" max="100" step="1" value="" maxlength="3" size="4" style="text-align:center; padding:0" /> retrieved results without needing to scroll
+							</label>
+							<label class="legend">
+								Retrieve up to <input name="option_maxaddressboxresults" id="option_maxaddressboxresults" class="upto inputoption" type="number" min="0" max="100" step="1" value="" maxlength="3" size="4" style="text-align:center; padding:0" /> results at a time
+							</label>
+							<label class="legend">
 								<input name="option_showmatchinghistoryitems" id="option_showmatchinghistoryitems" type="checkbox" /> Show matching results from my browsing history
 							</label>
 							<label class="legend">
@@ -161,10 +167,23 @@
 							<label class="legend">
 								<input name="option_consolidateBookmarks" id="option_consolidateBookmarks" type="checkbox" /> Consolidate duplicate bookmarks
 							</label>
-							<label class="legend">
-								<input name="option_ignoretitleless" id="option_ignoretitleless" type="checkbox" /> Ignore certain titleless pages
-							</label>
-							<label class="legend">
+							<table cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+								<tr>
+									<td>
+										<label class="legend" style="white-space:nowrap">
+											<input name="option_prerender" id="option_prerender" type="checkbox" />
+											Pre-render the first result after pausing for
+										</label>
+									</td>
+									<td style="width:100%">
+										<label class="legend" style="position:relative; bottom:-1px">
+											&nbsp;<input type="number" id="option_prerenderMs" name="option_prerenderMs" max="500" min="50" step="50" size="4" style="margin-top:-5px; text-align:center" />
+											milliseconds
+										</label>
+									</td>
+								</tr>
+							</table>
+							<label class="legend" style="margin-top:5px">
 								<input name="option_hidehttp" id="option_hidehttp" type="checkbox" /> Hide <b>http://</b> from the beginning of URLs
 							</label>
 							<label class="legend">
@@ -174,22 +193,62 @@
 								<input name="option_underline" id="option_underline" type="checkbox" /> Underline matching words
 							</label>
 							<label class="legend">
-								Display up to <input name="option_maxaddressboxresultsshown" id="option_maxaddressboxresultsshown" class="upto inputoption" type="number" min="0" max="100" step="1" value="" maxlength="3" size="4" style="text-align:center; padding:0" /> retrieved results without needing to scroll
+								<input name="option_ignoretitleless" id="option_ignoretitleless" type="checkbox" /> Only show untitled results if they have a file extension
 							</label>
-							<label class="legend">
-								Retrieve up to <input name="option_maxaddressboxresults" id="option_maxaddressboxresults" class="upto inputoption" type="number" min="0" max="100" step="1" value="" maxlength="3" size="4" style="text-align:center; padding:0" /> results at a time
+							<label class="legend" style="width:100%">
+								<table cellpadding="0" cellspacing="0" style="border-collapse:collapse; width:95%"><tr><td style="white-space:nowrap">Don't show results from:&nbsp;</td>
+									<td style="width:90%"><input name="option_blacklist" id="option_blacklist" type="text" spellcheck="false" style="width:100%; position:relative; bottom:-2px"
+														placeholder="badsite.com, goodsite.org/*badDirectory"></td>
+								</tr></table>
 							</label>
+							<div class="optionstip" style="margin-left:-2px">
+								Separate unwanted domains and/or URLs with commas. Use <b>*</b> for mid-match wildcards.
+							</div>
 						</td>
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
 						<th>Auto-fill</th>
 						<td>
-							<label class="legend">
+							<label class="legend" style="margin-top:1px">
 								<input name="option_autofillurl" id="option_autofillurl" type="checkbox" /> Auto-fill the Address Box with a matching URL while typing
 							</label>
 						</td>
 					</tr>
+					<!-- Possible future weighting implementation:
+					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr>
+						<th>Blacklist</th>
+						<td>
+							<div class="legend" style="margin-top:-4px">
+								<button style="font-size:12px">Add Modifier...</button>
+								<button style="font-size:12px">Save Modifiers</button>
+							</div>
+							<div class="legend" id="modifiers">
+								<div style="font-size:12px">
+										If
+										<select style="margin-bottom:-1px">
+											<option>title and/or URL</option>
+											<option>title and URL</option>
+											<option>title</option>
+											<option>URL</option>
+										</select>
+										<select style="margin-bottom:-1px">
+											<option>starts with</option>
+											<option>ends with</option>
+											<option>contains</option>
+											<option>doesn't start with</option>
+											<option>doesn't end with</option>
+											<option>doesn't contain</option>
+										</select>
+										<input type="text" value="lol" spellcheck="false" title="The % symbol acts as a wildcard." />,
+										multiply frecency score by
+										<input type="number" step="0.1" min="0" max="3" value="0" maxlength="3" style="width:50px" />
+								</div>
+							</div>
+						</td>
+					</tr>
+					-->
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
 						<th>Fallback URL</th>
@@ -656,7 +715,7 @@
 					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px;" />
 					Fauxbar Management
 				</h1>
-				Fauxbar version 0.2.3 &nbsp;<span style="opacity:.5">(2 Aug 2011)</span>
+				Fauxbar version 0.3.0 &nbsp;<span style="opacity:.5">(3 Aug 2011)</span>
 				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
@@ -698,7 +757,7 @@
 								</div>
 								<textarea id="backup" disabled style="font-size:12px; width:90%; height:200px; margin-top:10px"></textarea>
 								<div class="optionstip" style="margin-top:6px">
-									Backups contain all cosmetic and functionality settings you've chosen, including your site tiles and Fauxbar search engines.<br />
+									Backups contain all cosmetic and functionality settings you've chosen, including your site tiles, Fauxbar search engines, and blacklist.<br />
 									<div style="margin-top:8px">However, backups do <i>not</i> contain your history items, bookmarks, or search queries.</div>
 								</div>
 							</div>
@@ -712,7 +771,7 @@
 								</div>
 								<textarea id="restore" style="font-size:12px; width:90%; height:200px; margin-top:10px"></textarea>
 								<div class="optionstip" style="margin-top:6px">
-									Backups contain all cosmetic and functionality settings you've chosen, including your site tiles and Fauxbar search engines.<br />
+									Backups contain all cosmetic and functionality settings you've chosen, including your site tiles, Fauxbar search engines, and blacklist.<br />
 									<div style="margin-top:8px">However, backups do <i>not</i> contain your history items, bookmarks, or search queries.</div>
 								</div>
 							</div>
@@ -906,7 +965,7 @@
 				</h1>
 				Questions? Feedback? Wanting to donate? Found a bug?<br />Engage with Fauxbar using the links below.
 				<div style="margin-top:11px; font-size:90%; opacity:.55">
-					<b>Latest news:</b> <span id="latestNews" style="font-size:100%;">Loading...</span>
+					<b>Latest tweet:</b> <span id="latestNews" style="font-size:100%;">Loading...</span>
 				</div>
 				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
@@ -916,10 +975,12 @@
 							Fauxbar
 						</th>
 						<td>
+							<div id="likeBox"></div>
 							<a href="http://code.google.com/p/fauxbar/" target="_blank" style="color:#06c">Project Overview</a><br />
 							<a href="http://code.google.com/p/fauxbar/w/list" target="_blank" style="color:#06c">Wiki (Documentation)</a><br />
 							<a href="http://code.google.com/p/fauxbar/issues/list" target="_blank" style="color:#06c">Issues (To-do List)</a><br />
-							<a href="http://code.google.com/p/fauxbar/source/browse/trunk#trunk%2FFauxbar" target="_blank" style="color:#06c">Source Code</a>
+							<!--<a href="http://code.google.com/p/fauxbar/source/browse/trunk#trunk%2FFauxbar" target="_blank" style="color:#06c">Source Code</a>-->
+
 						</td>
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
@@ -932,7 +993,6 @@
 							<a href="http://www.facebook.com/pages/Fauxbar/147907341953576?sk=wall" target="_blank" style="color:#06c">Fauxbar's Wall</a><br />
 							<a href="http://www.facebook.com/pages/Fauxbar/147907341953576?sk=app_2373072738" target="_blank" style="color:#06c">Discussions</a><br />
 							<a href="http://www.facebook.com/pages/Fauxbar/147907341953576?sk=notes" target="_blank" style="color:#06c">Notes (Blog)</a><br />
-							<div id="likeBox" style="margin-top:10px; margin-bottom:-6px"></div>
 						</td>
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>

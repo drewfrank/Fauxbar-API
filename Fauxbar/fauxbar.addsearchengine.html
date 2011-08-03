@@ -2,6 +2,13 @@
 <head>
 	<title>fauxbar.popup</title>
 	<link href="fauxbar.css" media="screen" rel="stylesheet" type="text/css" />
+	<style type="text/css">
+		* { font-family: Segoe UI, Arial, sans-serif; font-size:12px; }
+		img { height:16px; width:16px; position:relative; top:2px; padding-right:2px; }
+		body { background-color:#fff; padding:0; opacity:0; padding:0; height:1px; }
+		button { margin-right:0; margin-left:4px; }
+		#note { color:rgba(0,0,0,.73); position:relative; top:12px; }
+	</style>
 	<script type="text/javascript" src="logerror.js"></script>
 	<script type="text/javascript" src="jquery-1.6.2.min.js"></script>
 	<script type="text/javascript" src="common.js"></script>
@@ -121,16 +128,9 @@
 		});
 
 	</script>
-	<style type="text/css">
-		* { font-family: Segoe UI, Arial, sans-serif; font-size:12px; }
-		img { height:16px; width:16px; position:relative; top:2px; padding-right:2px; }
-		body { background-color:#fff; padding:0; opacity:0; padding:0; height:1px; }
-		button { margin-right:0; margin-left:4px; }
-		#note { color:rgba(0,0,0,.73); position:relative; top:12px; }
-	</style>
 </head>
 <body>
-	<div style="padding:10px 12px 0px 10px;" id="popup">
+	<div style="padding:12px 13px 0px 13px;" id="popup">
 		<div style="white-space:nowrap;"><img /> <span id="maintext" style="font-size:13px; font-weight:bold">Add "<b style="font-size:inherit"></b>" to Fauxbar?</span><span id="note"></span></div>
 		<div id="buttons" style="text-align:right; position:relative; top:30px; padding-bottom:10px">
 			<button id="add" onclick="add()">Add to Fauxbar</button>

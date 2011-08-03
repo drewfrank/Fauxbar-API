@@ -75,8 +75,8 @@ chrome.extension.onRequestExternal.addListener(function(request){
 $(document).ready(function(){
 
 	// New version info
-	var currentVersion = "0.2.3";
-	localStorage.updateBlurb = ". &nbsp;A new support section has been added to the options.";
+	var currentVersion = "0.3.0";
+	localStorage.updateBlurb = ". &nbsp;Pre-rendering pages and site blacklists are now available.";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
 		localStorage.readUpdateMessage = 0;
 	}
@@ -107,6 +107,19 @@ $(document).ready(function(){
 			// Load top site tile thumbnails into memory upon load
 			loadThumbsIntoMemory();
 		});
+	}
+
+	// Initialise the blacklist. Added in 0.3.0
+	if (!localStorage.option_blacklist) {
+		localStorage.option_blacklist = '';
+	}
+
+	// Enable pre-rendering. Added in 0.3.0
+	if (!localStorage.option_prerender) {
+		localStorage.option_prerender = 1;
+	}
+	if (!localStorage.option_prerenderMs) {
+		localStorage.option_prerenderMs = 50;
 	}
 
 	// Consolidate duplicate bookmarks. Added in 0.2.0
@@ -558,78 +571,95 @@ function beginIndexing() {
 	reindex();
 }
 
+// Capture tab screenshot and save it
+function captureScreenshot(sender) {
+	if (openDb()) {
+		window.db.transaction(function(tx){
+
+			// Check to see if page is a top site
+			tx.executeSql('SELECT frecency FROM urls WHERE url = ? LIMIT 1', [sender.tab.url], function(tx, results){
+
+				// Check to see if URL is a user-chosen site tile
+				var urlIsManualTile = false;
+				if (localStorage.option_pagetilearrangement == "manual" && localStorage.siteTiles) {
+					var siteTiles = jQuery.parseJSON(localStorage.siteTiles);
+					for (var st in siteTiles) {
+						if (siteTiles[st].url == sender.tab.url) {
+							urlIsManualTile = true;
+							break;
+						}
+					}
+				}
+				if (results.rows.length > 0 || urlIsManualTile == true) {
+					if (results.rows.length > 0) {
+						var frecency = results.rows.item(0).frecency;
+					} else {
+						var frecency = -1;
+					}
+					if (frecency >= window.frecencyThreshold || urlIsManualTile == true) {
+						chrome.tabs.getSelected(null, function(selectedTab){
+							if (selectedTab.id == sender.tab.id) {
+
+								// Take a screenshot and save the image
+								chrome.tabs.captureVisibleTab(null, {format:"png"}, function(dataUrl){
+									if (dataUrl != "") {
+										var myCanvas = document.createElement("canvas");
+										var context = myCanvas.getContext('2d');
+										var img = new Image;
+										img.onload = function(){
+											var width = 430; // Double width than the actual displayed tile size, so that it gets shrunk and looks nice.
+											var height = Math.round(img.height * width / img.width);
+											myCanvas.width = width;
+											myCanvas.height = height;
+											context.drawImage(img,0,0, width, height);
+
+											// Save image data
+											if (urlIsManualTile || localStorage.option_pagetilearrangement == "frecency") {
+												window.md5thumbs[hex_md5(sender.tab.url)] = myCanvas.toDataURL("image/png");
+											}
+											window.md5thumbs[hex_md5(sender.tab.url)] = myCanvas.toDataURL("image/png");
+											window.db.transaction(function(tx){
+												tx.executeSql('UPDATE thumbs SET data = ?, title = ?, frecency = ? WHERE url = ?', [myCanvas.toDataURL("image/png"), sender.tab.title, frecency, sender.tab.url], function(tx, results){
+													if (results.rowsAffected == 0) {
+														tx.executeSql('INSERT INTO thumbs (url, data, title, frecency) VALUES (?, ?, ?, ?)', [sender.tab.url, myCanvas.toDataURL("image/png"), sender.tab.title, frecency]);
+													}
+												});
+											}, function(t){
+												errorHandler(t, getLineInfo());
+											});
+										};
+										img.src = dataUrl;
+									}
+								});
+							}
+						});
+					}
+				}
+			});
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
+	}
+}
+
 // Background page listens for requests...
 chrome.extension.onRequest.addListener(function(request, sender){
 
 	// Generate top site tile thumbnail for page if page reports page has not been scrolled at all
 	if (request == "scrolltop is 0") {
-		if (openDb()) {
-			window.db.transaction(function(tx){
+		captureScreenshot(sender);
+	}
 
-				// Check to see if page is a top site
-				tx.executeSql('SELECT frecency FROM urls WHERE url = ? LIMIT 1', [sender.tab.url], function(tx, results){
+	// Pre-rendered page is being navigated to, so let's process it in a moment
+	else if (request == "process prerendered page") {
 
-					// Check to see if URL is a user-chosen site tile
-					var urlIsManualTile = false;
-					if (localStorage.option_pagetilearrangement == "manual" && localStorage.siteTiles) {
-						var siteTiles = jQuery.parseJSON(localStorage.siteTiles);
-						for (var st in siteTiles) {
-							if (siteTiles[st].url == sender.tab.url) {
-								urlIsManualTile = true;
-								break;
-							}
-						}
-					}
-					if (results.rows.length > 0 || urlIsManualTile == true) {
-						if (results.rows.length > 0) {
-							var frecency = results.rows.item(0).frecency;
-						} else {
-							var frecency = -1;
-						}
-						if (frecency >= window.frecencyThreshold || urlIsManualTile == true) {
-							chrome.tabs.getSelected(null, function(selectedTab){
-								if (selectedTab.id == sender.tab.id) {
-
-									// Take a screenshot and save the image
-									chrome.tabs.captureVisibleTab(null, {format:"png"}, function(dataUrl){
-										if (dataUrl != "") {
-											var myCanvas = document.createElement("canvas");
-											var context = myCanvas.getContext('2d');
-											var img = new Image;
-											img.onload = function(){
-												var width = 430; // Double width than the actual displayed tile size, so that it gets shrunk and looks nice.
-												var height = Math.round(img.height * width / img.width);
-												myCanvas.width = width;
-												myCanvas.height = height;
-												context.drawImage(img,0,0, width, height);
-
-												// Save image data
-												if (urlIsManualTile || localStorage.option_pagetilearrangement == "frecency") {
-													window.md5thumbs[hex_md5(sender.tab.url)] = myCanvas.toDataURL("image/png");
-												}
-												window.md5thumbs[hex_md5(sender.tab.url)] = myCanvas.toDataURL("image/png");
-												window.db.transaction(function(tx){
-													tx.executeSql('UPDATE thumbs SET data = ?, title = ?, frecency = ? WHERE url = ?', [myCanvas.toDataURL("image/png"), sender.tab.title, frecency, sender.tab.url], function(tx, results){
-														if (results.rowsAffected == 0) {
-															tx.executeSql('INSERT INTO thumbs (url, data, title, frecency) VALUES (?, ?, ?, ?)', [sender.tab.url, myCanvas.toDataURL("image/png"), sender.tab.title, frecency]);
-														}
-													});
-												}, function(t){
-													errorHandler(t, getLineInfo());
-												});
-											};
-											img.src = dataUrl;
-										}
-									});
-								}
-							});
-						}
-					}
-				});
-			}, function(t){
-				errorHandler(t, getLineInfo());
+		// Tab ID changes with prerendering (even though it's the same tab...), so need to get new ID via getSelected()
+		setTimeout(function(){
+			chrome.tabs.getSelected(null, function(tab){
+				processUpdatedTab(tab.id, tab);
+				captureScreenshot(sender);
 			});
-		}
+		}, 500);
 	}
 
 	// User has switched tile selection type, so reload thumbs data into background page
@@ -645,15 +675,6 @@ chrome.extension.onRequest.addListener(function(request, sender){
 	// Request received to do the indexing process
 	else if (request.action && request.action == "reindex") {
 		beginIndexing();
-	}
-
-	// Content script has requested to open Fauxbar in the current tab. "NewTab" meaning the New Tab page, not an actual new tab.
-	else if (request.action && request.action == "goToNewTab") {
-		window.newTabHash = request.hash;
-		chrome.tabs.update(sender.tab.id, {url:chrome.extension.getURL("fauxbar.html")+"#"+request.hash});
-		setTimeout(function(){
-			delete window.newTabHash;
-		}, 300);
 	}
 
 	// Chrome sometimes truncates page titles for its history items. Don't know why.
@@ -751,10 +772,8 @@ chrome.tabs.onSelectionChanged.addListener(function(tabId, selectInfo){
 	});
 });
 
-// When a tab changes its URL, or finishes loading the page...
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-
-	// Refresh results for "Switch to tab" texts
+function processUpdatedTab(tabId, tab) {
+// Refresh results for "Switch to tab" texts
 	if (tab.status == "complete") {
 		refreshResults();
 	}
@@ -762,14 +781,15 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 	// If URL is a web page...
 	if (tab.url.substr(0,7) == 'http://' || tab.url.substr(0,8) == 'https://') {
 
-		// If page has finished loading, update its title in Fauxbar's database
+		// If page has finished loading, update its title in Fauxbar's database so it's not stale
 		if (tab.status == "complete") {
 			chrome.tabs.executeScript(tabId, {file:"updatetitle.js"});
 		}
 
 		// If user has opted to enable Alt+D, Ctrl+L or Ctrl+L functionality, make it so
 		if ((localStorage.option_altd && localStorage.option_altd == 1) || (localStorage.option_ctrll && localStorage.option_ctrll == 1) || (localStorage.option_ctrlk && localStorage.option_ctrlk == 1)) {
-			chrome.tabs.executeScript(tabId, {file:"jquery.hotkeys.js"});
+
+			//chrome.tabs.executeScript(tabId, {file:"jquery.hotkeys.js"});
 			if (localStorage.option_altd && localStorage.option_altd == 1) {
 				chrome.tabs.executeScript(tabId, {file:"alt-d.js"});
 			}
@@ -805,6 +825,12 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 			chrome.tabs.executeScript(tab.id, {file:"getscrolltop.js"});
 		}
 	}
+}
+
+
+// When a tab changes its URL, or finishes loading the page...
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+	processUpdatedTab(tabId, tab);
 });
 
 // When tab moves to a new Window, refresh Address Box results "Switch to tab" texts

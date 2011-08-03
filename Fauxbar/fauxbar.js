@@ -842,21 +842,6 @@ $(document).ready(function(){
 	// Doing this now, rather than before the document is ready, in order to shave off a few seconds from Fauxbar's loading time. Makes Fauxbar start up quicker
 	$("head").append('<script type="text/javascript" src="jquery.rangyinputs.js"></script>');
 
-	// Keep track of when Ctrl is pressed or not. Starts off as not being pressed
-	window.ctrlDown = false;
-	// Record that Ctrl is pressed
-	$(document).bind("keydown", function(e) {
-		if (e.keyCode == 17 ) {
-			window.ctrlDown = true;
-		}
-	});
-	// Record that Ctrl is no longer pressed
-	$(document).bind("keyup", function(e) {
-		if (e.keyCode == 17 ) {
-			window.ctrlDown = false;
-		}
-	});
-
 	// Apply Options
 	// ..Most code below applies user-specified options just before the Fauxbar is shown
 	// Lots of customization :)
@@ -869,7 +854,8 @@ $(document).ready(function(){
 		changeInputFontSize();
 	}
 
-	if (!localStorage.customStyles/* || getHashVar("options") == 1*/) {
+	if (!localStorage.customStyles) {
+
 		// Load the user's font name
 		$("#customstyle").append("#apps, #topthumbs { font-family:"+localStorage.option_font+",Segoe UI, Arial, sans-serif; font-size:"+localStorage.option_sappsfontsize+"px; }");
 
@@ -1136,30 +1122,18 @@ $(document).ready(function(){
 		}
 	});
 
-	// jquery.hotkeys doesn't really like binding multiple hotkeys to one element, so need to check e.keyCode.
-	// All three .live() things here below cascade one after another. the last `return true;` lets Chrome take over the default behaviour
 
-	// If user presses Alt+D, focus Address Box instead of Omnibox (if selected in Options)
-	$("*").live('keydown', 'alt+d', function(e){
-		if (e.keyCode == 68 && localStorage.option_altd && localStorage.option_altd == 1) {
+
+	// Focus Address Box or Search Box if allowed, stealing from Chrome's Omnibox
+	$("*").live("keydown", function(e){
+		if ((e.keyCode == 68 && e.altKey == true && localStorage.option_altd == 1) || (e.keyCode == 76 && e.ctrlKey == true && localStorage.option_ctrll == 1)) {
 			$("#awesomeinput").focus().select();
 			return false;
 		}
-	});
-	// If user presses Ctrl+L, focus Address Box instead of Omnibox (if selected in Options)
-	$("*").live('keydown', 'ctrl+l', function(e){
-		if (e.keyCode == 76 && localStorage.option_ctrll && localStorage.option_ctrll == 1) {
-			$("#awesomeinput").focus().select();
-			return false;
-		}
-	});
-	// If user presses Ctrl+K, focus Search Box instead of Omnibox (if selected in Options)
-	$("*").live('keydown', 'ctrl+k', function(e){
-		if (e.keyCode == 75 && localStorage.option_ctrlk && localStorage.option_ctrlk == 1) {
+		else if (e.keyCode == 75 && e.ctrlKey == true && localStorage.option_ctrlk == 1) {
 			$("#opensearchinput").focus().select();
 			return false;
 		}
-		return true;
 	});
 
 	// When user clicks on almost anything, hide results/suggestions/queries. Assumes the user wants to hide them this way.
@@ -1378,58 +1352,74 @@ $(document).ready(function(){
 		$("#searchicon_cell img").attr("src",$("#searchicon_cell img").attr("tintedsrc"));
 	});
 
-	// If Address Box is focused and user presses Ctrl+Enter, wrap "http://www." and ".com" around the text, and go to the URL
-	$("#awesomeinput").bind("keydown", "ctrl+return", function(){
-		var thisVal = $(this).val();
-		if (!strstr(thisVal.trim(), ' ') && !strstr(thisVal, '/')) {
-			if (!strstr(thisVal, '.')) {
-				$(this).val('http://www.'+thisVal+'.com/');
+	$("#awesomeinput").bind("keydown", function(e){
+
+		// Ctrl+Return
+		if (e.keyCode == 13 && e.ctrlKey == true) {
+			var thisVal = window.actualUserInput;
+			if (!strstr(thisVal.trim(), ' ') && !strstr(thisVal, '/')) {
+				if (!strstr(thisVal, '.')) {
+					$(this).val('http://www.'+thisVal+'.com/');
+				}
+				else if (thisVal.substr(thisVal.length-3) != '.com') {
+					$(this).val('http://'+thisVal+'.com/');
+				}
 			}
-			else if (thisVal.substr(thisVal.length-3) != '.com') {
-				$(this).val('http://'+thisVal+'.com/');
+		}
+
+		// Ctrl+K
+		else if (e.keyCode == 75 && e.ctrlKey == true) {
+			$("#opensearchinput").focus();
+			return false;
+		}
+
+		//  Ctrl+L, Alt+D
+		else if ((e.keyCode == 76 && e.ctrlKey == true) || (e.keyCode == 68 && e.altKey == true)) {
+			return false;
+		}
+
+		// Alt+Return
+		else if (e.keyCode == 13 && e.altKey == true) {
+			window.altReturn = true;
+		}
+
+		// Tab
+		else if (e.keyCode == 9 && $(".result").length) {
+			if (e.shiftKey == true) {
+				navigateResults({keyCode:38});
+			} else {
+				navigateResults({keyCode:40});
 			}
+			return false;
 		}
 	});
 
-	// If Address Box is focused and user presses Ctrl+K, focus the Search Box
-	$("#awesomeinput").bind("keydown", "ctrl+k", function(){
-		$("#opensearchinput").focus();
-		return false;
-	});
+	$("#opensearchinput").bind("keydown", function(e){
+		// Ctrl+K
+		if (e.keyCode == 75 && e.ctrlKey == true) {
+			return false;
+		}
 
-	// If Address Box is focused and user presses Ctrl+L, don't focus the Omnibox
-	$("#awesomeinput").bind("keydown", "ctrl+l", function(){
-		return false;
-	});
+		// Ctrl+L, Alt+D
+		else if ((e.keyCode == 76 && e.ctrlKey == true) || (e.keyCode == 68 && e.altKey == true)) {
+			$("#awesomeinput").focus();
+			return false;
+		}
 
-	// If Address Box is focused and user presses Alt+D, don't focus the Omnibox
-	$("#awesomeinput").bind("keydown", "alt+d", function(){
-		return false;
-	});
+		// Alt+Return
+		else if (e.keyCode == 13 && e.altKey == true) {
+			window.altReturn = true;
+		}
 
-	// If Search Box is focused and user presses Ctrl+K, don't focus the Omnibox
-	$("#opensearchinput").bind("keydown", "ctrl+k", function(){
-		return false;
-	});
-
-	// If Search Box is focused and user presses Ctrl+L, focus the Address Box
-	$("#opensearchinput").bind("keydown", "ctrl+l", function(){
-		$("#awesomeinput").focus();
-		return false;
-	});
-
-	// If Search Box is focused and user presses Alt+D, focus the Address Box
-	$("#opensearchinput").bind("keydown", "alt+d", function(){
-		$("#awesomeinput").focus();
-		return false;
-	});
-
-	// Record when user presses Alt+Enter
-	$("#awesomeinput").bind("keydown", "alt+return", function(){
-		window.altReturn = true;
-	});
-	$("#opensearchinput").bind("keydown", "alt+return", function(){
-		window.altReturn = true;
+		// Tab
+		else if (e.keyCode == 9 && $(".result").length) {
+			if (e.shiftKey == true) {
+				navigateResults({keyCode:38});
+			} else {
+				navigateResults({keyCode:40});
+			}
+			return false;
+		}
 	});
 
 	$("#results").bind("scroll", function() {
@@ -1527,38 +1517,6 @@ $(document).ready(function(){
 		setTimeout(getResults, 1);
 	});
 
-	// If user presses Tab with the Address Box focused, and there are results displayed, navigate down the results (just like pressing Down Arrow)
-	$("#awesomeinput").bind("keydown", "tab", function(){
-		if ($(".result").length) {
-			navigateResults({keyCode:40});
-			return false;
-		}
-	});
-
-	// If user presses Shift+Tab with the Address Box focused, and there are results displayed, navigate up the results (just like pressing Up Arrow)
-	$("#awesomeinput").bind("keydown", "shift+tab", function(){
-		if ($(".result").length) {
-			navigateResults({keyCode:38});
-			return false;
-		}
-	});
-
-	// If user presses Tab with the Search Box focused, and there are queries/suggestions displayed, navigate down the results (just like pressing Down Arrow)
-	$("#opensearchinput").bind("keydown", "tab", function(){
-		if ($(".result").length) {
-			navigateResults({keyCode:40});
-			return false;
-		}
-	});
-
-	// If user presses Tab with the Search Box focused, and there are queries/suggestions displayed, navigate up the results (just like pressing Up Arrow)
-	$("#opensearchinput").bind("keydown", "shift+tab", function(){
-		if ($(".result").length) {
-			navigateResults({keyCode:38});
-			return false;
-		}
-	});
-
 	// When user releases a key with the Address Box focused...
 	$("#awesomeinput").bind("keyup",function(e){
 		// up = 38, down = 40, 27 = esc, left = 37, right = 39
@@ -1593,12 +1551,10 @@ $(document).ready(function(){
 	populateOpenSearchMenu();
 
 	// When user clicks on a Search Box query/suggestion...
-	$('.jsonresult, .historyresult').live("mousedown", function(){
+	$('.jsonresult, .historyresult').live("mousedown", function(e){
 		var query = false;
-
 		// If user Middle-clicks or Ctrl+Clicks, record it as such, so that submitOpenSearch() knows to do the search in a new tab
-		if (event.button == 1 || window.ctrlDown == true) {
-			window.ctrlDown = false;
+		if (event.button == 1 || e.ctrlKey == true) {
 			window.middleMouse = true;
 			window.altReturn = true;
 			query = ($(".suggestion",this).text());
@@ -2136,7 +2092,7 @@ $(document).ready(function(){
 
 	// Now that the Fauxbar page is pretty much loaded, load the JS files to apply custom colors to the various icons, if they're not the defaults.
 	// Page loads a bit slower if these are loaded first, so that's why we're loading them now.
-	if (localStorage.option_iconcolor != "#3374AB" || localStorage.option_favopacity != 0 || getHashVar("options") == 1) {
+	if (localStorage.option_iconcolor.toLowerCase() != "#3374ab" || localStorage.option_favopacity != 0 || getHashVar("options") == 1) {
 		setTimeout(function(){
 			delete processFilters;
 			$("head").append('<script type="text/javascript" src="mezzoblue-PaintbrushJS-098389a/common.js"></script>');
@@ -2535,7 +2491,7 @@ function getResults(noQuery) {
 		}
 
 		// Get ready for the results
-		window.sortedHistoryItems = {};
+		var sHI = {};
 
 		if (openDb()) {
 			window.db.readTransaction(function(tx) {
@@ -2651,7 +2607,7 @@ function getResults(noQuery) {
 								if (results.rows.item(i).type == 2) {
 									newItem.isBookmark = true;
 								}
-								window.sortedHistoryItems[i] = newItem;
+								sHI[i] = newItem;
 							}
 						}
 
@@ -2715,16 +2671,41 @@ function getResults(noQuery) {
 							}
 						}
 
+
+						if (localStorage.option_blacklist.length) {
+							var blacksites = explode(",", localStorage.option_blacklist);
+						} else {
+							var blacksites = new Array;
+						}
+
 						// For each history item and bookmark we've retrieved that matches the user's text...
-						for (var ii in window.sortedHistoryItems) {
+						for (var ii in sHI) {
 							if (currentRows < maxRows) {
-								hI = window.sortedHistoryItems[ii];
+								hI = sHI[ii];
 								resultIsOkay = true;
+
+								// Check to see if site is on the blacklist
+								if (blacksites.length) {
+									for (var b in blacksites) {
+										var bs = blacksites[b].trim();
+										var blackparts = explode("*",bs);
+										var partsMatched = 0;
+										for (var p in blackparts) {
+											if (strstr(hI.url, blackparts[p])) {
+												partsMatched++;
+											}
+										}
+										if (partsMatched == blackparts.length) {
+											resultIsOkay = false;
+											break;
+										}
+									}
+								}
 
 								// When searching the database, Fauxbar returns both history and bookmarks. <strike>History items</strike> Bookmarks come first.
 								// If this is a bookmark result, add a bookmark icon to the existing history result.
 								// Then, cancel continuing on with this result.
-								if ($('.result[url="'+hI.url+'"]').length > 0) {
+								if (resultIsOkay == true && $('.result[url="'+hI.url+'"]').length > 0) {
 									if ($('.result[url="'+hI.url+'"] img.favstar').length == 0) {
 										if (!strstr(getAiSansSelected().toLowerCase(), "is:fav")) {
 											if (hI.isBookmark && !noQuery) { // bookmark
@@ -2959,6 +2940,18 @@ function getResults(noQuery) {
 								$("#results").attr("noquery",(noQuery?1:0)).css("opacity",1);
 							}
 
+							// Tell Chrome to pre-render the first result for the user
+							if (!noQuery && localStorage.option_prerender == 1 && $(".switch").length == 0 && !window.tileEditMode) {
+								setTimeout(function(){
+									if (thisQuery == window.actualUserInput) {
+										var theUrl = $(".result").first().attr("url");
+										$("body").append('<link rel="prerender" href="'+theUrl+'">');
+										console.log('Asking Chrome to pre-render '+theUrl);
+										window.prerenderedUrl = theUrl;
+									}
+								}, parseFloat(localStorage.option_prerenderMs));
+							}
+
 							// Auto append Address Box input with a best-guess URL.
 							// But won't autofill if user pressed backspace, delete, or if user has selected with ctrl+a
 							autofillInput(thisQuery);
@@ -3133,6 +3126,10 @@ function goToUrl(url, fromClickedResult) {
 		chrome.tabs.getCurrent(function(tab){
 			chrome.tabs.update(tab.id, {url:url});
 		});
+	}
+
+	if (window.prerenderedUrl && window.prerenderedUrl == url) {
+		chrome.extension.sendRequest("process prerendered page");
 	}
 }
 

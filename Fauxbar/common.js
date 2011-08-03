@@ -84,6 +84,7 @@ function resetOptions() {
 	localStorage.option_bgpos = "center"; 					// Page background image position.
 	localStorage.option_bgrepeat = "no-repeat"; 			// Page background image repeat.
 	localStorage.option_bgsize = "auto"; 					// Page background image size.
+	localStorage.option_blacklist = ""; 					// Blacklisted sites to exclude from Address Box results
 	localStorage.option_bold = 1; 							// Bolden matching words in results.
 	localStorage.option_bottomgradient = "#000000"; 		// Fauxbar wraper bottom gradient color.
 	localStorage.option_bottomopacity = "50"; 				// Fauxbar wrapper bottom gradient opacity.
@@ -133,6 +134,8 @@ function resetOptions() {
 	localStorage.option_osimproper = 1;						// Scan webpages for non-OpenSearch search engines; eg scan just lone input boxes.
 	localStorage.option_osproper = 1;						// Scan webpages for proper OpenSearch declarations.
 	localStorage.option_pagetilearrangement = "frecency";	// Page tile arrangement. Possible values: "frecency" "visitcount" "manual" "bookmarkbar"
+	localStorage.option_prerender = 1;						// Let Chrome pre-render the first Address Box result if possible.
+	localStorage.option_prerenderMs = 50;					// How many milliseconds to wait before pre-rendering
 	localStorage.option_quickdelete = "0";					// Don't enable Quick Delete by default. Don't want the user randomly deleting their history without knowing it.
 	localStorage.option_recentvisits = 10;					// Number of recent visits to sample when calculating frecency scores for URLs.
 	localStorage.option_recordsearchboxqueries = 1;			// Keep a record of the user's Search Box queries, to suggest them to the user later on if they search for something similar.

@@ -25,7 +25,6 @@
 	<script type="text/javascript" src="logerror.js"></script>
 	<script type="text/javascript" src="jquery-1.6.2.min.js"></script>
 	<script type="text/javascript" src="common.js"></script>
-	<script type="text/javascript" src="jquery.hotkeys.js"></script>
 	<script type="text/javascript">
 	<!--
 	$(document).ready(function(){
@@ -56,7 +55,16 @@
 						}
 					} else {
 						$("#sadlogo").attr("src","fauxbar48.png");
-						$("body").append('<div style="text-align:center; padding-top:40px; font-size:170%;">Hooray! No errors here.</div>');
+						if (localStorage.unreadErrors > 0) {
+							$("body").append('<div style="text-align:center; padding-top:40px; font-size:130%">Whoops! No errors have been logged.<br /><br />False alarm. Sorry about that.</div>');
+							localStorage.unreadErrors = 0;
+							window.onunload = function(){
+								chrome.extension.sendRequest("reload options");
+							}
+
+						} else {
+							$("body").append('<div style="text-align:center; padding-top:40px; font-size:170%;">Hooray! No errors here.</div>');
+						}
 						$("button").remove();
 					}
 				});

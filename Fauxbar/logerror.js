@@ -184,6 +184,8 @@ function date (format, timestamp) {
     return this.date(format, timestamp);
 }
 
+/////////////////////////////////////////////////////////////////////////
+
 // Do a bit of stack tracing and return filename, line # and column #
 function getLineInfo() {
 	var lines = new Error().stack.split("\n");
@@ -251,21 +253,3 @@ function logError(msg, file, line) {
 	}
 }
 window.onerror = logError;
-
-// http://phpjs.org/functions/rand:498
-/*function rand (min, max) {
-    var argc = arguments.length;
-    if (argc === 0) {
-        min = 0;
-        max = 2147483647;
-    } else if (argc === 1) {
-        throw new Error('Warning: rand() expects exactly 2 parameters, 1 given');
-    }
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}*/
-
-/*function getOops() {
-	var words = new Array('Oops!', 'Woah!', 'Whoops!', 'D\'oh!', 'Uh-oh!', 'Aw, snap!');
-	return words[rand(0, words.length-1)];
-}*/
-

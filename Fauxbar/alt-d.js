@@ -1,6 +1,8 @@
-$("*").live('keydown', 'alt+d', function(){
-	chrome.extension.sendRequest({action:"goToNewTab", hash:'sel=ai&ai='+window.urlencode(window.location.href)});
-	return false;
+$("*").live('keydown', function(e){
+	if (e.altKey == true && e.keyCode == 68) {
+		window.location = chrome.extension.getURL("fauxbar.html#sel=ai&ai="+window.urlencode(window.location.href));
+		return false;
+	}
 });
 
 window.urlencode = function (str) {
