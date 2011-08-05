@@ -2235,11 +2235,11 @@ function resizeSearchSuggestions() {
 		}
 	}
 	if (window.keywordEngine && $("#awesomeinput:focus").length) {
-		$("#opensearch_results").css("display","block").css("width", $("#addresswrapper").innerWidth() - $(".switchtext").outerWidth() - $("#addressbaricon").parent().outerWidth() - 6 +"px").css("margin-left","0px").css("margin-top","8px")
-			.css("position","absolute").css("left",$("#awesomeinput").position().left+"px");
+		$("#opensearch_results").css("display","block").css("width", $("#addresswrapper").innerWidth() - $(".switchtext").outerWidth() - $("#addressbaricon").parent().outerWidth() - 6 +"px").css("margin-left","0px").css("margin-top","0px")
+			.css("position","absolute").css("left",$("#awesomeinput").position().left+"px").css("top",$("#addresswrapper").position().top+$("#addresswrapper").outerHeight()+1+"px");
 	} else {
-		$("#opensearch_results").css("display","block").css("width", $("#searchwrapper").innerWidth() - $("#opensearch_triangle").outerWidth() - 6 +"px").css("margin-left","0px").css("margin-top","8px").
-			css("position","absolute").css("left",$("#opensearchinput").position().left+"px");
+		$("#opensearch_results").css("display","block").css("width", $("#searchwrapper").innerWidth() - $("#opensearch_triangle").outerWidth() - 6 +"px").css("margin-left","0px").css("margin-top","0px").
+			css("position","absolute").css("left",$("#opensearchinput").position().left+"px").css("top",$("#searchwrapper").position().top+$("#searchwrapper").outerHeight()+1+"px");
 	}
 }
 

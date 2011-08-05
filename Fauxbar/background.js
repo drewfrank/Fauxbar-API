@@ -82,7 +82,7 @@ $(document).ready(function(){
 	loadThumbsIntoMemory();
 
 	// New version info
-	var currentVersion = "0.4.0";
+	var currentVersion = "0.4.1";
 	localStorage.updateBlurb = ". &nbsp;Search engines can now be used via keywords, and the startup crashes should hopefully be fixed.";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
 		localStorage.readUpdateMessage = 0;
@@ -93,8 +93,8 @@ $(document).ready(function(){
 		localStorage.option_showQueriesViaKeyword = 1;
 		localStorage.option_showSuggestionsViaKeyword = 1;
 	}
-	// Change default unvisited bookmark frecency score to 1. Changed in 0.4.0
-	if (!localStorage.currentVersion || (currentVersion == "0.4.0" && localStorage.currentVersion != "0.4.0")) {
+	// Change default unvisited bookmark frecency score to 1. Changed in 0.4.0 (and adding support for this to change in 0.4.1)
+	if (!localStorage.currentVersion || (currentVersion == "0.4.0" && localStorage.currentVersion != "0.4.0") || (currentVersion == "0.4.1" && localStorage.currentVersion != "0.4.1")) {
 		if (localStorage.option_frecency_unvisitedbookmark == 140) {
 			localStorage.option_frecency_unvisitedbookmark = 1;
 		}
