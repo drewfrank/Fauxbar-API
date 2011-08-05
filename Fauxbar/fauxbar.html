@@ -4,10 +4,10 @@
 	<link href="fauxbar.css" media="screen" rel="stylesheet" type="text/css" />
 	<style type="text/css" id="customstyle"></style>
 	<style type="text/css" id="editTileStyle"></style>
-	<script type="text/javascript" src="logerror.js"></script>
 	<script type="text/javascript" src="jquery-1.6.2.min.js"></script>
-	<script type="text/javascript" src="md5-min.js"></script>
 	<script type="text/javascript" src="common.js"></script>
+	<script type="text/javascript" src="logerror.js"></script>
+	<script type="text/javascript" src="md5-min.js"></script>
 	<script type="text/javascript" src="jquery.rangyinputs.js"></script>
 	<script type="text/javascript" src="fauxbar.js"></script>
 	<!--
@@ -100,10 +100,11 @@
 										<script type="text/javascript">
 											var speech = localStorage.option_speech == 1 ? "x-webkit-speech" : "";
 											$("#awesomeinput_cell").html('<input type="text" id="awesomeinput" spellcheck="false" autocomplete="off" '+speech+' onwebkitspeechchange="$(this).focus().removeClass(\'description\'); getResults()" />');
-											$("#opensearchinput_cell").html('<input type="text" id="opensearchinput" class="description" spellcheck="false" autocomplete="off" value="'+localStorage.osshortname+'" '+speech+' onwebkitspeechchange="$(this).focus().removeClass(\'description\'); setTimeout(getSearchSuggestions,100)" /> <div id="opensearch_results"></div>')
+											$("#opensearchinput_cell").html('<input type="text" id="opensearchinput" class="description" spellcheck="false" autocomplete="off" value="'+localStorage.osshortname+'" '+speech+' onwebkitspeechchange="$(this).focus().removeClass(\'description\'); setTimeout(getSearchSuggestions,100)" />')
 										</script>
 										<td style="width:1px; padding-left:5px; padding-right:2px;" id="searchicon_cell" title="Search">
 											<img src="search.png" class="filter-tint" id="searchicon" />
+											<div id="opensearch_results"></div>
 										</td>
 									</tr>
 								</table>

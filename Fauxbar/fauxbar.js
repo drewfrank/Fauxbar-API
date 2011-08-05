@@ -623,9 +623,9 @@ function clearSearchHistory() {
 // Submit the Search Box's input as a search to the selected search engine.
 // Need to create a simple URL if it's a GET, otherwise create a form and POST it.
 function submitOpenSearch(query) {
-	var selectedMenuItem = '.menuitem[shortname="'+window.openSearchShortname+'"]';
+	var selectedMenuItem = '.menuitem[shortname="'+(window.keywordEngine ? window.keywordEngine.shortname : window.openSearchShortname)+'"]';
 	var searchUrl = $(selectedMenuItem).attr("searchurl");
-	var openSearchInputVal = query ? query : $("#opensearchinput").val();
+	var openSearchInputVal = query ? query : (window.keywordEngine ? $("#awesomeinput").val() : $("#opensearchinput").val());
 	searchUrl = str_replace('{searchTerms}', urlencode(openSearchInputVal), searchUrl);
 
 	if (localStorage.option_recordsearchboxqueries == 1 && openDb()){
@@ -637,6 +637,9 @@ function submitOpenSearch(query) {
 	}
 
 	if ($(selectedMenuItem).attr("method").toLowerCase() == 'get') {
+		if (window.keywordEngine) {
+			window.executingKeywordSearch = true;
+		}
 		goToUrl(searchUrl);
 	}
 	else {
@@ -776,10 +779,11 @@ function sortSearchEnginesAlphabetically() {
 function getSearchEngines() {
 	if (openDb()){
 		window.db.readTransaction(function(tx){
-			tx.executeSql('SELECT iconurl, shortname, searchurl FROM opensearches ORDER BY position DESC, shortname COLLATE NOCASE ASC', [], function(tx,results){
+			tx.executeSql('SELECT iconurl, shortname, searchurl, keyword FROM opensearches ORDER BY position DESC, shortname COLLATE NOCASE ASC', [], function(tx,results){
 				var openEngines = '';
 				var len = results.rows.length, i;
 				var iconUrl = "";
+				var keyword = "";
 				if (len > 0) {
 					for (var i = 0; i < len; i++) {
 						iconUrl = results.rows.item(i).iconurl;
@@ -789,6 +793,7 @@ function getSearchEngines() {
 						openEngines += '<tr class="opensearch_optionrow">';
 						openEngines += '<td class="osicon" style="width:1px; padding:0px 0px 0 5px"><img src="'+iconUrl+'" /></td>';
 						openEngines += '<td style="width:25%" class="shortname"><input class="inputoption" type="text" value="'+results.rows.item(i).shortname+'" origvalue="'+results.rows.item(i).shortname+'" /></td>';
+						openEngines += '<td style="width:13%" class="keyword"><input class="inputoption" type="text" value="'+results.rows.item(i).keyword+'" origvalue="'+results.rows.item(i).keyword+'" /></td>';
 						openEngines += '<td style="width:75%" class="searchurl"><input class="inputoption" type="text" value="'+results.rows.item(i).searchurl+'" origvalue="'+results.rows.item(i).searchurl+'" style="color:rgba(0,0,0,.52)" spellcheck="false" autocomplete="off" /></td>';
 						if (len > 1) {
 							openEngines += '<td style="width:1px; padding:0 5px 0 4px" class="opensearchcross" title="Remove &quot;'+results.rows.item(i).shortname+'&quot; from Fauxbar"><img class="crossicon" src="cross.png" /></td>';
@@ -798,7 +803,10 @@ function getSearchEngines() {
 						openEngines += '</tr>\n';
 					}
 
-					$("#opensearchengines").html('<table id="opensearchoptionstable" class="opensearchoptionstable" style="width:100%" cellpadding="2" cellspacing="0" style="border-collapse:collapse">'+openEngines+'</table>');
+					$("#opensearchengines").html('<table id="opensearchoptionstable" class="opensearchoptionstable" style="width:100%" cellpadding="2" cellspacing="0" style="border-collapse:collapse">'+
+													'<tr style="opacity:.55"><td colspan="2" style="font-size:12px;font-weight:bold; padding-left:4px">Name</td>'+
+														'<td style="font-size:12px; font-weight:bold; padding-right:15px; padding-left:4px">Keyword</td><td colspan="2" style="padding-left:4px; text-align:left; font-size:12px; font-weight:bold">URL</td></tr>'+
+													openEngines+'</table>');
 				}
 				var visibleSEButtons = 0;
 				$(".searchenginebutton").each(function(){
@@ -1027,7 +1035,7 @@ $(document).ready(function(){
 		window.mousemovePageY = e.pageY;
 
 		// If search queries/suggestions are displayed but the Search Box isn't focused for some reason (maybe user just clicked on a result?), focus the Search Box.
-		if ($(".historyresult, .jsonresult").length > 0 && $("#opensearchinput").val().length > 0 && $("#opensearchinput:focus").length == 0) {
+		if ($(".historyresult, .jsonresult").length > 0 && $("#opensearchinput").val().length > 0 && $("#opensearchinput:focus").length == 0 && !window.keywordEngine) {
 			$("#opensearchinput").focus();
 		}
 
@@ -1122,9 +1130,7 @@ $(document).ready(function(){
 		}
 	});
 
-
-
-	// Focus Address Box or Search Box if allowed, stealing from Chrome's Omnibox
+	// Focus Address Box or Search Box if allowed, stealing from Chrome's Omnibox (shortcut keys)
 	$("*").live("keydown", function(e){
 		if ((e.keyCode == 68 && e.altKey == true && localStorage.option_altd == 1) || (e.keyCode == 76 && e.ctrlKey == true && localStorage.option_ctrll == 1)) {
 			$("#awesomeinput").focus().select();
@@ -1146,12 +1152,17 @@ $(document).ready(function(){
 	// When user focuses the Address Box, hide search queries and suggestions
 	$("#awesomeinput").bind("focus", function(){
 		window.navigating = false;
-		$("#opensearch_results").css("display","none").html("");
+		if (!window.keywordEngine) {
+			$("#opensearch_results").css("display","none").html("");
+		}
 		if (window.dontGetResults) {
 			setTimeout(function(){
 				delete window.dontGetResults;
 			}, 50);
 			return true;
+		}
+		if (!window.keywordEngine) {
+			getResults();
 		}
 	});
 
@@ -1392,6 +1403,16 @@ $(document).ready(function(){
 			}
 			return false;
 		}
+
+		// Pressing Backspace if search engine keyword is being used
+		if (e.keyCode == 8 && window.keywordEngine && !$("#awesomeinput").val().length) {
+			$("#awesomeinput").val(window.keywordEngine.keyword);
+			delete window.keywordEngine;
+			$("#addressbaricon").attr("src","chrome://favicon/null").css("opacity",.75);
+			$(".switchtext").html("Switch to tab:").css("display","");
+			getResults();
+			return false;
+		}
 	});
 
 	$("#opensearchinput").bind("keydown", function(e){
@@ -1429,7 +1450,9 @@ $(document).ready(function(){
 	// When user types a key into the Address Box...
 	$("#awesomeinput").bind("keydown",function(e){
 		window.userHasNewInput = false;
-		setTimeout(toggleSwitchText, 1);
+		if (!window.keywordEngine) {
+			setTimeout(toggleSwitchText, 1);
+		}
 		// up = 38, down = 40, esc = 27, left = 37, right = 39, enter = 13, tab = 9
 		// 8 = backspace, 46 = delete, tab = 9, shift = 16, ctrl = 17, alt = 18
 
@@ -1446,16 +1469,32 @@ $(document).ready(function(){
 		// Delete - if user has a result selected/hovered, delete it if Quick Delete is enabled in the options
 		if (e.keyCode == 46 && localStorage.option_quickdelete && localStorage.option_quickdelete == 1) {
 			if ($(".arrowed").length) {
-				if (openDb()) {
+				if ($('.arrowed.historyresult').length > 0 && localStorage.option_quickdelete && localStorage.option_quickdelete == 1) {
+					if (openDb()) {
+						window.db.transaction(function(tx){
+							var tempNum = microtime(true);
+							$(".arrowed").next(".result").attr("tempnum",tempNum);
+							tx.executeSql('DELETE FROM searchqueries WHERE query = ?', [html_entity_decode($(".arrowed .suggestion").text())]);
+							$(".arrowed").remove();
+							$('.result[tempnum="'+tempNum+'"]').addClass("arrowed");
+						}, function(t){
+							errorHandler(t, getLineInfo());
+						});
+					}
+					return false;
+				}
+				else if (openDb()) {
 					window.db.transaction(function(tx){
 						var arrowedUrl = $(".arrowed").attr("url");
-						tx.executeSql('UPDATE urls SET queuedfordeletion = 1 WHERE url = ? AND type = 1', [arrowedUrl]);
-						tx.executeSql('DELETE FROM thumbs WHERE url = ? AND manual != 1', [arrowedUrl]);
-						tx.executeSql('UPDATE thumbs SET frecency = -1 WHERE url = ?', [arrowedUrl]);
-						chrome.history.deleteUrl({url:arrowedUrl});
-						var nextNumber = $(".arrowed").next(".result").attr("number");
-						$(".arrowed").remove();
-						$('.result[number="'+nextNumber+'"]').addClass("arrowed");
+						if (arrowedUrl) {
+							tx.executeSql('UPDATE urls SET queuedfordeletion = 1 WHERE url = ? AND type = 1', [arrowedUrl]);
+							tx.executeSql('DELETE FROM thumbs WHERE url = ? AND manual != 1', [arrowedUrl]);
+							tx.executeSql('UPDATE thumbs SET frecency = -1 WHERE url = ?', [arrowedUrl]);
+							chrome.history.deleteUrl({url:arrowedUrl});
+							var nextNumber = $(".arrowed").next(".result").attr("number");
+							$(".arrowed").remove();
+							$('.result[number="'+nextNumber+'"]').addClass("arrowed");
+						}
 					}, function(t){
 						errorHandler(t, getLineInfo());
 					});
@@ -1468,9 +1507,18 @@ $(document).ready(function(){
 		// Esc - hide results and/or select all the text (user doesn't want what's currently there)
 		if (e.keyCode == 27) {
 			$(".arrowed").removeClass("arrowed");
+			if (window.keywordEngine && $("#awesomeinput").val() == "") {
+				delete window.keywordEngine;
+				window.actualUserInput = '';
+				$("#addressbaricon").attr("src","chrome://favicon/null").css("opacity",.75);
+				$(".switchtext").html("Switch to tab:").css("display","");
+				return false;
+			}
 			if (window.actualUserInput) {
 				$(this).val(window.actualUserInput);
 			}
+
+			$("#opensearch_results").css("display","none").html("");
 			if ($(".result").length > 0) {
 				$(".triangle").removeClass("glow");
 				hideResults();
@@ -1486,7 +1534,9 @@ $(document).ready(function(){
 			var aiVal = $(this).val();
 			if (aiVal.length > 0) {
 				goToUrl(aiVal);
-				$(this).blur();
+				if (!window.keywordEngine) {
+					$(this).blur();
+				}
 				if (window.altReturn == false) {
 					hideResults();
 				}
@@ -1502,8 +1552,13 @@ $(document).ready(function(){
 
 		// Up, Down - navigate the result links
 		if ((e.keyCode == 38 || e.keyCode == 40)) {
-			window.navigating = true;
-			return navigateResults(e);
+			if (window.keywordEngine && !$(".result").length) {
+				getSearchSuggestions();
+			} else {
+				window.navigating = true;
+				navigateResults(e);
+			}
+			return false;
 		}
 
 		// Hide the current results if the user has decided to show the top results instead
@@ -1557,7 +1612,7 @@ $(document).ready(function(){
 		if (event.button == 1 || e.ctrlKey == true) {
 			window.middleMouse = true;
 			window.altReturn = true;
-			query = ($(".suggestion",this).text());
+			query = $(".suggestion",this).text();
 		}
 
 		// If user hasn't Middle-clicked or Ctrl+Clicked, hide the queries/suggestions from view
@@ -1664,6 +1719,32 @@ $(document).ready(function(){
 			$("#awesomeinput").select();
 		}, 150);
 	}
+
+	$(".switchtext").live("mousedown", function(){
+		$("#awesomeinput").select();
+		return false;
+	});
+
+	$("#addressbaricon").live("mousedown", function(){
+		$("#awesomeinput").select();
+		return false;
+	});
+
+	$("#awesomeinput").live("blur", function(){
+		if (window.keywordEngine) {
+			setTimeout(function(){
+				if (!$("#awesomeinput:focus").length) {
+					if (window.keywordEngine) {
+						$("#awesomeinput").val(window.keywordEngine.keyword+" "+(window.actualUserInput == window.keywordEngine.keyword+" " ? '' : window.actualUserInput)).removeClass("description");
+						$("#opensearch_results").css("display","none").html("");
+					}
+					delete window.keywordEngine;
+					$("#addressbaricon").attr("src","chrome://favicon/null").css("opacity",.75);
+					$(".switchtext").html("Switch to tab:").css("display","");
+				}
+			}, 1);
+		}
+	});
 
 	///////// OPTIONS //////////////
 
@@ -1777,8 +1858,9 @@ $(document).ready(function(){
 				var thisOffset = $(this).offset();
 				$("body").append('<table id="dragging_os_row" style="width:'+thisParent.width()+'px; top:'+thisOffset.top+"px"+'; left:'+thisOffset.left+"px"+';"><tr class="opensearch_optionrow">'+thisParent.html()+'</tr></table>');
 				$("#dragging_os_row tr td.shortname input").val($(this).nextAll("td.shortname").children("input").val());
+				$("#dragging_os_row tr td.keyword input").val($(this).nextAll("td.keyword").children("input").val());
 				$("#dragging_os_row tr td.searchurl input").val($(this).nextAll("td.searchurl").children("input").val());
-				$(this).parent().before('<tr class=".opensearch_optionrow dotted_os_row" style="height:'+$(this).parent().outerHeight()+'px;"><td colspan="4">&nbsp;</td></tr>');
+				$(this).parent().before('<tr class=".opensearch_optionrow dotted_os_row" style="height:'+$(this).parent().outerHeight()+'px;"><td colspan="5">&nbsp;</td></tr>');
 				$(this).parent().css("display","none");
 				window.draggingOsRow = true;
 				return false;
@@ -1796,7 +1878,7 @@ $(document).ready(function(){
 				if (openDb()) {
 					var osRow = $(this).parent().parent();
 					window.db.transaction(function(tx){
-						tx.executeSql('UPDATE opensearches SET shortname = ?, searchurl = ? WHERE shortname = ?', [$('.shortname > input',osRow).val(), $('.searchurl > input',osRow).val(), $('.shortname > input',osRow).attr("origvalue")]);
+						tx.executeSql('UPDATE opensearches SET shortname = ?, searchurl = ?, keyword = ? WHERE shortname = ?', [$('.shortname > input',osRow).val().trim(), $('.searchurl > input',osRow).val().trim(), $('.keyword > input',osRow).val().trim(), $('.shortname > input',osRow).attr("origvalue")]);
 					}, function(t){
 						errorHandler(t, getLineInfo());
 					}, function(){
@@ -1817,7 +1899,7 @@ $(document).ready(function(){
 					}, function(t){
 						errorHandler(t, getLineInfo());
 					});
-					$(theCell).parent().animate({opacity:0}, /*400*/ 0, function() {
+					$(theCell).parent().animate({opacity:0}, 0, function() {
 						$(this).remove();
 						populateOpenSearchMenu();
 						getSearchEngines();
@@ -1859,7 +1941,7 @@ $(document).ready(function(){
 					var button = this;
 					window.db.transaction(function(tx) {
 						tx.executeSql('DELETE FROM opensearches WHERE searchurl = ?', [$(button).attr("searchurl")]);
-						tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, suggestUrl) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [$(button).attr("shortname"), $("img",button).attr("src"), $(button).attr("searchurl"), "", "", "0", "get", $(button).attr("suggesturl")]);
+						tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, suggestUrl, keyword) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [$(button).attr("shortname"), $("img",button).attr("src"), $(button).attr("searchurl"), "", "", "0", "get", $(button).attr("suggesturl"), $(button).attr("keyword")]);
 						$(button).css("display","none");
 					}, function(t){
 						errorHandler(t, getLineInfo());
@@ -2152,21 +2234,56 @@ function resizeSearchSuggestions() {
 			window.resultsAreScrollable = true;
 		}
 	}
-	$("#opensearch_results").css("display","block").css("width", $("#searchwrapper").innerWidth() - $("#opensearch_triangle").outerWidth() - 6 +"px").css("margin-left","0px").css("margin-top","4px");
+	if (window.keywordEngine && $("#awesomeinput:focus").length) {
+		$("#opensearch_results").css("display","block").css("width", $("#addresswrapper").innerWidth() - $(".switchtext").outerWidth() - $("#addressbaricon").parent().outerWidth() - 6 +"px").css("margin-left","0px").css("margin-top","8px")
+			.css("position","absolute").css("left",$("#awesomeinput").position().left+"px");
+	} else {
+		$("#opensearch_results").css("display","block").css("width", $("#searchwrapper").innerWidth() - $("#opensearch_triangle").outerWidth() - 6 +"px").css("margin-left","0px").css("margin-top","8px").
+			css("position","absolute").css("left",$("#opensearchinput").position().left+"px");
+	}
 }
 
+function validateJson(string) {
+	try {
+		jQuery.parseJSON(string);
+		return true;
+	} catch(e) {
+		return false;
+	}
+}
+
+
 // Fetch and display queries/suggestions related to the user's Search Box input
-function getSearchSuggestions() {
+function getSearchSuggestions(dontActuallyGet) {
 	window.mouseHasMoved = false;
 
+	if (window.keywordEngine) {
+		window.actualUserInput = $("#awesomeinput").val();
+	}
+
+	if (dontActuallyGet) {
+		return false;
+	}
+
+	if ($("#opensearchinput:focus").length && $("#opensearchinput").val().length) {
+		$(".menuitem").each(function(){
+			if ($(this).attr("keyword") && $("#opensearchinput").val() == $(this).attr("keyword")+" ") {
+				$("#opensearchinput").val("");
+				window.dontActuallyGetSearchResults = true;
+				selectOpenSearchType(this, true);
+				return false;
+			}
+		});
+	}
+
 	// If user has opted to show queries or suggestions...
-	if ($("#opensearchinput:focus").length && (localStorage.option_showqueryhistorysuggestions == 1 || localStorage.option_showjsonsuggestions == 1)) {
+	if (($("#opensearchinput:focus").length && (localStorage.option_showqueryhistorysuggestions == 1 || localStorage.option_showjsonsuggestions == 1)) || (window.keywordEngine)) {
 
 		// Set up the SQL select statement for Fauxbar's `searchqueries` database table
-		window.actualSearchInput = $("#opensearchinput").val();
+		window.actualSearchInput = window.keywordEngine ? $("#awesomeinput").val() : $("#opensearchinput").val();
 		if (openDb()) {
 			window.db.readTransaction(function(tx){
-				var osWords = explode(" ", $("#opensearchinput").val().trim());
+				var osWords = explode(" ", window.actualSearchInput.trim());
 				var queryLikes = [];
 				var statementParts = [];
 				for (w in osWords) {
@@ -2180,28 +2297,29 @@ function getSearchSuggestions() {
 					statementParts[0] = "%";
 				}
 
-				var limit = localStorage.option_maxretrievedsuggestions ? localStorage.option_maxretrievedsuggestions : 30;
+				var limit = localStorage.option_maxretrievedsuggestions ? localStorage.option_maxretrievedsuggestions : 20;
 				statementParts[statementParts.length] = limit;
+
 				// Execute the SQL select statement
 				tx.executeSql('SELECT DISTINCT query FROM searchqueries WHERE '+implode(" AND ",queryLikes)+' ORDER BY query ASC LIMIT ?', statementParts, function(tx, results){
 
 					// Get the JSON OpenSearch suggestions from the selected search engine suggestion URL if possible, otherwise just default to a fake URL so we can at least continue.
 					// Doing it this way so that it's more streamlined here, rather than me trying to worry about dealing with asynchronus results; I think it'd be messier. This way seems cleaner.
-					var suggestUrl = $('#opensearchmenu .menuitem[shortname="'+window.openSearchShortname+'"]').attr("suggesturl");
+					var suggestUrl = window.keywordEngine ? window.keywordEngine.suggestUrl : $('#opensearchmenu .menuitem[shortname="'+window.openSearchShortname+'"]').attr("suggesturl");
 					var actualSuggestUrl = "http://0.0.0.0/";
-					if (localStorage.option_showjsonsuggestions == 1 && suggestUrl != "null" && suggestUrl != "" && suggestUrl.length > 0) {
+					if (((!window.keywordEngine && localStorage.option_showjsonsuggestions == 1) || (window.keywordEngine && localStorage.option_showSuggestionsViaKeyword == 1)) && suggestUrl != "null" && suggestUrl != "" && suggestUrl.length > 0) {
 						actualSuggestUrl = suggestUrl;
 					}
-					var osVal = $("#opensearchinput").val();
+					var osVal = window.keywordEngine ? $("#awesomeinput").val() : $("#opensearchinput").val();
 
 					// Setup the JSON URL get...
 					$.getJSON(str_replace("{searchTerms}", urlencode(osVal), actualSuggestUrl)).complete(function(response){
-						response = jQuery.parseJSON(response.responseText);
+						response = validateJson(response.responseText) ? jQuery.parseJSON(response.responseText) : '';
 						var historyResults = '';
 						var jsonResults = '';
 
 						// If user has opted to show past queries, make it so
-						if (localStorage.option_showqueryhistorysuggestions == 1) {
+						if ((!window.keywordEngine && localStorage.option_showqueryhistorysuggestions == 1) || (window.keywordEngine && localStorage.option_showQueriesViaKeyword == 1)) {
 							var len = results.rows.length, i;
 							if (len > 0 || $(".result").length) {
 								var openResults = '';
@@ -2228,8 +2346,14 @@ function getSearchSuggestions() {
 							}
 						}
 
+						if (window.dontActuallyGetSearchResults) {
+							$("#opensearch_results").css("display","none").html("");
+							delete window.dontActuallyGetSearchResults;
+							return;
+						}
+
 						// Display the queries and suggestions, if any
-						if (osVal == $("#opensearchinput").val()) {
+						if (osVal == (window.keywordEngine ? $("#awesomeinput").val() : $("#opensearchinput").val())) {
 							if (historyResults.length > 0 || jsonResults.length > 0) {
 								$("#opensearch_results").html(historyResults+jsonResults).css("display","block");
 								if (historyResults.length > 0) {
@@ -2251,6 +2375,9 @@ function getSearchSuggestions() {
 
 // If Address Box input is a URL that has the "Switch to tab" text as a result below it, add a faded "Switch to text" bit in front of the Address Box's input box
 function toggleSwitchText() {
+	if (window.keywordEngine) {
+		return false;
+	}
 	var switchUrl = $(".switch").parent('.result_url').parent('.result').attr("url");
 	if ($('.switch').length > 0 && $("#awesomeinput").val() == switchUrl) {
 		$(".switchtext").css("font-size",$("#awesomeinput").css("font-size")).css("display","table-cell");
@@ -2266,8 +2393,10 @@ function toggleSwitchText() {
 // When user presses Up, Down, Shift or Shift+Tab to navigate through Address Box results or Search Box queries/suggestions
 function navigateResults(e) {
 	window.mouseHasMoved = false;
+
 	// If user has pressed Up or Down (or Shift+Tab or Shift)...
 	if ((e.keyCode == 38 || e.keyCode == 40)) {
+
 		// If some results/queries/suggestions are currently displayed...
 		if ($(".result").length > 0) {
 			var anotherResultExists = true;
@@ -2298,6 +2427,7 @@ function navigateResults(e) {
 				if ($(".arrowed").position().top < 0) {
 					var stopScrolling = false;
 					var lastScrollPosition = null;
+
 					// If page size has been changed via ctrl+ or ctrl-, top result position can sometimes always be < 0, so need to prevent infinite loop
 					while ($(".arrowed").position().top < 0 && stopScrolling == false) {
 						if ($("#awesomeinput:focus").length) {
@@ -2320,12 +2450,12 @@ function navigateResults(e) {
 						}
 					}
 					else {
-						if ($("#awesomeinput:focus").length) {
+						if ($("#awesomeinput:focus").length && !window.keywordEngine) {
 							var resultBottomPadding = 4; // taken from css file (.result)
 							while ( ($("#results").position().top+$(".arrowed .result_bottom").position().top+resultBottomPadding) > ($("#results").position().top+$("#results").height()) ) {
 								$("#results").scrollTop($("#results").scrollTop()+1);
 							}
-						} else if ($("#opensearchinput:focus").length) {
+						} else if ($("#opensearchinput:focus").length || window.keywordEngine) {
 							var resultBottomPadding = 4; // taken from css file (.result)
 							while ( ($("#opensearch_results").position().top+$(".arrowed").next(".result").position().top) > ($("#opensearch_results").position().top+$("#opensearch_results").height()) ) {
 								$("#opensearch_results").scrollTop($("#opensearch_results").scrollTop()+1);
@@ -2336,9 +2466,18 @@ function navigateResults(e) {
 
 				// Update the appropriate input box with the highlighted result's URL or search query
 				if ($("#awesomeinput:focus").length) {
-					$("#awesomeinput").val($(".arrowed").attr("url"));
+					if (window.keywordEngine) {
+						$("#awesomeinput").val(html_entity_decode($(".arrowed .suggestion").text()));
+					} else {
+						$("#awesomeinput").val($(".arrowed").attr("url"));
+					}
 				} else if ($("#opensearchinput:focus").length) {
 					$("#opensearchinput").val(html_entity_decode($(".arrowed .suggestion").text()));
+				}
+				if (window.keywordEngine) {
+					setTimeout(function(){
+						$("#awesomeinput").setSelection($("#awesomeinput").val().length);
+					},1);
 				}
 				return false;
 			}
@@ -2355,7 +2494,7 @@ function navigateResults(e) {
 			}
 		}
 		// But if no results are displayed, display some
-		else if ($("#awesomeinput").val() == "" && $("#awesomeinput:focus").length) {
+		else if ($("#awesomeinput").val() == "" && $("#awesomeinput:focus").length && !window.keywordEngine) {
 			getResults(true); // get the top pages
 			return false;
 		}
@@ -2400,8 +2539,17 @@ function refillInputs() {
 		if (getHashVar('os')) {
 			$("#opensearchinput").removeClass("description").val(getHashVar('os'));
 		}
+
+		// Keyword search engine
+		if (getHashVar('ke')) {
+			$("#awesomeinput").val(getHashVar("ke")+" "+getHashVar('ai'));
+		}
+
 		// Focus/select a Box
 		setTimeout(function(){
+			if (getHashVar("ke")) {
+				setTimeout(getResults, 100);
+			}
 			if (getHashVar('sel')) {
 				if (getHashVar('sel') == 'ai') { // "if selection == #awesomeinput/AddressBox"
 					$("#opensearchinput").blur();
@@ -2428,7 +2576,7 @@ function autofillInput(thisQuery) {
 		$(".result").each(function(){
 			if (fru == '') {
 				tu = $(this).attr("url");
-				if ('http://'+ai == tu.substr(0,('http://'+ai).length) || 'http://www.'+ai == tu.substr(0,('http://www.'+ai).length) || ai == tu.substr(0,ai.length) || 'https://'+ai == tu.substr(0,('https://'+ai).length) || 'https://www.'+ai == tu.substr(0,('https://www.'+ai).length) ) {
+				if (tu && ('http://'+ai == tu.substr(0,('http://'+ai).length) || 'http://www.'+ai == tu.substr(0,('http://www.'+ai).length) || ai == tu.substr(0,ai.length) || 'https://'+ai == tu.substr(0,('https://'+ai).length) || 'https://www.'+ai == tu.substr(0,('https://www.'+ai).length)) ) {
 					fru = html_entity_decode(strip_tags($(".result_url",this).html()));
 					$(this).addClass("autofillmatch");
 				}
@@ -2440,13 +2588,11 @@ function autofillInput(thisQuery) {
 			if (substr_count(newVal, '/') == 1 && newVal.substr(newVal.length-1) == '/' && $("#awesomeinput").val().substr(-1) != '/') {
 				newVal = newVal.substr(0, newVal.length-1);
 			}
-			//if (thisQuery == window.actualUserInput || !thisQuery) {
-				if ($("#awesomeinput").getSelection().length == 0) {
-					if ((!localStorage.option_autofillurl || localStorage.option_autofillurl == 1) && !window.tileEditMode) {
-						$("#awesomeinput").val(newVal).setSelection(ai.length, $("#awesomeinput").val().length);
-					}
+			if ($("#awesomeinput").getSelection().length == 0) {
+				if ((!localStorage.option_autofillurl || localStorage.option_autofillurl == 1) && !window.tileEditMode) {
+					$("#awesomeinput").val(newVal).setSelection(ai.length, $("#awesomeinput").val().length);
 				}
-			//}
+			}
 		}
 	}
 }
@@ -2469,9 +2615,11 @@ function getResults(noQuery) {
 	}
 
 	// Get an array of tabs in the current Chrome window, so we can examine them soon to see if we need to use the "Switch to tab" text/functionality anywhere
-	chrome.tabs.getAllInWindow(null, function(tabs){
-		window.currentTabs = tabs;
-	});
+	if (!window.keywordEngine && !$(".glow").length) {
+		chrome.tabs.getAllInWindow(null, function(tabs){
+			window.currentTabs = tabs;
+		});
+	}
 
 	// As we are getting new results, remove any indiction from any existing result URLs that have been used to auto-fill the Address Box's input for the user.
 	$(".autofillmatch").removeClass("autofillmatch");
@@ -2480,7 +2628,58 @@ function getResults(noQuery) {
 	if ($("#awesomeinput").val() != window.placeholder) {
 		window.actualUserInput = getAiSansSelected();
 	}
+
 	var thisQuery = window.actualUserInput;
+
+	if ($(".glow").length) {
+		delete window.keywordEngine;
+	} else {
+
+		// Search engine keyword?
+		var keywordMatch = false;
+		if (!window.tileEditMode && !window.keywordEngine) {
+			var justEnabledKeywordEngine = true;
+			var usingKeyword = '';
+			$(".menuitem").each(function(){
+				var keyword = $(this).attr("keyword");
+				if (keyword && thisQuery && thisQuery.substr(0,keyword.length+1) == keyword+" ") {
+					keywordMatch = true;
+					usingKeyword = keyword;
+					window.keywordEngine = {shortname:$(this).attr("shortname"), keyword:$(this).attr("keyword"), suggestUrl:$(this).attr("suggesturl")};
+					$("#addressbaricon").attr("src",$("img",this).attr("src")).css("opacity",1);
+					hideResults();
+				}
+			});
+			if (keywordMatch == false) {
+				$("#addressbaricon").attr("src","chrome://favicon/null").css("opacity",.75);
+				$(".switchtext").html("Switch to tab:").css("display","");
+			}
+		}
+
+		if (window.keywordEngine) {
+			if (noQuery) {
+				$("#opensearch_results").css("display","none").html("");
+			} else {
+				$(".switchtext").html(window.keywordEngine.shortname+":").css("display","table-cell");
+				if ($("#awesomeinput").val().substr(0,window.keywordEngine.keyword.length+1) == window.keywordEngine.keyword+" ") {
+					$("#awesomeinput").val($("#awesomeinput").val().substr(window.keywordEngine.keyword.length+1));
+				}
+				if ($("#awesomeinput").val().length > 0) {
+					if (justEnabledKeywordEngine) {
+						getSearchSuggestions(true);
+					} else {
+						getSearchSuggestions();
+					}
+				} else {
+					$("#opensearch_results").css("display","none").html("");
+				}
+				return;
+			}
+		} else {
+			$("#opensearch_results").css("display","none").html("");
+		}
+	}
+
 
 	// If the user has entered text into the Address Box, or if the user is just getting the top results...
 	if ( ($("#awesomeinput").length > 0 && $("#awesomeinput").val().length > 0 && $("#awesomeinput").val() != window.placeholder) || noQuery ) {
@@ -2537,11 +2736,8 @@ function getResults(noQuery) {
 					}
 					resultLimit = resultLimit * 2;
 
-					// Define Fauxbar's URL, so that results from that don't get displayed. No need to display a link to Fauxbar when you're already using Fauxbar.
-					var fauxbarUrl = chrome.extension.getURL("fauxbar.html%");
-
 					// Ignore titleless results if user has opted. But still keep proper files like .js, .php, .pdf, .json, .html, etc.
-					var titleless = localStorage.option_ignoretitleless == 1 ? ' AND (title != "" OR url LIKE "%.__" OR url LIKE "%.___" OR url LIKE "%.____") ' : "";
+					var titleless = localStorage.option_ignoretitleless == 1 ? ' AND (title != "" OR url LIKE "%.__" OR url LIKE "%.___" OR url LIKE "%.____" OR url LIKE "%/") ' : "";
 
 
 					// If user is editing site tiles, don't show results for tiles that have already been added.
@@ -2555,15 +2751,17 @@ function getResults(noQuery) {
 					// And now to create the statement.
 					// If we're just getting the top sites...
 					if (noQuery) {
-						var selectStatement = 'SELECT url, title, type, id FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+ titleless + editModeUrls +' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
+						var selectStatement = 'SELECT url, title, type, id FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+ titleless + editModeUrls +' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
 					}
+
 					// If we're searching using the words from the Address Box's input...
 					else if (urltitleWords.length > 0) {
-						var selectStatement = 'SELECT url, title, type, id, (url||" "||title) AS urltitle FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' AND '+implode(" and ", urltitleQMarks)+' AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless + editModeUrls +' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
+						var selectStatement = 'SELECT url, title, type, id, (url||" "||title) AS urltitle FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' AND '+implode(" and ", urltitleQMarks) + titleless + editModeUrls +' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
 					}
+
 					// Not sure if this actually ever gets used.
 					else {
-						var selectStatement = 'SELECT url, title, type, id FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless + editModeUrls +' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
+						var selectStatement = 'SELECT url, title, type, id FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+ modifiers + titleless + editModeUrls +' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
 					}
 
 					// If the user's computer is lagging and taking a while to retrieve the results, display a loading on the left side of the Address Box
@@ -2572,7 +2770,7 @@ function getResults(noQuery) {
 					setTimeout(function(){
 						if (window.waitingForResults == true && microtime(true) - window.fetchResultStartTime > 1 && $("#awesomeinput:focus").length == 1 && $("#awesomeinput").getSelection().length != $("#awesomeinput").val().length) {
 							$("#addressbaricon").attr("src","chrome://resources/images/throbber.svg");
-						} else {
+						} else if ($("#addressbaricon").attr("src") == "chrome://resources/images/throbber.svg") {
 							$("#addressbaricon").attr("src","chrome://favicon/null");
 						}
 					}, 1000);
@@ -2596,6 +2794,7 @@ function getResults(noQuery) {
 							return false;
 						}
 						var newItem = {};
+
 						// Create each returned row into a new object
 						var jsTest = 'javascript:void';
 						for (var i = 0; i < len; i++) {
@@ -2630,14 +2829,11 @@ function getResults(noQuery) {
 							return false;
 						}
 
-						// As we're close to showing the new results, hide any currently shown results.
-						hideResults();
-
 						// Getting ready to make matching words appear bold/underlined
 						var text = getAiSansSelected();
 
 						// The ¸ cedilla character will largely act as a special/unique character for our bold/underline character replacement method below, so make it be a space if user happens to use it (sorry to anyone who actually uses it!)
-						text = str_replace("¸", " ", text); // cedilla
+						text = str_replace("¸", " ", text);
 
 						// Replace other special characters with their HTML equivalents (or is it the other way around...?)
 						text = replaceSpecialChars(text);
@@ -2671,12 +2867,15 @@ function getResults(noQuery) {
 							}
 						}
 
-
+						// Process the blacklist
 						if (localStorage.option_blacklist.length) {
 							var blacksites = explode(",", localStorage.option_blacklist);
 						} else {
 							var blacksites = new Array;
 						}
+
+						// As we're close to showing the new results, hide any currently shown results.
+						hideResults();
 
 						// For each history item and bookmark we've retrieved that matches the user's text...
 						for (var ii in sHI) {
@@ -2809,7 +3008,7 @@ function getResults(noQuery) {
 
 									// Make the URL display the "Switch to tab" text if tab is already open in current window
 									urlTextAttr = urlText;
-									if (!window.tileEditMode) {
+									if (!window.tileEditMode && !window.keywordEngine) {
 										for (var ct in window.currentTabs) {
 											if (currentTabs[ct].url == hI.url) {
 												urlText = '<img src="tabicon.png" style="opacity:.6" /> <span class="switch">Switch to tab</span>';
@@ -2858,7 +3057,9 @@ function getResults(noQuery) {
 
 						// Remove the Address Box's loading icon
 						window.fetchResultStartTime = microtime(true);
-						$("#addressbaricon").attr("src","chrome://favicon/null");
+						if ($("#addressbaricon").attr("src") == "chrome://resources/images/throbber.svg") {
+							$("#addressbaricon").attr("src","chrome://favicon/null");
+						}
 
 						// If there's no results, hide any existing ones.
 						if ($("#results").html() == "") {
@@ -2933,9 +3134,15 @@ function getResults(noQuery) {
 							// Show the results
 							$(".result").last().css("border-bottom",0);
 							$(".favstar").attr("src", $("#fauxstar").attr("src"));
-							toggleSwitchText();
+							if (keywordMatch == false && thisQuery == window.actualUserInput && !window.keywordEngine) {
+								toggleSwitchText();
+							}
 							window.mouseHasMoved = false;
 
+							if (window.keywordEngine && !noQuery) {
+								hideResults();
+								return;
+							}
 							if (thisQuery.length > 1 || thisQuery == window.actualUserInput || !noQuery && $(".glow").length == 1) {
 								$("#results").attr("noquery",(noQuery?1:0)).css("opacity",1);
 							}
@@ -3023,6 +3230,7 @@ function updateHash() {
 	var ai = $("#awesomeinput").hasClass("description") ? 'ai=' : 'ai='+urlencode(window.actualUserInput ? window.actualUserInput : $("#awesomeinput").val());
 	var os = $("#opensearchinput").hasClass("description") ? '&os=' : '&os='+urlencode($("#opensearchinput").val());
 	var sel = '&sel=';
+	var ke = '&ke=';
 	var options = "";
 	if ($("#awesomeinput:focus").length || window.goingToUrl) {
 		sel += 'ai';
@@ -3032,7 +3240,10 @@ function updateHash() {
 	if (getHashVar("options") == 1) {
 		options = "&options=1";
 	}
-	var hash = '#'+ai+os+sel+options;
+	if (window.keywordEngine) {
+		ke += window.keywordEngine.keyword;
+	}
+	var hash = '#'+ai+os+sel+ke+options;
 	if (hash != window.location.hash) {
 		window.location.hash = hash;
 	}
@@ -3041,6 +3252,11 @@ function updateHash() {
 
 // Tell the tab to go to a URL.
 function goToUrl(url, fromClickedResult) {
+	if (window.keywordEngine && !window.executingKeywordSearch) {
+		//$("#opensearch_results").css("display","none").html("");
+		submitOpenSearch(url);
+		return;
+	}
 	url = url.trim();
 	if ($('.result[href="'+url+'"] .result_url .switch').length > 0) {
 		chrome.tabs.getAllInWindow(null, function(tabs){
@@ -3122,6 +3338,11 @@ function goToUrl(url, fromClickedResult) {
 			delete window.middleMouse;
 		}
 		chrome.tabs.create({url:url, selected:selected});
+		if (window.keywordEngine) {
+			setTimeout(function(){
+				$("#awesomeinput").focus();
+			}, 100);
+		}
 	} else {
 		chrome.tabs.getCurrent(function(tab){
 			chrome.tabs.update(tab.id, {url:url});
@@ -3149,32 +3370,6 @@ function hexToR(h) { return parseInt((cutHex(h)).substring(0,2),16) }
 function hexToG(h) { return parseInt((cutHex(h)).substring(2,4),16) }
 function hexToB(h) { return parseInt((cutHex(h)).substring(4,6),16) }
 function cutHex(h) { return (h.charAt(0)=="#") ? h.substring(1,7) : h}
-
-
-
-// http://stackoverflow.com/questions/934012/get-image-data-in-javascript
-function getBase64Image(img, jpgQualityDecimal) {
-	if (!jpgQualityDecimal) {
-		jpgQualityDecimal = .7;
-	}
-    // Create an empty canvas element
-    var canvas = document.createElement("canvas");
-    canvas.width = img.width;
-    canvas.height = img.height;
-
-    // Copy the image contents to the canvas
-    var ctx = canvas.getContext("2d");
-    ctx.drawImage(img, 0, 0);
-
-    // Get the data-URL formatted image
-    // Firefox supports PNG and JPEG. You could check img.src to guess the
-    // original format, but be aware the using "image/jpg" will re-encode the image.
-   // var dataURL = canvas.toDataURL("image/png");
-    var dataURL = canvas.toDataURL("image/jpeg", jpgQualityDecimal);
-
-    //return dataURL.replace(/^data:image\/(png|jpg);base64,/, "");
-    return dataURL;
-}
 
 // http://www.somacon.com/p355.php
 String.prototype.trim = function() {
@@ -3552,7 +3747,7 @@ if (getHashVar("options") == 1) {
 								var newWords = new Array;
 								for (var w in words) {
 									if (words[w].substr(0,4) == "http") {
-										newWords[newWords.length] = '<a href='+words[w]+'" target="_blank" style="color:#06c">'+words[w]+'</a>';
+										newWords[newWords.length] = '<a href="'+words[w]+'" target="_blank" style="color:#06c">'+words[w]+'</a>';
 									} else {
 										newWords[newWords.length] = words[w];
 									}
@@ -3581,4 +3776,3 @@ if (getHashVar("options") == 1) {
 		}
 	}
 }
-

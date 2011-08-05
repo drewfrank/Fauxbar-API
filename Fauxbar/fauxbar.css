@@ -111,7 +111,7 @@ table { border:0; border-collapse:collapse; width:100%; display:table; }
 #opensearch_menufocus { position:absolute; z-index:-999; opacity:0; display:none; }
 
 /* "Switch to tab" text in front of the Address Box's input box, used when user has navigated to a "Switch to tab"-laden result */
-.switchtext, td.addtile { white-space:nowrap; border-right:0px solid rgba(0,0,0,.2); color:rgba(0,0,0,.6); font-family:Segoe UI, Arial, sans-serif; font-size:15px; padding-right:4px; padding-left:2px; display:none; width:1px; }
+.switchtext, td.addtile { white-space:nowrap; border-right:0px solid rgba(0,0,0,.2); color:rgba(0,0,0,.6); font-family:Segoe UI, Arial, sans-serif; font-size:15px; padding-right:4px; padding-left:0px; display:none; width:1px; }
 
 /* The hidden URL of a "Switch to tab" replacement text */
 .result_url_hidden { display:none; }

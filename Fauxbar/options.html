@@ -139,7 +139,8 @@
 					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Fauxbar Options: Address Box
 				</h1>
-				Find your history items, bookmarks and opened tabs by typing into the Address Box.
+				Find your history items, bookmarks and opened tabs by typing into the Address Box.<br />
+				Search engines can also be accessed by typing a keyword and pressing spacebar.
 				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
@@ -193,7 +194,7 @@
 								<input name="option_underline" id="option_underline" type="checkbox" /> Underline matching words
 							</label>
 							<label class="legend">
-								<input name="option_ignoretitleless" id="option_ignoretitleless" type="checkbox" /> Only show untitled results if they have a file extension
+								<input name="option_ignoretitleless" id="option_ignoretitleless" type="checkbox" /> Don't show dynamically-generated untitled results
 							</label>
 							<label class="legend" style="width:100%">
 								<table cellpadding="0" cellspacing="0" style="border-collapse:collapse; width:95%"><tr><td style="white-space:nowrap">Don't show results from:&nbsp;</td>
@@ -249,6 +250,23 @@
 						</td>
 					</tr>
 					-->
+
+					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr>
+						<th>Keywords</th>
+						<td>
+							<label class="legend">
+								When using search engines via keywords in the Address Box...
+							</label>
+							<label class="legend">
+								<input type="checkbox" id="option_showQueriesViaKeyword" /> show previous queries from my Fauxbar search history
+							</label>
+							<label class="legend">
+								<input type="checkbox" id="option_showSuggestionsViaKeyword" /> show suggestions from the search engine when possible
+							</label>
+						</td>
+					</tr>
+
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
 						<th>Fallback URL</th>
@@ -270,8 +288,7 @@
 								Bing.com
 							</button>
 							<div class="optionstip">
-								&bull; Used when an invalid address is submitted from the Address Box,<br />
-								<span style="margin-left:8px;font-size:12px">e.g. when you've entered a search query instead of a URL.</span>
+								&bull; Used when you're not using a keyword and an invalid address is submitted, e.g. when you've entered a search query instead of a URL.</span>
 								<div style="margin-top:5px; font-size:12px">&bull; Must contain <b>{searchTerms}</b></div>
 							</div>
 						</td>
@@ -310,20 +327,21 @@
 						<td>
 							<div class="optionstip" style="line-height:150%; margin-top:-3px; margin-bottom:10px">
 								Fauxbar's search engines are separate from Chrome's search engines.<br />
+								Keywords let you access search engines from both the Address Box and Search Box.<br />
 								Drag an icon to rearrange the display order, or <a onclick="javascript:sortSearchEnginesAlphabetically()" style="text-decoration:underline; cursor:pointer">sort alphabetically</a>.
 							</div>
 							<div id="opensearchengines" style="margin-top:-3px">You haven't added any search engines to Fauxbar yet.</div>
 							<div id="restorebig3" style="margin-top:10px">
 								Restore:
-								<button class="searchenginebutton google" shortname="Google" searchurl="http://www.google.com/search?q={searchTerms}" suggesturl="http://suggestqueries.google.com/complete/search?json&q={searchTerms}" style="font-size:12px; padding:2px 4px 2px 3px;">
+								<button class="searchenginebutton google" shortname="Google" searchurl="http://www.google.com/search?q={searchTerms}" suggesturl="http://suggestqueries.google.com/complete/search?json&q={searchTerms}" keyword="g" style="font-size:12px; padding:2px 4px 2px 3px;">
 									<img src="google.ico" style="vertical-align:middle; margin-top:-3px;" />
 									Google.com
 								</button>
-								<button class="searchenginebutton yahoo" shortname="Yahoo!" searchurl="http://search.yahoo.com/search?p={searchTerms}" suggesturl="http://ff.search.yahoo.com/gossip?output=fxjson&amp;command={searchTerms}" style="font-size:12px; padding:2px 4px 2px 3px;">
+								<button class="searchenginebutton yahoo" shortname="Yahoo!" searchurl="http://search.yahoo.com/search?p={searchTerms}" suggesturl="http://ff.search.yahoo.com/gossip?output=fxjson&amp;command={searchTerms}" keyword="y" style="font-size:12px; padding:2px 4px 2px 3px;">
 									<img src="yahoo.ico" style="vertical-align:middle; margin-top:-3px;" />
 									Yahoo.com
 								</button>
-								<button class="searchenginebutton bing" shortname="Bing" searchurl="http://www.bing.com/search?q={searchTerms}" suggesturl="http://api.bing.com/osjson.aspx?query={searchTerms}" style="font-size:12px; padding:2px 4px 2px 3px;">
+								<button class="searchenginebutton bing" shortname="Bing" searchurl="http://www.bing.com/search?q={searchTerms}" suggesturl="http://api.bing.com/osjson.aspx?query={searchTerms}" keyword="b" style="font-size:12px; padding:2px 4px 2px 3px;">
 									<img src="bing.ico" style="vertical-align:middle; margin-top:-3px;" />
 									Bing.com
 								</button>
@@ -715,7 +733,7 @@
 					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px;" />
 					Fauxbar Management
 				</h1>
-				Fauxbar version 0.3.0 &nbsp;<span style="opacity:.5">(3 Aug 2011)</span>
+				Fauxbar version 0.4.0 &nbsp;<span style="opacity:.5">(5 Aug 2011)</span>
 				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
@@ -824,6 +842,16 @@
 				to determine the order of your history items and bookmarks.<br />
 				Below, you can alter how the frecency scores are measured.
 				<table>
+					<tr class=""><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr class="">
+						<!--<th>Unvisited Bonuses</th>-->
+						<td colspan="2">
+						<label class="legend" style="margin-top:0px">
+								Unvisited bookmark score:
+								<input name="option_frecency_unvisitedbookmark" id="option_frecency_unvisitedbookmark" class="inputoption" type="number" min="0" max="9999" step="20" value="" maxlength="4" size="6" style="text-align:center; padding:0" />
+							</label>
+						</td>
+					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
 						<td colspan="2">
@@ -836,6 +864,8 @@
 							</div>
 						</td>
 					</tr>
+
+
 					<tr class="customscoring"><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr class="customscoring">
 						<th>Sampled Visits</th>
@@ -886,16 +916,6 @@
 							<div class="optionstip" style="margin-top:2px; margin-left:0px">
 								<a href="http://code.google.com/chrome/extensions/history.html#transition_types" target="_blank">Learn about these transition types</a>
 							</div>
-						</td>
-					</tr>
-					<tr class="customscoring"><td colspan="2" class="tdhr"><div></div></td></tr>
-					<tr class="customscoring">
-						<th>Unvisited Bonuses</th>
-						<td>
-						<label class="legend" style="margin-top:-2px">
-								Unvisited bookmark bonus:
-								<input name="option_frecency_unvisitedbookmark" id="option_frecency_unvisitedbookmark" class="inputoption" type="number" min="0" max="9999" step="20" value="" maxlength="4" size="6" style="text-align:center; padding:0" />
-							</label>
 						</td>
 					</tr>
 					<tr class="customscoring"><td colspan="2" class="tdhr"><div></div></td></tr>

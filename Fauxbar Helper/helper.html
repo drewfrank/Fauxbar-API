@@ -11,7 +11,10 @@
 				for (var e in extensions) {
 					if (extensions[e].name == "Fauxbar" && extensions[e].enabled == true) {
 						window.doEnable = true;
-						chrome.management.setEnabled(extensions[e].id, false);
+						var eId = extensions[e].id;
+						setTimeout(function(){
+							chrome.management.setEnabled(eId, false);
+						}, 100);
 					}
 				}
 			});
@@ -20,9 +23,12 @@
 
 	chrome.management.onDisabled.addListener(function(extension) {
 		if (window.doEnable == true && extension.name == "Fauxbar") {
-			chrome.management.setEnabled(extension.id, true, function(){
-				window.doEnable = false;
-			});
+			var eId = extension.id;
+			setTimeout(function(){
+				chrome.management.setEnabled(eId, true, function(){
+					window.doEnable = false;
+				});
+			}, 100);
 		}
 	});
 

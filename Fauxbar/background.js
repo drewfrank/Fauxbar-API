@@ -26,25 +26,31 @@ function loadThumbsIntoMemory() {
 		});
 	}
 }
-$(document).ready(loadThumbsIntoMemory);
 
+// Record if we should restart the Helper next time it's disabled
+chrome.management.onDisabled.addListener(function(extension) {
+	if (window.doEnable == true && extension.name == "Fauxbar Memory Helper") {
+		var eId = extension.id;
+		setTimeout(function(){
+			chrome.management.setEnabled(eId, true, function(){
+				window.doEnable = false;
+			});
+		}, 100);
+	}
+});
 // Reload Fauxbar Memory Helper if it's running
 chrome.management.getAll(function(extensions){
 	for (var e in extensions) {
 		if (extensions[e].name == "Fauxbar Memory Helper" && extensions[e].enabled == true) {
 			window.doEnable = true;
-			chrome.management.setEnabled(extensions[e].id, false);
+			var eId = extensions[e].id;
+			setTimeout(function(){
+				chrome.management.setEnabled(eId, false);
+			}, 100);
 		}
 	}
 });
-// Record if we should restart the Helper next time it's disabled
-chrome.management.onDisabled.addListener(function(extension) {
-	if (window.doEnable == true && extension.name == "Fauxbar Memory Helper") {
-		chrome.management.setEnabled(extension.id, true, function(){
-			window.doEnable = false;
-		});
-	}
-});
+
 
 // If Helper detects computer is idle, Fauxbar will report back to restart Fauxbar IF no Fauxbar tabs are open.
 chrome.extension.onRequestExternal.addListener(function(request){
@@ -62,7 +68,7 @@ chrome.extension.onRequestExternal.addListener(function(request){
 			if (okayToRestart == true) {
 				chrome.management.getAll(function(extensions){
 					for (var e in extensions) {
-						if (extensions[e].name == "Fauxbar Memory Helper") {
+						if (extensions[e].name == "Fauxbar Memory Helper" && extensions[e].enabled == true) {
 							chrome.extension.sendRequest(extensions[e].id, "restart fauxbar");
 						}
 					}
@@ -73,12 +79,25 @@ chrome.extension.onRequestExternal.addListener(function(request){
 });
 
 $(document).ready(function(){
+	loadThumbsIntoMemory();
 
 	// New version info
-	var currentVersion = "0.3.0";
-	localStorage.updateBlurb = ". &nbsp;Pre-rendering pages and site blacklists are now available.";
+	var currentVersion = "0.4.0";
+	localStorage.updateBlurb = ". &nbsp;Search engines can now be used via keywords, and the startup crashes should hopefully be fixed.";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
 		localStorage.readUpdateMessage = 0;
+	}
+
+	// Add keyword suggestions/queries options, added in 0.4.0
+	if (!localStorage.option_showQueriesViaKeyword) {
+		localStorage.option_showQueriesViaKeyword = 1;
+		localStorage.option_showSuggestionsViaKeyword = 1;
+	}
+	// Change default unvisited bookmark frecency score to 1. Changed in 0.4.0
+	if (!localStorage.currentVersion || (currentVersion == "0.4.0" && localStorage.currentVersion != "0.4.0")) {
+		if (localStorage.option_frecency_unvisitedbookmark == 140) {
+			localStorage.option_frecency_unvisitedbookmark = 1;
+		}
 	}
 
 	// Re-enable error alerts for this release (0.2.0)
@@ -138,6 +157,14 @@ $(document).ready(function(){
 	}
 
 	if (openDb()) {
+
+		// Add `keyword` columns to `opensearches`, and apply keywords to the big three. Added in 0.4.0
+		window.db.transaction(function(tx){
+			tx.executeSql('ALTER TABLE opensearches ADD COLUMN keyword TEXT DEFAULT ""');
+			tx.executeSql('UPDATE opensearches SET keyword = "g" WHERE shortname = "Google"');
+			tx.executeSql('UPDATE opensearches SET keyword = "y" WHERE shortname = "Yahoo!"');
+			tx.executeSql('UPDATE opensearches SET keyword = "b" WHERE shortname = "Bing"');
+		});
 
 		// Create `errors` table for error tracking. Added in 0.2.0
 		window.db.transaction(function(tx){
@@ -313,23 +340,20 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 					resultLimit = 20;
 				}
 
-				// Define Fauxbar's URL, so that results from that don't get displayed. No need to display a link to Fauxbar when you're already using Fauxbar.
-				var fauxbarUrl = chrome.extension.getURL("fauxbar.html%");
-
-				// Ignore titleless results if user has opted. But still keep proper files like .pdf, .json, .js, .php, .html, etc.
-				var titleless = localStorage.option_ignoretitleless == 1 ? ' AND (title != "" OR url LIKE "%.__" OR url LIKE "%.___" OR url LIKE "%.____") ' : "";
+				// Ignore titleless results if user has opted. But still keep proper files like .pdf, .json, .js, .php, .html, etc. And also allow untitled URLs ending with "/"
+				var titleless = localStorage.option_ignoretitleless == 1 ? ' AND (title != "" OR url LIKE "%.__" OR url LIKE "%.___" OR url LIKE "%.____" OR url LIKE "%/") ' : "";
 
 				// If there's no input...
 				if (text.length == 0) {
-					var selectStatement = 'SELECT url, title, type FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
+					var selectStatement = 'SELECT url, title, type FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
 				}
 				// Else, If we have words...
 				else if (urltitleWords.length > 0) {
-					var selectStatement = 'SELECT url, title, type, (url||" "||title) AS urltitle FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' AND '+implode(" and ", urltitleQMarks)+' AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
+					var selectStatement = 'SELECT url, title, type, (url||" "||title) AS urltitle FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' AND '+implode(" and ", urltitleQMarks) + titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
 				}
 				// Else, this probably doesn't ever get used.
 				else {
-					var selectStatement = 'SELECT url, title, type FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' AND url NOT LIKE "'+fauxbarUrl+'" AND url NOT LIKE "data:%" '+titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
+					var selectStatement = 'SELECT url, title, type FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers + titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
 				}
 
 				// If user text no longer equals the text we're processing, cancel.
@@ -380,6 +404,12 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 					text = replaceSpecialChars(text);
 					var truncated = 0;
 
+					if (localStorage.option_blacklist.length) {
+						var blacksites = explode(",", localStorage.option_blacklist);
+					} else {
+						var blacksites = new Array;
+					}
+
 					// For each result...
 					for (var i in sortedHistoryItems) {
 						truncated = 0;
@@ -392,6 +422,24 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 								words = explode(" ", text);
 								if (words) {
 									words.sort(compareStringLengths);
+								}
+							}
+
+							// Check to see if site is on the blacklist
+							if (blacksites.length) {
+								for (var b in blacksites) {
+									var bs = blacksites[b].trim();
+									var blackparts = explode("*",bs);
+									var partsMatched = 0;
+									for (var p in blackparts) {
+										if (strstr(hI.url, blackparts[p])) {
+											partsMatched++;
+										}
+									}
+									if (partsMatched == blackparts.length) {
+										resultIsOkay = false;
+										break;
+									}
 								}
 							}
 
@@ -788,8 +836,6 @@ function processUpdatedTab(tabId, tab) {
 
 		// If user has opted to enable Alt+D, Ctrl+L or Ctrl+L functionality, make it so
 		if ((localStorage.option_altd && localStorage.option_altd == 1) || (localStorage.option_ctrll && localStorage.option_ctrll == 1) || (localStorage.option_ctrlk && localStorage.option_ctrlk == 1)) {
-
-			//chrome.tabs.executeScript(tabId, {file:"jquery.hotkeys.js"});
 			if (localStorage.option_altd && localStorage.option_altd == 1) {
 				chrome.tabs.executeScript(tabId, {file:"alt-d.js"});
 			}
@@ -909,12 +955,16 @@ chrome.history.onVisited.addListener(function(historyItem) {
 	}
 });
 
-// If Chrome removes a visit from its history, update frecency scores in Fauxbar for the URL, or delete the URL completely if all visits have been removed.
+// When Chrome deletes its history...
+// if ALL of Chrome's history has been removed, or if all visits of a unique URL have been removed, this function gets called.
+// But this function does *not* get called if only a few visits of a URL get removed.
+// eg, if you visit a URL every hour in a day, and then tell Chrome to delete your past hour of history, this function will not get called because visits of the URL still remain for the other 23 hours.
 chrome.history.onVisitRemoved.addListener(function(removed) {
 	if (openDb()) {
 
 		// If user has chosen to remove their entire history from Chrome, do the same to Fauxbar's index
 		if (removed.allHistory == true) {
+			console.log("Removing all history URLs!");
 			window.db.transaction(function(tx){
 				tx.executeSql('DELETE FROM urls WHERE type = 1');
 				tx.executeSql('DELETE FROM thumbs WHERE manual != 1');
@@ -925,37 +975,18 @@ chrome.history.onVisitRemoved.addListener(function(removed) {
 			});
 		}
 
-		// But if only a single URL has been removed...
+		// But if all visits of specific URLs have been removed, delete them from Fauxbar's index
 		else {
-			for (var r in removed.urls) {
-				removedUrl = removed.urls[r];
-				chrome.history.getVisits({url:removedUrl}, function(visitItems){
-
-					// If all instances of the URL have been removed from Chrome's history, do the same for Fauxbar's index
-					if (visitItems.length == 0) {
-						window.db.transaction(function (tx) {
-							tx.executeSql('DELETE FROM urls WHERE type = 1 AND url = ?', [removedUrl]);
-							tx.executeSql('DELETE FROM thumbs WHERE url = ? AND manual != 1', [removedUrl]);
-							tx.executeSql('UPDATE thumbs SET frecency = -1 WHERE url = ?', [removedUrl]);
-							tx.executeSql('UPDATE urls SET frecency = ? WHERE url = ? AND type = 2', [localStorage.option_frecency_unvisitedbookmark, removedUrl]);
-						}, function(t){
-							errorHandler(t, getLineInfo());
-						});
-					}
-
-					// But if some instances of the URL still exist, just update frecency scores
-					else {
-						visitItems.reverse();
-						window.db.transaction(function (tx) {
-							var frec = calculateFrecency(visitItems);
-							tx.executeSql('UPDATE urls SET frecency = ? WHERE url = ?', [calculateFrecency(visitItems), removedUrl]);
-							tx.executeSql('UPDATE thumbs SET frecency = ? WHERE url = ?', [calculateFrecency(visitItems), removedUrl]);
-						}, function(t){
-							errorHandler(t, getLineInfo());
-						});
-					}
-				});
-			}
+			window.db.transaction(function (tx) {
+				for (var r in removed.urls) {
+					tx.executeSql('DELETE FROM urls WHERE type = 1 AND url = ?', [removed.urls[r]]);
+					tx.executeSql('DELETE FROM thumbs WHERE url = ? AND manual != 1', [removed.urls[r]]);
+					tx.executeSql('UPDATE thumbs SET frecency = -1 WHERE url = ?', [removed.urls[r]]);
+					tx.executeSql('UPDATE urls SET frecency = ? WHERE url = ? AND type = 2', [localStorage.option_frecency_unvisitedbookmark, removed.urls[r]]);
+				}
+			}, function(t){
+				errorHandler(t, getLineInfo());
+			});
 		}
 	}
 });

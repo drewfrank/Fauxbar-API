@@ -109,7 +109,7 @@ function resetOptions() {
 	localStorage.option_frecency_reload = 100;
 	localStorage.option_frecency_start_page = 100;
 	localStorage.option_frecency_typed = 100;
-	localStorage.option_frecency_unvisitedbookmark = 140;
+	localStorage.option_frecency_unvisitedbookmark = 1;
 
 	localStorage.option_font = window.OS == "Mac" ? "Lucida Grande" : "Segoe UI";	// Global font name(s).
 	localStorage.option_forceoptionsicon = 0;				// Always show the options icon on every page. Disabled by default.
@@ -151,7 +151,9 @@ function resetOptions() {
 	localStorage.option_showjsonsuggestions = 1;			// Show Search Box suggestions from the selected search engine when user is typing a query.
 	localStorage.option_showmatchingfavs = 1;				// Search for and display matching bookmarks from the Address Box.
 	localStorage.option_showmatchinghistoryitems = 1;		// Search for and display matching history items from the Address Box.
+	localStorage.option_showQueriesViaKeyword = 1;			// Show previous search queries when seaching via keyword in the Address Box.
 	localStorage.option_showqueryhistorysuggestions = 1;	// Show Search Box past queries when user is typing a query into the Search Box.
+	localStorage.option_showSuggestionsViaKeyword = 1;		// Show suggestions from search engine when using keywords in the Address Box.
 	localStorage.option_showtopsites = 1;					// Show top site tiles.
 	localStorage.option_speech = "0";						// Show speech input icons in the Address Box and Search Box.
 	localStorage.option_timing = "immediately";				// Only show Address Box results once the user has stopped typing. "immediately" shows results after every keystroke instead.
@@ -191,6 +193,7 @@ function selectOpenSearchType(el, focusToo) {
 	}
 	if ($(".shortname", el).length == 0) {
 		localStorage.option_optionpage = "option_section_searchengines";
+
 		// If "Edit search engines..." is selected, load the options.
 		// If options are already loaded, switch to the Search Box subpage
 		if (getHashVar("options") != 1) {
@@ -239,7 +242,7 @@ function selectOpenSearchType(el, focusToo) {
 function populateOpenSearchMenu(force) {
 	if (openDb(force)) {
 		window.db.readTransaction(function (tx) {
-			tx.executeSql('select shortname, searchurl, method, suggestUrl, iconurl, isdefault from opensearches order by position DESC, shortname COLLATE NOCASE asc', [], function (tx, results) {
+			tx.executeSql('SELECT shortname, searchurl, method, suggestUrl, iconurl, isdefault, keyword FROM opensearches ORDER BY position DESC, shortname COLLATE NOCASE asc', [], function (tx, results) {
 				var menuItems = '';
 				var len = results.rows.length, i;
 				var isDefault = false;
@@ -257,7 +260,7 @@ function populateOpenSearchMenu(force) {
 					if (iconUrl != "google.ico" && iconUrl != "yahoo.ico" && iconUrl != "bing.ico") {
 						iconUrl = "chrome://favicon/"+iconUrl;
 					}
-					menuItems += '<div class="menuitem" shortname="'+result.shortname+'" searchurl="'+result.searchurl+'" method="'+result.method+'" suggesturl="'+result.suggestUrl+'">';
+					menuItems += '<div class="menuitem" shortname="'+result.shortname+'" searchurl="'+result.searchurl+'" method="'+result.method+'" suggesturl="'+result.suggestUrl+'" keyword="'+result.keyword+'">';
 					menuItems += '<div class="vertline2">';
 					menuItems += '<img src="'+iconUrl+'" style="height:16px;width:16px" /> ';
 					menuItems += '<div class="vertline shortname">' + result.shortname;
@@ -331,7 +334,7 @@ function clearIndex(reindexing) {
 
 				// Search Box search engines
 				tx.executeSql('DROP TABLE IF EXISTS opensearches');
-				tx.executeSql('CREATE TABLE opensearches (shortname TEXT UNIQUE ON CONFLICT REPLACE, iconurl TEXT, searchurl TEXT, xmlurl TEXT, xml TEXT, isdefault NUMERIC DEFAULT 0, method TEXT DEFAULT "get", position NUMERIC DEFAULT 0, suggestUrl TEXT)');
+				tx.executeSql('CREATE TABLE opensearches (shortname TEXT UNIQUE ON CONFLICT REPLACE, iconurl TEXT, searchurl TEXT, xmlurl TEXT, xml TEXT, isdefault NUMERIC DEFAULT 0, method TEXT DEFAULT "get", position NUMERIC DEFAULT 0, suggestUrl TEXT, keyword TEXT DEFAULT "")');
 
 				// Search Box search queries
 				tx.executeSql('DROP TABLE IF EXISTS searchqueries');
@@ -342,9 +345,9 @@ function clearIndex(reindexing) {
 				chrome.extension.sendRequest({message:"currentStatus",status:"Adding search engines...", step:3}); // Step 3
 
 				// Add Google, Yahoo! and Bing to the Search Box
-				tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, suggestUrl) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', ["Google", "google.ico", "http://www.google.com/search?q={searchTerms}", "", "", "1", "get", "http://suggestqueries.google.com/complete/search?json&q={searchTerms}"]);
-				tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, suggestUrl) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', ["Yahoo!", "yahoo.ico", "http://search.yahoo.com/search?p={searchTerms}", "", "", "0", "get", "http://ff.search.yahoo.com/gossip?output=fxjson&amp;command={searchTerms}"]);
-				tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, suggestUrl) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', ["Bing", "bing.ico", "http://www.bing.com/search?q={searchTerms}", "", "", "0", "get", "http://api.bing.com/osjson.aspx?query={searchTerms}"]);
+				tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, suggestUrl, keyword) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', ["Google", "google.ico", "http://www.google.com/search?q={searchTerms}", "", "", "1", "get", "http://suggestqueries.google.com/complete/search?json&q={searchTerms}", "g"]);
+				tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, suggestUrl, keyword) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', ["Yahoo!", "yahoo.ico", "http://search.yahoo.com/search?p={searchTerms}", "", "", "0", "get", "http://ff.search.yahoo.com/gossip?output=fxjson&amp;command={searchTerms}", "y"]);
+				tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, suggestUrl, keyword) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', ["Bing", "bing.ico", "http://www.bing.com/search?q={searchTerms}", "", "", "0", "get", "http://api.bing.com/osjson.aspx?query={searchTerms}", "b"]);
 			} else {
 				window.indexStatus = "Skipping search engines..."; // Step 3
 				chrome.extension.sendRequest({message:"currentStatus",status:"Skipping search engines...", step:3}); // Step 3
@@ -394,6 +397,7 @@ function startIndexing() {
 					tx.executeSql('INSERT INTO urls (url, type, title, frecency) VALUES (?, ?, ?, ?)', [hi.url, 1, hi.title, -1]);
 					window.sqlLastExecution = getMs();
 				}
+				tx.executeSql('DELETE FROM urls WHERE url LIKE "data:%" OR url LIKE "javascript:void%"');
 				window.indexStatus = "Processing your history items and bookmarks..."; // Step 5
 				chrome.extension.sendRequest({message:"currentStatus",status:"Processing your history items and bookmarks...", step:5});
 				chrome.bookmarks.getTree(function(bookmarkTreeNodes){

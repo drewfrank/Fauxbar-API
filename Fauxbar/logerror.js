@@ -208,7 +208,7 @@ function logError(msg, file, line) {
 			localStorage.unreadErrors = 0;
 		}
 		localStorage.unreadErrors++;
-		localStorage.latestErrorMsg = msg;
+		localStorage.latestError = JSON.stringify({version:localStorage.currentVersion, file:file, line:line, msg:msg, date:date("Y-m-d H:i:s"), count:1, url:window.location.href});
 
 		// Tell all Fauxbar pages to show an error message if user's opted for it
 		if (localStorage.option_alert && localStorage.option_alert == 1) {
@@ -247,6 +247,8 @@ function logError(msg, file, line) {
 				window.onerror = logError;
 			}, 1000);
 			console.log('Fauxbar\'s error handler encountered an error:\n"'+t.message+'"');
+		}, function(){
+			delete localStorage.latestError;
 		});
 	} else {
 		console.log('Unable to open Fauxbar\'s database.');

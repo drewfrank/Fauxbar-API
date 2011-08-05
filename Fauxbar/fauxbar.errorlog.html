@@ -22,20 +22,12 @@
 
 		#errorInner { width:66%; text-align:left; display:inline-block; margin:0 auto; padding:20px; background-color:#fff; color:#000; box-shadow:0 5px 20px rgba(0,0,0,.8); }
 	</style>
-	<script type="text/javascript" src="logerror.js"></script>
 	<script type="text/javascript" src="jquery-1.6.2.min.js"></script>
 	<script type="text/javascript" src="common.js"></script>
+	<script type="text/javascript" src="logerror.js"></script>
 	<script type="text/javascript">
 	<!--
-	$(document).ready(function(){
-
-		window.OS = "Unknown";
-		if (navigator.appVersion.indexOf("Win")!=-1) window.OS="Windows";
-		if (navigator.appVersion.indexOf("Mac")!=-1) window.OS="Mac";
-		if (navigator.appVersion.indexOf("X11")!=-1) window.OS="UNIX";
-		if (navigator.appVersion.indexOf("Linux")!=-1) window.OS="Linux";
-		$("table").prepend("\n<!-- Operating system: "+window.OS+" -->");
-
+	function showErrors() {
 		if (openDb()){
 			window.db.readTransaction(function(tx){
 				tx.executeSql('SELECT * FROM errors ORDER BY id ASC', [], function(tx, results){
@@ -71,6 +63,29 @@
 			}, function(t){
 				errorHandler(t, getLineInfo());
 			});
+		}
+	}
+
+	$(document).ready(function(){
+
+		window.OS = "Unknown";
+		if (navigator.appVersion.indexOf("Win")!=-1) window.OS="Windows";
+		if (navigator.appVersion.indexOf("Mac")!=-1) window.OS="Mac";
+		if (navigator.appVersion.indexOf("X11")!=-1) window.OS="UNIX";
+		if (navigator.appVersion.indexOf("Linux")!=-1) window.OS="Linux";
+		$("table").prepend("\n<!-- Operating system: "+window.OS+" -->");
+
+		if (localStorage.latestError && localStorage.latestError.length) {
+			var e = jQuery.parseJSON(localStorage.latestError);
+			if (openDb()) {
+				window.db.transaction(function(tx){
+					tx.executeSql('INSERT INTO errors (date, version, url, file, line, message, count) VALUES (?, ?, ?, ?, ?, ?, ?)', [e.date, e.version, e.url, e.file, e.line, e.msg, e.count]);
+				}, function(t){
+					errorHandler(t, getLineInfo());
+				}, showErrors);
+			}
+		} else {
+			showErrors();
 		}
 
 		window.clearErrors = function(){
