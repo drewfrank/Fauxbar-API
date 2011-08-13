@@ -61,6 +61,606 @@
 
 ////// Fauxbar-crafted code below ///////
 
+function showContextMenu(e) {
+
+	var html = '';
+	var usingSuperTriangle = e.currentTarget && e.currentTarget.className && (strstr(e.currentTarget.className,"superselect") ? true : false);
+	if (usingSuperTriangle == true) {
+		var y = $(".superselect").first().offset().top+$(".superselect").first().outerHeight();
+		var x = $(".superselect").first().offset().left;
+	}
+	else if ($("#opensearch_triangle .glow").length) {
+		var y = $("#opensearch_triangle").offset().top+$("#opensearch_triangle").outerHeight();
+		var x = $("#opensearch_triangle").offset().left;
+	}
+	else {
+		var y = e.pageY;
+		var x = e.pageX;
+	}
+	html += '<div id="contextMenu" style="top:'+y+'px; left:'+x+'px; opacity:0" '+(usingSuperTriangle ? 'class="supercontext"' : '')+'>';
+	var cutCopyPaste = false;
+
+	if ($('input[type="text"]:focus, textarea:focus').length) {
+		var currentVal = $('input[type="text"]:focus, textarea:focus').val();
+		if ($('input[type="text"]:focus, textarea:focus').getSelection().length) {
+			html += '	<div class="menuOption">Cut</div>';
+			html += '	<div class="menuOption">Copy</div>';
+			cutCopyPaste = true;
+		}
+
+		document.execCommand("paste");
+		var newVal = $('input[type="text"]:focus, textarea:focus').val();
+		document.execCommand("undo");
+		if (newVal != currentVal) {
+			html += '	<div class="menuOption">Paste</div>';
+			cutCopyPaste = true;
+			if ($("#awesomeinput:focus").length && !window.keywordEngine && !window.tileEditMode) {
+				html += '	<div class="menuOption">Paste &amp; Go</div>';
+			} else if ($("#opensearchinput:focus").length || ($("#awesomeinput:focus").length && window.keywordEngine)) {
+				html += '	<div class="menuOption">Paste &amp; Search</div>';
+			}
+		}
+
+		if ($('input[type="text"]:focus, textarea:focus').getSelection().length) {
+			html += '	<div class="menuOption">Delete</div>';
+			cutCopyPaste = true;
+		}
+
+		if ($('input[type="text"]:focus, textarea:focus').val().length && $('input[type="text"]:focus, textarea:focus').getSelection().length != $('input[type="text"]:focus, textarea:focus').val().length) {
+			if (cutCopyPaste == true) {
+				html += '	<div class="menuHr"></div>';
+			}
+			html += '	<div class="menuOption">Select All</div>';
+			cutCopyPaste = true;
+		}
+		if (cutCopyPaste == true) {
+			html += '	<div class="menuHr"></div>';
+		}
+	}
+
+	delete window.contextHref;
+	delete window.linkIsApp;
+	delete window.rightClickedApp;
+	delete window.rightClickedResult;
+
+	if (e.target.href && e.target.href.length) {
+		window.contextHref = e.target.href;
+		$(e.target).addClass("rightClickedTile");
+		if (strstr(e.target.className, "result")) {
+			$(e.target).addClass("rightClickedResult");
+			window.rightClickedResult = e.target;
+		}
+		else if (strstr(e.target.className, "app")) {
+			$(e.target).addClass("rightClickedApp");
+			if (!strstr(e.target.href,"https://chrome.google.com/webstore")) {
+				window.linkIsApp = true;
+				window.rightClickedApp = e.target;
+			}
+		}
+	} else if ($(e.target).parents('a').first().length) {
+		window.contextHref = $(e.target).parents('a').first().attr("href");
+		$(e.target).parents('a').first().addClass("rightClickedTile");
+		if ($(e.target).parents('.result').length) {
+			$(e.target).parents('.result').first().addClass("rightClickedResult");
+			window.rightClickedResult = $(e.target).parents('.result').first();
+		}
+
+		$(e.target).parents('.app').first().addClass("rightClickedApp");
+		if ($(e.target).parents('.app').length && !strstr($(e.target).parents('.app').first().attr("href"), "https://chrome.google.com/webstore")) {
+			window.linkIsApp = true;
+			window.rightClickedApp = $(e.target).parents('.app').first();
+		}
+	}
+
+	if (window.contextHref && !window.tileEditMode) {
+		var loadFile = "loadfile.html#";
+		if (window.contextHref.substr(0,loadFile.length) == loadFile) {
+			window.contextHref = window.contextHref.substr(loadFile.length);
+		}
+		if (window.linkIsApp) {
+			html += '	<div class="menuOption disabled"><b>'+$(window.rightClickedApp).attr("appname")+'</b></div>';
+			html += '	<div class="menuHr"></div>';
+			html += '	<div class="menuOption">Open App in New Tab</div>';
+			html += '	<div class="menuOption">Open App in New Window</div>';
+			html += '	<div class="menuOption">Copy Link Address</div>';
+			html += '	<div class="menuHr"></div>';
+			html += '	<div class="menuOption">Uninstall</div>';
+		} else {
+			html += '	<div class="menuOption">Open Link in New Tab</div>';
+			html += '	<div class="menuOption">Open Link in New Window</div>';
+			html += '	<div class="menuOption">Open Link in Incognito Window</div>';
+			html += '	<div class="menuOption">Copy Link Address</div>';
+			html += '	<div class="menuHr"></div>';
+			if (window.rightClickedResult) {
+				if ($(window.rightClickedResult).attr("bmid") > 0) {
+					html += '	<div class="menuOption">Edit Bookmark...</div>';
+				} else {
+					html += '	<div class="menuOption">Add Bookmark</div>';
+				}
+				html += '	<div class="menuHr"></div>';
+				if (!$(window.rightClickedResult).attr("keyword")) {
+					html += '	<div class="menuOption fauxbar16">Add Keyword...</div>';
+				} else {
+					html += '	<div class="menuOption fauxbar16">Edit Keyword...</div>';
+				}
+				html += '	<div class="menuHr"></div>';
+			}
+		}
+	}
+
+	if (usingSuperTriangle || $("#awesomeinput:focus").length) {
+		$("#super_triangle .triangle").addClass("glow");
+		html += '	<div class="menuOption" style="background-image:url(chrome://favicon/null); background-repeat:no-repeat; background-position:4px 2px">History &amp; Bookmarks</div>';
+		// To do: implement these later on.
+		//html += '	<div class="menuOption" style="background-image:url(omnibox_star_dark.png); background-repeat:no-repeat; background-position:3px 1px; background-size:18px 18px">Bookmarks</div>';
+		//html += '	<div class="menuOption" style="background-image:url(omnibox_history_dark.png); background-repeat:no-repeat; background-position:2px 0px; background-size:20px 20px">History</div>';
+		//html += '	<div class="menuOption" style="background-image:url(large_history_favicon.png); background-repeat:no-repeat; background-position:2px 0px; background-size:20px 20px">"Full" History</div>';
+		html += '	<div class="menuHr"></div>';
+	}
+
+	if (($("#opensearchinput:focus, #awesomeinput:focus").length || usingSuperTriangle || $("#opensearch_triangle .glow").length) && !window.tileEditMode) {
+		$(".menuitem").each(function(){
+			if ($(this).attr("shortname")) {
+				html += '	<div class="menuOption engine" shortname="'+$(this).attr("shortname")+'" keyword="'+$(this).attr("keyword")+'" style="background-image:url('+$(this).attr("iconsrc")+'); background-repeat:no-repeat; background-position:4px 2px">'+
+				$(this).attr("shortname")+
+				($(this).attr("keyword") && !strstr($(this).attr("keyword"),"fakekeyword_") ? ' <span style="display:inline-block; opacity:.5; float:right; margin-right:-20px">&nbsp;'+$(this).attr("keyword")+'</span>' : '') +
+				'</div>';
+			}
+		});
+		html += '	<div class="menuHr"></div>';
+	}
+
+	if (localStorage.indexComplete == 1 && !window.tileEditMode && !$('input[type="text"]:focus, textarea:focus').length && !usingSuperTriangle && !$("#opensearch_triangle .glow").length && !getHashVar("options") && /*localStorage.option_pagetilearrangement == "manual"*/ (localStorage.option_showtopsites == 1 || localStorage.option_showapps == 1) && !window.contextHref) {
+		html += '	<div class="menuOption fauxbar16">Edit Tiles...</div>';
+	}
+	else if (window.tileEditMode && !$('input:focus').length) {
+		delete window.tileThumb;
+		if (strstr(e.target.className,"sitetile")) {
+			window.tileThumb = e.target;
+		}
+		else if ($(e.target).parents('.sitetile').first().length) {
+			window.tileThumb = $(e.target).parents('.sitetile').first();
+		}
+		if (window.tileThumb) {
+			html += '	<div class="menuOption fauxbar16">Rename Tile...</div>';
+			html += '	<div class="menuOption fauxbar16">Remove Tile</div>';
+			html += '	<div class="menuHr"></div>';
+		}
+
+		if (!window.tileThumb) {
+			html += '	<div class="menuOption fauxbar16">Save Changes</div>';
+			html += '	<div class="menuOption fauxbar16">Cancel Changes</div>';
+			html += '	<div class="menuHr"></div>';
+		}
+	}
+
+
+	if (($("#opensearchinput:focus, #awesomeinput:focus").length || usingSuperTriangle || $("#opensearch_triangle .glow").length) && !window.tileEditMode) {
+		html += '	<div class="menuOption fauxbar16">Edit Search Engines...</div>';
+	}
+	if (localStorage.indexComplete == 1) {
+		if (!getHashVar("options").length) {
+			if (!window.tileThumb && !window.linkIsApp) {
+				html += '	<div class="menuOption fauxbar16">Customize Fauxbar...</div>';
+				html += '	<div class="menuHr"></div>';
+			}
+		} else {
+			html += '	<div class="menuOption fauxbar16">Close Options</div>';
+			html += '	<div class="menuHr"></div>';
+		}
+	}
+
+	if (!window.linkIsApp) {
+		html += '	<div class="menuOption disabled" style="">Fauxbar v'+localStorage.currentVersion+'</div>';
+	}
+
+	html += '</div>';
+	$("body").append(html);
+
+	if ($("#contextMenu").offset().left + $("#contextMenu").outerWidth() > window.innerWidth) {
+		$("#contextMenu").css("left",window.innerWidth - $("#contextMenu").outerWidth() + "px");
+	}
+
+	if ($("#contextMenu").offset().top + $("#contextMenu").outerHeight() > window.innerHeight) {
+		$("#contextMenu").css("top",window.innerHeight - $("#contextMenu").outerHeight() + "px");
+	}
+
+	$(".menuOption.fauxbar16").first().css("background-image","url(fauxbar16.png)").css("background-repeat","no-repeat").css("background-position","4px 2px");
+	$("#contextMenu").animate({opacity:1},100);
+}
+
+function removeContextMenu() {
+	$("#contextMenu").remove();
+	$(".glow").removeClass("glow");
+	$(".rightClickedTile").removeClass("rightClickedTile");
+	$(".rightClickedResult").removeClass("rightClickedResult");
+	$(".rightClickedApp").removeClass("rightClickedApp");
+}
+
+$(document).ready(function(){
+	$(".superselect").live("mousedown",function(e){
+		if (localStorage.indexComplete == 1) {
+			if ($("#super_triangle .triangle.glow").length) {
+				removeContextMenu();
+			} else {
+				removeContextMenu();
+				hideResults();
+				$("#opensearch_results").css("display","none").html("");
+				$("#super_triangle .triangle").addClass("glow");
+				$("#awesomeinput").blur();
+				showContextMenu(e);
+			}
+		}
+		return false;
+	});
+
+	$("body").live("contextmenu",function(e){
+		if (!$(".glow").length) {
+			removeContextMenu();
+			if (e.button == 2 && !e.ctrlKey) {
+				if (e.target.id != "addressbaricon" && !strstr(e.target.className, "triangle")) {
+					showContextMenu(e);
+				}
+				return false;
+			}
+		} else {
+			return false;
+		}
+	});
+	$("#contextMenu").live("mouseenter", function(){
+		$(".arrowed").removeClass("arrowed");
+	});
+
+
+	$("#contextMenu .menuOption").live("mousedown", function(){
+		if ($("input:focus, textarea:focus").length) {
+			var elId = $("input:focus, textarea:focus").attr("id");
+			var len = $("input:focus, textarea:focus").val().length;
+			var sel = $("input:focus, textarea:focus").getSelection();
+		}
+
+		if (!$(this).hasClass("disabled")) {
+			switch ($(this).text()) {
+
+				case "Edit Bookmark...":
+					chrome.tabs.create({url:"chrome://bookmarks/?#q="+$(window.rightClickedResult).attr("url"), selected:true});
+					break;
+
+				case "Add Bookmark":
+					chrome.bookmarks.getChildren("0", function(nodes){
+						for (var n in nodes) {
+							if (nodes[n].id != 1) {
+								chrome.bookmarks.create({parentId:nodes[n].id, title:$(window.rightClickedResult).attr("origtitle"), url:$(window.rightClickedResult).attr("url")}, function(){
+									setTimeout(function(){
+										if ($("#awesomeinput").val().length) {
+											getResults();
+										} else {
+											$("#awesomeinput").focus();
+											getResults(true);
+										}
+									}, 100);
+								});
+								break;
+							}
+						}
+					});
+					break;
+
+				case "Add Keyword...":
+					$("#contextMenu").css("opacity",0);
+					var keyword = prompt('Add a keyword for '+$(window.rightClickedResult).attr("url"));
+					if (keyword) {
+						keyword = str_replace('"', '', keyword.trim());
+						if (keyword.length && openDb()) {
+							window.db.transaction(function(tx){
+								tx.executeSql('UPDATE urls SET tag = ? WHERE url = ?', [keyword, $(window.rightClickedResult).attr("url")]);
+								tx.executeSql('DELETE FROM tags WHERE url = ?', [$(window.rightClickedResult).attr("url")]);
+								tx.executeSql('INSERT INTO tags (url, tag) VALUES (?, ?)', [$(window.rightClickedResult).attr("url"), keyword]);
+							}, function(t){
+								errorHandler(t, getLineInfo());
+							}, function(){
+								if ($("#awesomeinput").val().length) {
+									getResults();
+								} else {
+									$("#awesomeinput").focus();
+									getResults(true);
+								}
+							});
+						}
+					}
+					break;
+
+				case "Edit Keyword...":
+					$("#contextMenu").css("opacity",0);
+					var keyword = prompt('Edit the keyword for '+$(window.rightClickedResult).attr("url"), $(window.rightClickedResult).attr("keyword"));
+					if (keyword != null) {
+						keyword = str_replace('"', '', keyword.trim());
+						if (keyword.length && openDb()) {
+							window.db.transaction(function(tx){
+								tx.executeSql('UPDATE urls SET tag = ? WHERE url = ?', [keyword, $(window.rightClickedResult).attr("url")]);
+								tx.executeSql('UPDATE tags SET tag = ? WHERE url = ?', [keyword, $(window.rightClickedResult).attr("url")]);
+							}, function(t){
+								errorHandler(t, getLineInfo());
+							}, function(){
+								if ($("#awesomeinput").val().length) {
+									getResults();
+								} else {
+									$("#awesomeinput").focus();
+									getResults(true);
+								}
+							});
+						}
+						else if (openDb()) {
+							window.db.transaction(function(tx){
+								tx.executeSql('UPDATE urls SET tag = ? WHERE url = ?', ["", $(window.rightClickedResult).attr("url")]);
+								tx.executeSql('DELETE FROM tags WHERE url = ?', [$(window.rightClickedResult).attr("url")]);
+							}, function(t){
+								errorHandler(t, getLineInfo());
+							}, function(){
+								if ($("#awesomeinput").val().length) {
+									getResults();
+								} else {
+									$("#awesomeinput").focus();
+									getResults(true);
+								}
+							});
+						}
+					}
+					break;
+
+				case "Uninstall":
+					removeContextMenu();
+					confirm("Uninstall \""+$(window.rightClickedApp).attr("appname")+"\" from Chrome?") ? chrome.management.uninstall($(window.rightClickedApp).attr("appid")) + $(window.rightClickedApp).remove() : null;
+					break;
+
+				case "Rename Tile...":
+					removeContextMenu();
+					var text = prompt("Rename tile:",$(window.tileThumb).attr("origtitle"));
+					if (text) {
+						$(".toptitletext",window.tileThumb).text(text);
+						$(window.tileThumb).attr("origtitle",text);
+						truncatePageTileTitle($(".toptitle",window.tileThumb));
+					}
+					break;
+
+				case "Remove Tile":
+					$(window.tileThumb).animate({opacity:0}, 350, function(){
+						$(this).remove();
+					});
+					break;
+
+				case "Open Link in New Tab":
+					chrome.tabs.create({url:window.contextHref, selected:false});
+					break;
+
+				case "Open App in New Tab":
+					chrome.tabs.create({url:window.contextHref, selected:false});
+					break;
+
+				case "Open Link in New Window":
+					chrome.windows.create({url:window.contextHref});
+					break;
+
+				case "Open App in New Window":
+					chrome.windows.create({url:window.contextHref});
+					break;
+
+				case "Open Link in Incognito Window":
+					chrome.windows.create({url:window.contextHref, incognito:true});
+					break;
+
+				case "Copy Link Address":
+					$("body").append('<input id="copyLink" type="text" value="'+window.contextHref+'" style="position:absolute; z-index:-500000; opacity:0" />');
+					$("#copyLink").select();
+					document.execCommand('copy');
+					$("#copyLink").remove();
+					break;
+
+				case "Close Options":
+					closeOptions();
+					break;
+
+				case "Save Changes":
+					saveSiteTiles();
+					break;
+
+				case "Cancel Changes":
+					cancelTiles();
+					break;
+
+				case "Reload":
+					window.location.reload();
+					break;
+
+				case "Back":
+					window.history.go(-1);
+					break;
+
+				case "Forward":
+					window.history.go(1);
+					break;
+
+				case "Cut":
+					document.execCommand("cut");
+					break;
+
+				case "Copy":
+					document.execCommand("copy");
+					break;
+
+				case "Paste":
+					window.justPasted = true;
+					document.execCommand("paste");
+					if (elId == "awesomeinput") {
+						setTimeout(getResults,1);
+					} else if (elId == "opensearchinput") {
+						setTimeout(getSearchSuggestions,1);
+					}
+					break;
+
+				case "Paste & Go":
+					window.justPasted = true;
+					window.navigating = true;
+					$("#awesomeinput").val("");
+					document.execCommand("paste");
+					setTimeout(function(){
+						if ($("#awesomeinput").val().trim().length) {
+							if (window.keywordEngine) {
+								submitOpenSearch($("#awesomeinput").val());
+							} else {
+								goToUrl($("#awesomeinput").val());
+							}
+							setTimeout(function(){
+								$("#awesomeinput").blur();
+							},1);
+						} else {
+							$("#awesomeinput").focus();
+						}
+					},1);
+					break;
+
+				case "Paste & Search":
+					window.justPasted = true;
+					window.navigating = true;
+					$("#"+elId).val("");
+					document.execCommand("paste");
+
+					setTimeout(function(){
+						if ($("#"+elId).val().trim().length) {
+							submitOpenSearch($("#"+elId).val());
+							if (elId != "awesomeinput") {
+								setTimeout(function(){
+									$("#"+elId).blur();
+								},1);
+							}
+						} else {
+							$("#"+elId).focus();
+						}
+					},1);
+					break;
+
+				case "Delete":
+					window.justDeleted = true;
+					document.execCommand("delete");
+					break;
+
+				case "Select All":
+					document.execCommand("selectAll");
+					break;
+
+				case "History & Bookmarks":
+					delete window.keywordEngine;
+					$("#awesomeInsetButton").removeClass("insetButton").addClass("noInsetButton");
+					$("#addressbaricon").attr("src","chrome://favicon/null").css("opacity",.75);
+					$(".switchtext").html("Switch to tab:").css("display","");
+					$("#awesomeinput").attr("placeholder",window.placeholder).focus();
+					break;
+
+				case "Edit Search Engines...":
+					localStorage.option_optionpage = "option_section_searchengines";
+
+					// If "Edit search engines..." is selected, load the options.
+					// If options are already loaded, switch to the Search Box subpage
+					if (getHashVar("options") != 1) {
+						if (window.location.hash.length == 0) {
+							window.location.hash = "#options=1";
+						} else {
+							window.location.hash += "options=1";
+						}
+						window.location.reload();
+					} else {
+						changeOptionPage("#option_section_searchengines");
+					}
+					break;
+
+				case "Customize Fauxbar...":
+					if (window.tileEditMode) {
+						localStorage.option_optionpage = "option_section_tiles";
+					}
+					window.location = "fauxbar.html#options=1";
+					window.location.reload();
+					break;
+
+				case "Edit Tiles...":
+					if (localStorage.option_showtopsites == 1 && localStorage.option_pagetilearrangement == "manual") {
+						enterTileEditMode();
+					} else {
+						localStorage.option_optionpage = "option_section_tiles";
+						window.location = "fauxbar.html#options=1";
+						window.location.reload();
+					}
+					break;
+
+				default:
+					if ($(this).hasClass("engine")) {
+						if ($("#awesomeinput:focus").length || $(".supercontext").length) {
+							if (!window.keywordEngine) {
+								if ($(this).attr("keyword").length) {
+									$("#awesomeinput").val($(this).attr("keyword")+" "+$("#awesomeinput").val()).focus();
+									setTimeout(getResults,1);
+								}
+							} else {
+								var en = window.keywordEngine;
+								var newKeyword = $(this).attr("keyword");
+								$("#awesomeinput").blur().val(newKeyword+" "+$("#awesomeinput").val()).focus();
+								setTimeout(function(){
+									getResults();
+								},1);
+							}
+						} else if ($("#opensearchinput:focus").length || $("#opensearch_triangle .glow").length) {
+							$("#opensearch_results").css("display","none").html("");
+							selectOpenSearchType($('.menuitem[shortname="'+str_replace('"','&quot;',$(this).attr("shortname"))+'"]'), false);
+							if ($("#opensearch_triangle .glow").length) {
+								$("#opensearchinput").focus();
+							}
+							if ($("#opensearchinput").val().trim().length) {
+								setTimeout(getSearchSuggestions,1);
+							}
+						}
+					}
+					break;
+			}
+			removeContextMenu();
+			return false;
+		} else {
+			return false;
+		}
+		if (window.justPasted) {
+			setTimeout(function(){
+				getResults();
+			},10);
+		}
+		setTimeout(function(){
+			window.justUsedContextMenu = true;
+			var newLen = $("#"+elId).val().length;
+			if (sel && sel.length) {
+
+				if (len == newLen) {
+					$("#"+elId).setSelection(sel.start, sel.end);
+				} else if (sel.length >= newLen) {
+					$("#"+elId).setSelection(sel.end, sel.end);
+				} else {
+					//$("#"+elId).setSelection(newLen);
+					//$("#"+elId).focus();
+				}
+			} else {
+				$("#"+elId).setSelection(sel.start+(newLen-len));
+			}
+		},100);
+	});
+});
+$("body").live("mousedown", function(e){
+	if (e.target.className != "menuOption" && e.target.className != "menuOption disabled" && e.target.id != "contextMenu") {
+		removeContextMenu();
+	}
+});
+$(window).bind("blur", function(){
+	removeContextMenu();
+});
+$("*").bind("keydown", function(){
+	removeContextMenu();
+});
+
 // Show update message if it hasn't been read yet
 if (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0) {
 
@@ -135,6 +735,12 @@ function cancelTiles() {
 
 // Initialise page tile editing mode
 function enterTileEditMode() {
+	delete window.keywordEngine;
+	$("#awesomeInsetButton").removeClass("insetButton").addClass("noInsetButton");
+	$("#addressbaricon").attr("src","chrome://favicon/null").css("opacity",.75);
+	$(".switchtext").html("Switch to tab:").css("display","");
+	$("#awesomeinput").focus();
+
 	window.document.title = "Fauxbar: Edit Tiles";
 	window.onbeforeunload = function() {
 		if (localStorage.siteTiles && saveSiteTiles(true) != localStorage.siteTiles) {
@@ -143,8 +749,7 @@ function enterTileEditMode() {
 	}
 	window.tileEditMode = true;
 	window.draggingTile = false;
-	window.placeholder = "Add a site as a tile";
-	$("#awesomeinput").val(window.placeholder).blur();
+	$("#awesomeinput").attr("placeholder","Add a site as a tile").blur();
 	hideResults();
 
 	// Prevent links from performing their usual behaviour when user clicks them
@@ -164,16 +769,19 @@ function enterTileEditMode() {
 
 	// Begin dragging a tile
 	$("#topthumbs a").live("mousedown", function(e){
-		window.draggingTile = true;
-		window.topThumbA = this;
-		setTimeout(function(){
-			if (window.draggingTile == true) {
-				$(window.topThumbA).addClass("draggingTile").removeClass("sitetile").css("top",(e.pageY-66)+"px").css("left",(e.pageX-106)+"px").after('<a class="holderTile"><div class="thumb" style="background:none"></div><span class="toptitle">&nbsp;</span></a>');
-				$("body").css("cursor","move").append('<div id="cursorbox" style="top:'+e.pageY+'px;left:'+e.pageX+'"></div>');
-				$(".tileCross").css("display","none");
-			}
-		}, 100);
-		return false;
+		if (e.button == 0) {
+			removeContextMenu();
+			window.draggingTile = true;
+			window.topThumbA = this;
+			setTimeout(function(){
+				if (window.draggingTile == true) {
+					$(window.topThumbA).addClass("draggingTile").removeClass("sitetile").css("top",(e.pageY-66)+"px").css("left",(e.pageX-106)+"px").after('<a class="holderTile"><div class="thumb" style="background:none"></div><span class="toptitle">&nbsp;</span></a>');
+					$("body").css("cursor","move").append('<div id="cursorbox" style="top:'+e.pageY+'px;left:'+e.pageX+'"></div>');
+					$(".tileCross").css("display","none");
+				}
+			}, 100);
+			return false;
+		}
 	});
 
 	// Drop the dragged tile to its new spot
@@ -208,7 +816,7 @@ function enterTileEditMode() {
 	});
 
 	// Tile edit mode CSS
-	$("#topthumbs a").attr("title","Click and drag to move.\nDouble-click to rename.");
+	$("#topthumbs").attr("title","Click and drag to move.\nRight-click to rename.");
 	$("#editTileStyle").append('#topthumbs a { cursor:move; }');
 	$("#editTileStyle").append('#topthumbs a:hover, #topthumbs a.draggingTile { background-color:'+localStorage.option_resultbgcolor+'; color:'+localStorage.option_titlecolor+'; }');
 	$("#editTileStyle").append('#address_goarrow { display:none; }');
@@ -221,9 +829,9 @@ function enterTileEditMode() {
 	$("#searchwrapper").parent().css("display","none");
 	$(".wrapper").css("max-width",maxWidth+"px");
 	$("#editmodeContainer").remove();
-	$("#maindiv").before('<div id="editmodeContainer" style="opacity:0; box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="fauxbar48.png" /> <b>Tile editing enabled.</b> Add sites as tiles using the modified Address Box below. Drag tiles to rearrange. Double-click to rename.</div></div>');
+	$("#maindiv").before('<div id="editmodeContainer" style="opacity:0; box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="fauxbar48.png" /> <b>Tile editing enabled.</b> Add sites as tiles using the modified Address Box below. Drag tiles to rearrange. Right-click to rename.</div></div>');
 	$("#editmodeContainer").prepend('<div id="editModeButtons"><button onclick="saveSiteTiles()" style="font-family:'+localStorage.option_font+', Lucida Grande, Segoe UI, Arial, sans-serif;">Save</button>&nbsp;<button onclick="cancelTiles()" style="font-family:'+localStorage.option_font+', Lucida Grande, Segoe UI, Arial, sans-serif;">Cancel</button></div>');
-	$("#editmodeContainer").animate({opacity:1}, 700);
+	$("#editmodeContainer").animate({opacity:1}, 325);
 	chrome.tabs.getCurrent(function(tab){
 		chrome.tabs.update(tab.id, {selected:true}, function(){
 			$("#awesomeinput").focus();
@@ -270,7 +878,7 @@ function addTile(el) {
 		$("#awesomeinput").val(window.actualUserInput).focus().setSelection(0,window.actualUserInput.length);
 	}, 10);
 	toggleSwitchText();
-	$("#awesomeinput").removeClass("description").focus();
+	$("#awesomeinput").focus();
 
 	// Load thumbnail img if it exists, then add tile regardless
 	if (openDb()) {
@@ -286,7 +894,7 @@ function addTile(el) {
 			$("#topthumbs").append(renderPageTile($(el).attr("url"), $(el).attr("origtitle"), true));
 			truncatePageTileTitle($("#topthumbs a .toptitle").last());
 			$("#topthumbs a").last().animate({opacity:1}, 500);
-			$("#topthumbs a").attr("title","Click and drag to move.\nDouble-click to rename.");
+			$("#topthumbs a").attr("title","Click and drag to move.\nRight-click to rename.");
 		});
 	}
 }
@@ -453,30 +1061,48 @@ function showBackupInfo() {
 	if (openDb()) {
 		window.db.readTransaction(function(tx) {
 			tx.executeSql('SELECT * FROM opensearches', [], function(tx, results) {
-				var backup = {};
-				backup.options = {};
-				var ls = localStorage;
-				var keys = sortKeys(ls).sort();
-				for (var key in keys) {
-					backup.options[keys[key]] = localStorage[keys[key]];
-				}
-				backup.searchengines = [];
-				var len = results.rows.length, i;
-				if (len > 0) {
-					var i = 0;
-					for (i = 0; i < len; i++) {
-						backup.searchengines[i] = results.rows.item(i);
+				tx.executeSql('SELECT * FROM tags', [], function(tx, results2) {
+					var backup = {};
+					backup.options = {};
+					var ls = localStorage;
+					var keys = sortKeys(ls).sort();
+					for (var key in keys) {
+						if (keys[key] != "customStyles") {
+							backup.options[keys[key]] = localStorage[keys[key]];
+						}
 					}
-				}
-				$("#restoreinfo").css("display","none");
-				$("#backupinfo").css("display","block");
-				var backupText = JSON.stringify(backup);
-				backupText = str_replace('","', '",\n"', backupText);
-				backupText = str_replace('":{"', '": {\n"', backupText);
-				backupText = str_replace('"},"', '"},\n\n"', backupText);
-				backupText = str_replace('":[{"', '": [\n{"', backupText);
-				backupText = str_replace('"shortname":', '\n\n"shortname":', backupText);
-				$("#backup").text(backupText).select();
+
+					backup.searchengines = [];
+					var len = results.rows.length, i;
+					if (len > 0) {
+						var i = 0;
+						for (i = 0; i < len; i++) {
+							backup.searchengines[i] = results.rows.item(i);
+						}
+					}
+
+					backup.tags = [];
+					var len2 = results2.rows.length, i2;
+					if (len2 > 0) {
+						var i2 = 0;
+						for (i2 = 0; i2 < len2; i2++) {
+							backup.tags[i2] = results2.rows.item(i2);
+						}
+					}
+
+					$("#restoreinfo").css("display","none");
+					$("#backupinfo").css("display","block");
+					var backupText = JSON.stringify(backup);
+					backupText = str_replace('","', '",\n"', backupText);
+					backupText = str_replace('":{"', '": {\n"', backupText);
+					backupText = str_replace('"},"', '"},\n\n"', backupText);
+					backupText = str_replace('":[{"', '": [\n{"', backupText);
+					backupText = str_replace('"shortname":', '\n\n"shortname":', backupText);
+					backupText = str_replace(',"tags": [', ',\n\n"tags": [', backupText);
+					backupText = str_replace('"},{"url":"', '"},\n{"url":"', backupText);
+					backupText = str_replace('",\n"tag":"', '","tag":"', backupText);
+					$("#backup").text(backupText).select();
+				});
 			});
 		}, function(t){
 			errorHandler(t, getLineInfo());
@@ -518,14 +1144,21 @@ function restoreOptions() {
 				var se = "";
 				for (var s in text.searchengines) {
 					se = text.searchengines[s];
-					tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, position, suggestUrl) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [se.shortname, se.iconurl, se.searchurl, se.xmlurl, se.xml, se.isdefault, se.method, se.position, se.suggestUrl]);
+					tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, position, suggestUrl, keyword) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [se.shortname, se.iconurl, se.searchurl, se.xmlurl, se.xml, se.isdefault, se.method, se.position, se.suggestUrl, se.keyword]);
 				}
-				setTimeout(function() {
-					alert("The import was successful.\n\nFauxbar will now restore your options.");
-					window.location.reload();
-				}, 500);
+
+				var tag = "";
+				for (var t in text.tags) {
+					tag = text.tags[t];
+					tx.executeSql('DELETE FROM tags WHERE url = ?', [tag.url]);
+					tx.executeSql('UPDATE urls SET tag = ? WHERE url = ?', [tag.tag, tag.url]);
+					tx.executeSql('INSERT INTO tags (url, tag) VALUES (?, ?)', [tag.url, tag.tag]);
+				}
 			}, function(t){
 				errorHandler(t, getLineInfo());
+			}, function(){
+				alert("The import was successful.\n\nFauxbar will now restore your options.");
+				window.location.reload();
 			});
 		} else {
 			alert("Oops! Fauxbar is unable to open its database to restore your search engines, but your other options will be restored.");
@@ -792,11 +1425,11 @@ function getSearchEngines() {
 						}
 						openEngines += '<tr class="opensearch_optionrow">';
 						openEngines += '<td class="osicon" style="width:1px; padding:0px 0px 0 5px"><img src="'+iconUrl+'" /></td>';
-						openEngines += '<td style="width:25%" class="shortname"><input class="inputoption" type="text" value="'+results.rows.item(i).shortname+'" origvalue="'+results.rows.item(i).shortname+'" /></td>';
+						openEngines += '<td style="width:25%" class="shortname"><input class="inputoption" type="text" value="'+str_replace('"', '&quot;', results.rows.item(i).shortname)+'" origvalue="'+str_replace('"', '&quot;', results.rows.item(i).shortname)+'" /></td>';
 						openEngines += '<td style="width:13%" class="keyword"><input class="inputoption" type="text" value="'+results.rows.item(i).keyword+'" origvalue="'+results.rows.item(i).keyword+'" /></td>';
 						openEngines += '<td style="width:75%" class="searchurl"><input class="inputoption" type="text" value="'+results.rows.item(i).searchurl+'" origvalue="'+results.rows.item(i).searchurl+'" style="color:rgba(0,0,0,.52)" spellcheck="false" autocomplete="off" /></td>';
 						if (len > 1) {
-							openEngines += '<td style="width:1px; padding:0 5px 0 4px" class="opensearchcross" title="Remove &quot;'+results.rows.item(i).shortname+'&quot; from Fauxbar"><img class="crossicon" src="cross.png" /></td>';
+							openEngines += '<td style="width:1px; padding:0 5px 0 4px" class="opensearchcross" title="Remove &quot;'+str_replace('"','&quot;',results.rows.item(i).shortname)+'&quot; from Fauxbar"><img class="crossicon" src="cross.png" /></td>';
 						} else {
 							openEngines += '<td></td>';
 						}
@@ -919,7 +1552,7 @@ $(document).ready(function(){
 
 		// Apply the user's specified color for Address Box result title texts, and Search Box queries/suggestions
 		if (localStorage.option_titlecolor && localStorage.option_titlecolor.length) {
-			$("#customstyle").append(".result_title, #opensearch_results .result, .result_title .dotdotdot { color:"+localStorage.option_titlecolor+"; }");
+			$("#customstyle").append(".result_title, #opensearch_results .result, .result_title .dotdotdot, .resultTag { color:"+localStorage.option_titlecolor+"; }");
 		}
 
 		// Apply the user's specified color for Address Box result URL texts
@@ -934,17 +1567,17 @@ $(document).ready(function(){
 
 		// Apply the user's sepcified highlighted color for results/queries/suggestions title texts
 		if (localStorage.option_selectedtitlecolor && localStorage.option_selectedtitlecolor.length) {
-			$("#customstyle").append("#opensearch_results .arrowed, .arrowed .result_title, .arrowed .result_title .dotdotdot { color:"+localStorage.option_selectedtitlecolor+"; }");
+			$("#customstyle").append("#opensearch_results .arrowed, .arrowed .result_title, .arrowed .result_title .dotdotdot, .rightClickedResult .result_title, .rightClickedResult .result_title .dotdotdot, .arrowed .resultTag, .rightClickedResult .resultTag { color:"+localStorage.option_selectedtitlecolor+"; }");
 		}
 
 		// Apply the user's sepcified highlighted color for result URL texts
 		if (localStorage.option_selectedurlcolor && localStorage.option_selectedurlcolor.length) {
-			$("#customstyle").append(".arrowed .result_url, .arrowed .result_url .dotdotdot { color:"+localStorage.option_selectedurlcolor+"; }");
+			$("#customstyle").append(".arrowed .result_url, .arrowed .result_url .dotdotdot, .rightClickedResult .result_url, .rightClickedResult .result_url .dotdotdot { color:"+localStorage.option_selectedurlcolor+"; }");
 		}
 
 		// Apply the user's sepcified highlighted background color for results/queries/suggestions
 		if (localStorage.option_selectedresultbgcolor && localStorage.option_selectedresultbgcolor.length) {
-			$("#customstyle").append(".arrowed, #options .arrowed .dotdotdot, .arrowed .result_title .dotdotdot, .arrowed .result_url .dotdotdot { background-color:"+localStorage.option_selectedresultbgcolor+"; }");
+			$("#customstyle").append(".arrowed, #options .arrowed .dotdotdot, .arrowed .result_title .dotdotdot, .arrowed .result_url .dotdotdot, .rightClickedResult, .rightClickedResult .result_title .dotdotdot, .rightClickedResult .result_url .dotdotdot, .rightClickedResult .resultTag, .arrowed .resultTag { background-color:"+localStorage.option_selectedresultbgcolor+"; }");
 		}
 
 		// Apply the user's specified font size for result titles
@@ -954,12 +1587,13 @@ $(document).ready(function(){
 
 		// Apply the user's specified font size for result URLs and queries/suggestions
 		if (localStorage.option_urlsize && localStorage.option_urlsize.length) {
-			$("#customstyle").append(".result_url, #options .result_url, .historyresult, .jsonresult { font-size:"+localStorage.option_urlsize+"px; }");
+			$("#customstyle").append(".result_url, #options .result_url, .historyresult, .jsonresult, .resultTag { font-size:"+localStorage.option_urlsize+"px; }");
 		}
 
-		// Apply the user's specified Address Box result separator color
+		// Apply the user's specified Address Box result separator color (and right-click context menu divider)
 		if (localStorage.option_separatorcolor && localStorage.option_separatorcolor.length) {
 			$("#customstyle").append(".result { border-color:"+localStorage.option_separatorcolor+"; }");
+			$("#customstyle").append("#contextMenu .menuHr { background-color:"+localStorage.option_separatorcolor+"; }");
 		}
 
 		// Apply the user's specified Address Box and Search Box background color
@@ -984,9 +1618,7 @@ $(document).ready(function(){
 
 		// In the Options, when deciding on a new color for the input boxes' text, remove the faded/italic CSS class
 		// so that the user can properly see what the text will look like when they're typing into it.
-		$("#option_fauxbarfontcolor").live("focus", function(){
-			$("#awesomeinput").removeClass("description");
-		});
+
 		// Then reset it back to being faded once the user is done deciding on a color.
 		$("#option_fauxbarfontcolor").live("blur", function(){
 			$("#awesomeinput").val("").blur();
@@ -1035,7 +1667,7 @@ $(document).ready(function(){
 		window.mousemovePageY = e.pageY;
 
 		// If search queries/suggestions are displayed but the Search Box isn't focused for some reason (maybe user just clicked on a result?), focus the Search Box.
-		if ($(".historyresult, .jsonresult").length > 0 && $("#opensearchinput").val().length > 0 && $("#opensearchinput:focus").length == 0 && !window.keywordEngine) {
+		if ($(".historyresult, .jsonresult").length && $("#opensearchinput").val().length && !$("#opensearchinput:focus").length && !window.keywordEngine) {
 			$("#opensearchinput").focus();
 		}
 
@@ -1150,7 +1782,7 @@ $(document).ready(function(){
 	});
 
 	// When user focuses the Address Box, hide search queries and suggestions
-	$("#awesomeinput").bind("focus", function(){
+	$("#awesomeinput").live("focus", function(e){
 		window.navigating = false;
 		if (!window.keywordEngine) {
 			$("#opensearch_results").css("display","none").html("");
@@ -1164,6 +1796,22 @@ $(document).ready(function(){
 		if (!window.keywordEngine) {
 			getResults();
 		}
+		setTimeout(function(){
+			if (!window.justPasted && !window.justDeleted) {
+				$("#awesomeinput").select();
+			}
+			delete window.justPasted;
+			delete window.justDeleted;
+		},1);
+	});
+	$("#opensearchinput").live("focus", function(e){
+		setTimeout(function(){
+			if (!window.justPasted && !window.justDeleted) {
+				$("#opensearchinput").select();
+			}
+			delete window.justPasted;
+			delete window.justDeleted;
+		},1);
 	});
 
 	// When user clicks to select a new search engine to user, make it so.
@@ -1175,16 +1823,13 @@ $(document).ready(function(){
 	// When the Search Box is focused, hide Address Box results and make the Search Box look good
 	$("#opensearchinput").focus(function(){
 		hideResults();
-		if ($(this).val() == window.openSearchShortname) {
-			$(this).removeClass("description").val("");
-		}
 		$(this).attr("title","");
 	});
 
 	// When the Search Box loses focus, make it look faded
 	$("#opensearchinput").blur(function(){
 		if ($(this).val() == "") {
-			$(this).addClass("description").val(window.openSearchShortname);
+			$(this).attr("placeholder",window.openSearchShortname);
 		}
 		$(this).attr("title",$(this).attr("realtitle"));
 	});
@@ -1197,20 +1842,11 @@ $(document).ready(function(){
 	});
 
 	// When user clicks the Search Box's triangle/arrow, show the list of selectable search engines to choose from, or close the list if it's showing
-	$("#opensearch_triangle").bind("mousedown", function(){
+	$("#opensearch_triangle").bind("mouseup", function(e){
 		if (localStorage.indexComplete == 1) {
 			$("#opensearch_results").html("").css("display","none");
-			if ($("#opensearchmenu").css("display") != "block") {
-				$("#opensearchmenu").css("display","block");
-				$("#opensearch_triangle .triangle").addClass("glow");
-				setTimeout(function(){
-					$("#opensearch_menufocus").css("display", "inline-block").focus();
-				}, 1);
-			}
-			else {
-				$("#opensearchmenu").css("display","none");
-				$("#opensearch_triangle .triangle").removeClass("glow");
-			}
+			$("#opensearch_triangle .triangle").addClass("glow");
+			showContextMenu(e);
 		}
 	});
 
@@ -1288,18 +1924,6 @@ $(document).ready(function(){
 		}
 	}
 
-	// When user clicks the Address Box or Search Box, if nothing was selected, select all the input to try and help the user out
-	$("#awesomeinput").bind("mouseup", function(){
-		if ($(this).getSelection().length == 0) {
-			$(this).select();
-		}
-	});
-	$("#opensearchinput").bind("mouseup", function(){
-		if ($(this).getSelection().length == 0) {
-			$(this).select();
-		}
-	});
-
 	// When user clicks the Address Box, hide the result links
 	$("#awesomeinput").bind("mousedown", function(){
 		hideResults();
@@ -1307,29 +1931,15 @@ $(document).ready(function(){
 
 	// When the Address Box is empty and the user double-clicks it, display the top results
 	$("#awesomeinput").dblclick(function(){
-		if ($(this).val() == "" || $(this).val() == window.placeholder) {
+		if (!$(this).val().length) {
 			$("#addressbox_triangle").mousedown();
-		}
-	});
-
-	// When Address Box loses focus, reinstate the faded look and generic helper text
-	$("#awesomeinput").blur(function() {
-		if ($(this).val() == "") {
-			$(this).val(window.placeholder).addClass("description");
-		}
-	});
-
-	// If Address Box is faded with generic helper text, and user clicks it, prime it
-	$("#awesomeinput").focus(function() {
-		if ($(this).val() == window.placeholder) {
-			$(this).val("").removeClass("description");
 		}
 	});
 
 	// When user clicks the Address Box's go arrow, go to the address if something is entered
 	$("#address_goarrow").bind("mousedown", function(){
 		var aiVal = $("#awesomeinput").val();
-		if (aiVal.length > 0 && aiVal != window.placeholder) {
+		if (aiVal.length) {
 			goToUrl(aiVal);
 			hideResults();
 		}
@@ -1348,7 +1958,7 @@ $(document).ready(function(){
 
 	// When user clicks the Search Box's magnifying glass, submit the search if text is entered
 	$("#searchicon_cell").bind("mousedown", function(){
-		if ($("#opensearchinput").val().trim() != "" && !$("#opensearchinput").hasClass("description")) {
+		if ($("#opensearchinput").val().trim().length) {
 			submitOpenSearch();
 		}
 	});
@@ -1406,10 +2016,11 @@ $(document).ready(function(){
 
 		// Pressing Backspace if search engine keyword is being used
 		if (e.keyCode == 8 && window.keywordEngine && !$("#awesomeinput").val().length) {
-			$("#awesomeinput").val(window.keywordEngine.keyword);
 			delete window.keywordEngine;
+			$("#awesomeInsetButton").removeClass("insetButton").addClass("noInsetButton");
 			$("#addressbaricon").attr("src","chrome://favicon/null").css("opacity",.75);
 			$(".switchtext").html("Switch to tab:").css("display","");
+			$("#awesomeinput").attr("placeholder",window.placeholder);
 			getResults();
 			return false;
 		}
@@ -1509,9 +2120,11 @@ $(document).ready(function(){
 			$(".arrowed").removeClass("arrowed");
 			if (window.keywordEngine && $("#awesomeinput").val() == "") {
 				delete window.keywordEngine;
+				$("#awesomeInsetButton").removeClass("insetButton").addClass("noInsetButton");
 				window.actualUserInput = '';
 				$("#addressbaricon").attr("src","chrome://favicon/null").css("opacity",.75);
 				$(".switchtext").html("Switch to tab:").css("display","");
+				$("#awesomeinput").attr("placeholder",window.placeholder);
 				return false;
 			}
 			if (window.actualUserInput) {
@@ -1677,7 +2290,7 @@ $(document).ready(function(){
 
 		// Enter/Return - execute the search, hide the results
 		if (e.keyCode == 13) {
-			if ($("#opensearchinput").val().trim().length > 0) {
+			if ($("#opensearchinput").val().trim().length) {
 				$("#opensearch_results").css("display","none").html("");
 				submitOpenSearch();
 			}
@@ -1702,7 +2315,7 @@ $(document).ready(function(){
 
 		// This far, user has probably entered a letter or number, so get some new queries/suggestions to display
 		setTimeout(function() {
-			if ($("#opensearchinput").val().trim() != "") {
+			if ($("#opensearchinput").val().trim().length) {
 				getSearchSuggestions();
 			} else {
 				$("#opensearch_results").css("display","none").html("");
@@ -1720,27 +2333,13 @@ $(document).ready(function(){
 		}, 150);
 	}
 
-	$(".switchtext").live("mousedown", function(){
-		$("#awesomeinput").select();
-		return false;
-	});
-
-	$("#addressbaricon").live("mousedown", function(){
-		$("#awesomeinput").select();
-		return false;
-	});
-
 	$("#awesomeinput").live("blur", function(){
 		if (window.keywordEngine) {
 			setTimeout(function(){
 				if (!$("#awesomeinput:focus").length) {
 					if (window.keywordEngine) {
-						$("#awesomeinput").val(window.keywordEngine.keyword+" "+(window.actualUserInput == window.keywordEngine.keyword+" " ? '' : window.actualUserInput)).removeClass("description");
 						$("#opensearch_results").css("display","none").html("");
 					}
-					delete window.keywordEngine;
-					$("#addressbaricon").attr("src","chrome://favicon/null").css("opacity",.75);
-					$(".switchtext").html("Switch to tab:").css("display","");
 				}
 			}, 1);
 		}
@@ -1783,7 +2382,16 @@ $(document).ready(function(){
 
 		// Load the Options page HTML
 		$.get("options.html", function(response){
-			$("#thefauxbar").after(response);
+			$("body").append(response);
+			$(window).bind("resize", function(){
+				$("#options").css("position","absolute").css("top",$(".wrapper").offset().top+$(".wrapper").outerHeight()+30+"px").css("margin","0");
+				if (window.innerWidth >= 1100) {
+					$("#options").css("width","1000");
+				} else {
+					$("#options").css("width",window.innerWidth - 50 + "px");
+				}
+				$("#options").css("left", window.innerWidth/2 - $("#options").outerWidth()/2 + "px" );
+			}).trigger("resize");
 
 			// Update the page/tab title
 			document.title = "Fauxbar: Options";
@@ -1875,10 +2483,11 @@ $(document).ready(function(){
 
 			// When the user edits one of the search engines (like its name or URL), update the database
 			$("tr.opensearch_optionrow td input").live("change", function(){
+				$(this).val(str_replace('"','',$(this).val()));
 				if (openDb()) {
 					var osRow = $(this).parent().parent();
 					window.db.transaction(function(tx){
-						tx.executeSql('UPDATE opensearches SET shortname = ?, searchurl = ?, keyword = ? WHERE shortname = ?', [$('.shortname > input',osRow).val().trim(), $('.searchurl > input',osRow).val().trim(), $('.keyword > input',osRow).val().trim(), $('.shortname > input',osRow).attr("origvalue")]);
+						tx.executeSql('UPDATE opensearches SET shortname = ?, searchurl = ?, keyword = ? WHERE shortname = ?', [str_replace('"','',$('.shortname > input',osRow).val().trim()), $('.searchurl > input',osRow).val().trim(), $('.keyword > input',osRow).val().trim(), $('.shortname > input',osRow).attr("origvalue")]);
 					}, function(t){
 						errorHandler(t, getLineInfo());
 					}, function(){
@@ -2074,13 +2683,15 @@ $(document).ready(function(){
 			function insertCustomStyles() {
 				var toAppend = "";
 				toAppend += ".wrapper { max-width:"+$("#option_maxwidth").val()+"px; }";
-				toAppend += ".result_title, .result, .result_title .dotdotdot, #options .result_title { color:"+$("#option_titlecolor").val()+"; font-size:"+$("#option_titlesize").val()+"px; }";
+				toAppend += ".result_title, .result, .result_title .dotdotdot, #options .result_title, .resultTag { color:"+$("#option_titlecolor").val()+"; font-size:"+$("#option_titlesize").val()+"px; }";
+				toAppend += ".resultTag { font-size:"+$("#option_urlsize").val()+"px; }";
 				toAppend += ".result_url, .result_url .dotdotdot, #options .result_url, .historyresult, .jsonresult { color:"+$("#option_urlcolor").val()+"; font-size:"+$("#option_urlsize").val()+"px; }";
 				toAppend += ".result, .resultpreview, .dotdotdot { background-color:"+$("#option_resultbgcolor").val()+"; }";
-				toAppend += ".arrowed .result_title, #options .arrowed .result_title, #opensearch_results .arrowed { color:"+$("#option_selectedtitlecolor").val()+"; }";
-				toAppend += ".arrowed .result_url, #options .arrowed .result_url { color:"+$("#option_selectedurlcolor").val()+"; }";
-				toAppend += ".arrowed, #options .arrowed .dotdotdot { background-color:"+$("#option_selectedresultbgcolor").val()+"; }";
+				toAppend += ".arrowed .result_title, #options .arrowed .result_title, #opensearch_results .arrowed, .rightClickedResult .result_title, .arrowed .resultTag, .rightClickedResult .resultTag { color:"+$("#option_selectedtitlecolor").val()+"; }";
+				toAppend += ".arrowed .result_url, #options .arrowed .result_url, .rightClickedResult .result_url { color:"+$("#option_selectedurlcolor").val()+"; }";
+				toAppend += ".arrowed, #options .arrowed .dotdotdot, .rightClickedResult { background-color:"+$("#option_selectedresultbgcolor").val()+"; }";
 				toAppend += ".result { border-color:"+$("#option_separatorcolor").val()+"; }";
+				toAppend += "#contextMenu .menuHr { background-color:"+$("#option_separatorcolor").val()+"; }";
 				toAppend += ".inputwrapper { background-color:"+$("#option_inputbgcolor").val()+"; }";
 				toAppend += ".inputwrapper input { color:"+$("#option_fauxbarfontcolor").val()+"; }";
 				$("#customstyle").append(toAppend);
@@ -2163,10 +2774,10 @@ $(document).ready(function(){
 			$("#awesomeinput").css("cursor","wait");
 			$("#searchwrapper *").css("cursor","wait");
 			setTimeout(function(){
-				$("#awesomeinput").prop("disabled",true).addClass("description").val(window.placeholder);
-				$("#opensearchinput").prop("disabled",true).addClass("description");
+				$("#awesomeinput").prop("disabled",true);
+				$("#opensearchinput").prop("disabled",true);
 				if (localStorage.indexedbefore != 1) {
-					$("#opensearchinput").val("Search");
+					$("#opensearchinput").attr("placeholder","Search");
 				}
 			}, 100);
 		});
@@ -2184,18 +2795,18 @@ $(document).ready(function(){
 	}
 	// If user has default colors set, load darkened icons
 	else {
-		$("td#address_goarrow")
-			.live("mouseover", function(){
+		$("#address_goarrow")
+			.live("mouseenter", function(){
 				$("img",this).attr("src","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAAAi0lEQVQoU2NkwAGsYmtngqSOLW5Ox6aEEZugbXyt9T8GxiMguf///s/CphmrRpAGy/i6SCYGhmW4NOPUSEgzXo34NDPaxNca4wogmPi/fwzGf///m8nEyMQAtAnsZ0aruNozQAUENf/8/Zfh////YLM4WFkekq+RbKcS8h+uaKF+dJCVAChKcoQSOQCI22/3L6cKGwAAAABJRU5ErkJggg==");
 			})
-			.live("mouseout", function(){
+			.live("mouseleave", function(){
 				$("img",this).attr("src","goarrow.png");
 			});
-		$("td#searchicon_cell")
-			.live("mouseover", function(){
+		$("#searchicon_cell")
+			.live("mouseenter", function(){
 				$("#searchicon").attr("src","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABdUlEQVQ4T5WTIUzDUBCG7zqWgBpqAgNBYtgWZrAEhSJZQpssm8DjIG0wGCgJDoFDQAitICEBiZ9ZslVNIVAkJAjAzECPu0fbdN1bw6rWvvd/7//vf0P4x1M1nQYhlYtUCLr+cSctwTx91XLOeUMbCGbifQTwxr8P+r57J98mAmo79gMgbighwicQffB7mWFz/P5NBLsC0QLq5uH6D4RPoiWEy77n7sUOapbTZciKOGHAshZQsZwbg2CbTxr0PLeejcmQd3FSAGNTC0jsG3jWuz05GgOY9oBzLYZI+7mAEOE+8NymxsErOyhxjLYWILXxwpUMKyRaDfzTlxiimuEByhrHK01uIcqpIACPBuIzN7ElA0wPdwwQdd8QiyweqtoyTzraCCCxF3XPFhdUHKKWfAoN/CqScZG+jQlgRKzpf9KNVYBkaNGu7OXJu+74J6ZrrmQWAYfTiFXSimkv8YQ7POF5AmzFf5K8U9NrKoJA+PS1acWi/QVHr6EUsRkP6wAAAABJRU5ErkJggg==");
 			})
-			.live("mouseout", function(){
+			.live("mouseleave", function(){
 				$("#searchicon").attr("src","search.png");
 			});
 	}
@@ -2235,11 +2846,22 @@ function resizeSearchSuggestions() {
 		}
 	}
 	if (window.keywordEngine && $("#awesomeinput:focus").length) {
-		$("#opensearch_results").css("display","block").css("width", $("#addresswrapper").innerWidth() - $(".switchtext").outerWidth() - $("#addressbaricon").parent().outerWidth() - 6 +"px").css("margin-left","0px").css("margin-top","0px")
-			.css("position","absolute").css("left",$("#awesomeinput").position().left+"px").css("top",$("#addresswrapper").position().top+$("#addresswrapper").outerHeight()+1+"px");
+		$("#opensearch_results").css("display","block")
+			.css("margin-left","0px")
+			.css("margin-top","0px")
+			.css("width", $("#awesomeinputwrapper2").outerWidth()-2+"px")
+			.css("top",$("#awesomeinput").offset().top+$("#awesomeinput").outerHeight()+5+"px")
+			.css("left",$("#awesomeinput").offset().left-1+"px")
+			.css("position","fixed")
+		;
 	} else {
-		$("#opensearch_results").css("display","block").css("width", $("#searchwrapper").innerWidth() - $("#opensearch_triangle").outerWidth() - 6 +"px").css("margin-left","0px").css("margin-top","0px").
-			css("position","absolute").css("left",$("#opensearchinput").position().left+"px").css("top",$("#searchwrapper").position().top+$("#searchwrapper").outerHeight()+1+"px");
+		$("#opensearch_results").css("display","block").
+			css("width", $("#opensearchwrapper2").outerWidth()- 2 +"px").
+			css("margin-left","0px").
+			css("margin-top","0px").
+			css("position","absolute").
+			css("left",$("#opensearchwrapper2").offset().left+"px").
+			css("top",$("#searchwrapper").offset().top+$("#searchwrapper").outerHeight()+1+"px");
 	}
 }
 
@@ -2280,7 +2902,7 @@ function getSearchSuggestions(dontActuallyGet) {
 	if (($("#opensearchinput:focus").length && (localStorage.option_showqueryhistorysuggestions == 1 || localStorage.option_showjsonsuggestions == 1)) || (window.keywordEngine)) {
 
 		// Set up the SQL select statement for Fauxbar's `searchqueries` database table
-		window.actualSearchInput = window.keywordEngine ? $("#awesomeinput").val() : $("#opensearchinput").val();
+		window.actualSearchInput = window.keywordEngine && $("#awesomeinput:focus").length ? $("#awesomeinput").val() : $("#opensearchinput").val();
 		if (openDb()) {
 			window.db.readTransaction(function(tx){
 				var osWords = explode(" ", window.actualSearchInput.trim());
@@ -2305,12 +2927,12 @@ function getSearchSuggestions(dontActuallyGet) {
 
 					// Get the JSON OpenSearch suggestions from the selected search engine suggestion URL if possible, otherwise just default to a fake URL so we can at least continue.
 					// Doing it this way so that it's more streamlined here, rather than me trying to worry about dealing with asynchronus results; I think it'd be messier. This way seems cleaner.
-					var suggestUrl = window.keywordEngine ? window.keywordEngine.suggestUrl : $('#opensearchmenu .menuitem[shortname="'+window.openSearchShortname+'"]').attr("suggesturl");
+					var suggestUrl = window.keywordEngine ? window.keywordEngine.suggestUrl : $('#opensearchmenu .menuitem[shortname="'+str_replace('"','&quot;',window.openSearchShortname)+'"]').attr("suggesturl");
 					var actualSuggestUrl = "http://0.0.0.0/";
 					if (((!window.keywordEngine && localStorage.option_showjsonsuggestions == 1) || (window.keywordEngine && localStorage.option_showSuggestionsViaKeyword == 1)) && suggestUrl != "null" && suggestUrl != "" && suggestUrl.length > 0) {
 						actualSuggestUrl = suggestUrl;
 					}
-					var osVal = window.keywordEngine ? $("#awesomeinput").val() : $("#opensearchinput").val();
+					var osVal = window.keywordEngine && $("#awesomeinput:focus").length ? $("#awesomeinput").val() : $("#opensearchinput").val();
 
 					// Setup the JSON URL get...
 					$.getJSON(str_replace("{searchTerms}", urlencode(osVal), actualSuggestUrl)).complete(function(response){
@@ -2319,7 +2941,8 @@ function getSearchSuggestions(dontActuallyGet) {
 						var jsonResults = '';
 
 						// If user has opted to show past queries, make it so
-						if ((!window.keywordEngine && localStorage.option_showqueryhistorysuggestions == 1) || (window.keywordEngine && localStorage.option_showQueriesViaKeyword == 1)) {
+						if ((localStorage.option_showqueryhistorysuggestions == 1) || (window.keywordEngine && localStorage.option_showQueriesViaKeyword == 1)) {
+
 							var len = results.rows.length, i;
 							if (len > 0 || $(".result").length) {
 								var openResults = '';
@@ -2353,7 +2976,7 @@ function getSearchSuggestions(dontActuallyGet) {
 						}
 
 						// Display the queries and suggestions, if any
-						if (osVal == (window.keywordEngine ? $("#awesomeinput").val() : $("#opensearchinput").val())) {
+						if (osVal == (window.keywordEngine && $("#awesomeinput:focus").length ? $("#awesomeinput").val() : $("#opensearchinput").val())) {
 							if (historyResults.length > 0 || jsonResults.length > 0) {
 								$("#opensearch_results").html(historyResults+jsonResults).css("display","block");
 								if (historyResults.length > 0) {
@@ -2381,12 +3004,15 @@ function toggleSwitchText() {
 	var switchUrl = $(".switch").parent('.result_url').parent('.result').attr("url");
 	if ($('.switch').length > 0 && $("#awesomeinput").val() == switchUrl) {
 		$(".switchtext").css("font-size",$("#awesomeinput").css("font-size")).css("display","table-cell");
+		$("#super_triangle").css("display","none");
 	}
 	else if (window.tileEditMode && window.tileEditMode == true && $("#awesomeinput").val().length > 0 && $(".result[url='"+$("#awesomeinput").val()+"']").length > 0) {
 		$(".switchtext").text("Add tile:").css("font-size",$("#awesomeinput").css("font-size")).css("display","table-cell");
+		$("#super_triangle").css("display","none");
 	}
 	else {
 		$(".switchtext").css("display","none");
+		$("#super_triangle").css("display","");
 	}
 }
 
@@ -2520,7 +3146,7 @@ function refillInputs() {
 								$("#awesomeinput").val("").focus();
 							} else if (localStorage.option_openfauxbarfocus == 'searchbox') {
 								$("#awesomeinput").val("").blur();
-								$("#opensearchinput").val("").focus().removeClass("description");
+								$("#opensearchinput").val("").focus();
 							}
 							hideResults();
 						});
@@ -2532,12 +3158,12 @@ function refillInputs() {
 	else {
 		// Populate Address Box
 		if (getHashVar('ai')) {
-			$("#awesomeinput").removeClass("description").val(getHashVar('ai'));
+			$("#awesomeinput").val(getHashVar('ai'));
 			window.actualUserInput = getHashVar('ai');
 		}
 		// Populate Search Box
 		if (getHashVar('os')) {
-			$("#opensearchinput").removeClass("description").val(getHashVar('os'));
+			$("#opensearchinput").val(getHashVar('os'));
 		}
 
 		// Keyword search engine
@@ -2609,8 +3235,13 @@ function getAiSansSelected() {
 
 // Get the user's Address Box input, search Fauxbar's database for matching history items and bookmarks, display the results, and auto-fill the Address Box input with a matching URL.
 function getResults(noQuery) {
+	if (noQuery && $("#contextMenu").length) {
+		removeContextMenu();
+	}
+
 	// If the Search Box is focused and something is trying to get results from the Address Box's input text, don't let it happen, since the user is focusing the Search Box.
-	if ($("#opensearchinput:focus").length == 1 && !noQuery){
+	if (window.justUsedContextMenu){
+		delete window.justUsedContextMenu;
 		return false;
 	}
 
@@ -2625,9 +3256,7 @@ function getResults(noQuery) {
 	$(".autofillmatch").removeClass("autofillmatch");
 
 	// Define what the user has actually typed
-	if ($("#awesomeinput").val() != window.placeholder) {
-		window.actualUserInput = getAiSansSelected();
-	}
+	window.actualUserInput = getAiSansSelected();
 
 	var thisQuery = window.actualUserInput;
 
@@ -2637,34 +3266,38 @@ function getResults(noQuery) {
 
 		// Search engine keyword?
 		var keywordMatch = false;
-		if (!window.tileEditMode && !window.keywordEngine) {
-			var justEnabledKeywordEngine = true;
+		if (!window.tileEditMode) {
+			if (!window.keywordEngine) {
+				var justEnabledKeywordEngine = true;
+			}
 			var usingKeyword = '';
 			$(".menuitem").each(function(){
 				var keyword = $(this).attr("keyword");
 				if (keyword && thisQuery && thisQuery.substr(0,keyword.length+1) == keyword+" ") {
 					keywordMatch = true;
 					usingKeyword = keyword;
+					$("#awesomeinput").attr("placeholder","Search");
 					window.keywordEngine = {shortname:$(this).attr("shortname"), keyword:$(this).attr("keyword"), suggestUrl:$(this).attr("suggesturl")};
 					$("#addressbaricon").attr("src",$("img",this).attr("src")).css("opacity",1);
 					hideResults();
 				}
 			});
-			if (keywordMatch == false) {
+			if (keywordMatch == false && !window.keywordEngine) {
 				$("#addressbaricon").attr("src","chrome://favicon/null").css("opacity",.75);
 				$(".switchtext").html("Switch to tab:").css("display","");
 			}
 		}
 
 		if (window.keywordEngine) {
+			$("#awesomeInsetButton").addClass("insetButton").removeClass("noInsetButton");
 			if (noQuery) {
 				$("#opensearch_results").css("display","none").html("");
 			} else {
-				$(".switchtext").html(window.keywordEngine.shortname+":").css("display","table-cell");
+				$(".switchtext").html(window.keywordEngine.shortname).css("display","table-cell");
 				if ($("#awesomeinput").val().substr(0,window.keywordEngine.keyword.length+1) == window.keywordEngine.keyword+" ") {
 					$("#awesomeinput").val($("#awesomeinput").val().substr(window.keywordEngine.keyword.length+1));
 				}
-				if ($("#awesomeinput").val().length > 0) {
+				if ($("#awesomeinput").val().length) {
 					if (justEnabledKeywordEngine) {
 						getSearchSuggestions(true);
 					} else {
@@ -2676,13 +3309,13 @@ function getResults(noQuery) {
 				return;
 			}
 		} else {
+			$("#awesomeInsetButton").removeClass("insetButton").addClass("noInsetButton");
 			$("#opensearch_results").css("display","none").html("");
 		}
 	}
 
-
 	// If the user has entered text into the Address Box, or if the user is just getting the top results...
-	if ( ($("#awesomeinput").length > 0 && $("#awesomeinput").val().length > 0 && $("#awesomeinput").val() != window.placeholder) || noQuery ) {
+	if ( ($("#awesomeinput").length > 0 && $("#awesomeinput").val().length) || noQuery ) {
 
 		// If results exist right now, auto-fill the Address Box's input with a matching URL if possible
 		if ($(".result").length > 0) {
@@ -2693,14 +3326,20 @@ function getResults(noQuery) {
 		var sHI = {};
 
 		if (openDb()) {
+			// has to be transaction instead of readTransaction for FTS table (not currently implemented, but just for the record)
 			window.db.readTransaction(function(tx) {
 
 				// If Address Box input exists, sort out how the SQL select statement should be crafted
 				if (!noQuery) {
-					var words = explode(" ", getAiSansSelected());
+					var actualText = getAiSansSelected();
+					actualText = actualText.trim();
+					var words = explode(" ", actualText);
 					var urltitleWords = new Array();
-					var urltitleQMarks = new Array();
+					var urltitleQMarks1 = new Array();
+					var urltitleQMarks2 = new Array();
 					var modifiers = '';
+
+					urltitleWords[urltitleWords.length] = thisQuery+"%";
 
 					for (var w in words) {
 						if (words[w] != "") {
@@ -2709,7 +3348,7 @@ function getResults(noQuery) {
 							}
 							else {
 								urltitleWords[urltitleWords.length] = '%'+str_replace("_","¸_",str_replace("%","¸%",words[w]))+'%';
-								urltitleQMarks[urltitleQMarks.length] = ' urltitle like ? escape "¸" ';
+								urltitleQMarks2[urltitleQMarks2.length] = ' urltitletag LIKE ? ESCAPE "¸" ';
 							}
 						}
 					}
@@ -2717,16 +3356,7 @@ function getResults(noQuery) {
 
 				// If actual words exist in the Address Box's input (or if we're getting just getting the top results)...
 				if (noQuery || urltitleWords.length > 0 || modifiers != "") {
-
-					// Specify for the SQL statement if we're to be getting history items and/or bookmarks
-					var typeOptions = ['type = -1'];
-					if (localStorage.option_showmatchinghistoryitems && localStorage.option_showmatchinghistoryitems == 1) {
-						typeOptions[typeOptions.length] = ' type = 1 ';
-					}
-					if (localStorage.option_showmatchingfavs && localStorage.option_showmatchingfavs == 1) {
-						typeOptions[typeOptions.length] = ' type = 2 ';
-					}
-					typeOptions = implode(" OR ", typeOptions);
+					var selectStatement = '';
 
 					// Specify the max amount of results to get
 					if (noQuery) {
@@ -2736,33 +3366,52 @@ function getResults(noQuery) {
 					}
 					resultLimit = resultLimit * 2;
 
-					// Ignore titleless results if user has opted. But still keep proper files like .js, .php, .pdf, .json, .html, etc.
-					var titleless = localStorage.option_ignoretitleless == 1 ? ' AND (title != "" OR url LIKE "%.__" OR url LIKE "%.___" OR url LIKE "%.____" OR url LIKE "%/") ' : "";
+					// Normal SQLite table search
 
+					// Specify for the SQL statement if we're to be getting history items and/or bookmarks
+					var typeOptions = new Array;
+					if (localStorage.option_showmatchinghistoryitems && localStorage.option_showmatchinghistoryitems == 1) {
+						typeOptions[typeOptions.length] = ' type = 1 ';
+					}
+					if (localStorage.option_showmatchingfavs && localStorage.option_showmatchingfavs == 1) {
+						typeOptions[typeOptions.length] = ' type = 2 ';
+					}
+					typeOptions[typeOptions.length] = ' type = -1 ';
+					typeOptions = implode(" OR ", typeOptions);
+
+					// Ignore titleless results if user has opted. But still keep proper files like .js, .php, .pdf, .json, .html, etc.
+					var titleless = localStorage.option_ignoretitleless == 1 ? ' AND (title != "" OR urls.url LIKE "%.__" OR urls.url LIKE "%.___" OR urls.url LIKE "%.____" OR urls.url LIKE "%/") ' : "";
 
 					// If user is editing site tiles, don't show results for tiles that have already been added.
 					var editModeUrls = '';
 					if (window.tileEditMode && window.tileEditMode == true) {
 						$("#topthumbs a").each(function(){
-							editModeUrls += ' AND url != "'+$(this).attr("url")+'" ';
+							editModeUrls += ' AND urls.url != "'+$(this).attr("url")+'" ';
 						});
 					}
 
 					// And now to create the statement.
 					// If we're just getting the top sites...
 					if (noQuery) {
-						var selectStatement = 'SELECT url, title, type, id FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+ titleless + editModeUrls +' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
+						selectStatement = 'SELECT url, title, type, id, tag FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+ titleless + editModeUrls +' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
 					}
 
 					// If we're searching using the words from the Address Box's input...
 					else if (urltitleWords.length > 0) {
-						var selectStatement = 'SELECT url, title, type, id, (url||" "||title) AS urltitle FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' AND '+implode(" and ", urltitleQMarks) + titleless + editModeUrls +' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
+						selectStatement = ''
+						+ ' SELECT urls.url, title, type, frecency, urls.id, urls.tag, (urls.url||" "||title||" "||urls.tag) AS urltitletag, tags.url*0 as tagscore'
+						+ ' FROM urls '
+						+ ' LEFT JOIN tags '
+						+ ' ON urls.url = tags.url AND tags.tag LIKE ? ' 																  //OR tags.tag LIKE ?
+						+ ' WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' '+(urltitleQMarks2.length ? ' AND '+implode(" AND ", urltitleQMarks2) : ' ')+' ' + titleless + editModeUrls
+						+ ' ORDER BY tagscore DESC, frecency DESC, type DESC LIMIT '+resultLimit;
 					}
 
 					// Not sure if this actually ever gets used.
 					else {
-						var selectStatement = 'SELECT url, title, type, id FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+ modifiers + titleless + editModeUrls +' ORDER BY frecency DESC, type ASC LIMIT '+resultLimit;
+						selectStatement = 'SELECT url, title, type, id, tag FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+ modifiers + titleless + editModeUrls +' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
 					}
+
 
 					// If the user's computer is lagging and taking a while to retrieve the results, display a loading on the left side of the Address Box
 					window.waitingForResults = true;
@@ -2783,8 +3432,12 @@ function getResults(noQuery) {
 						}
 					}
 
+
 					// Get the results from Fauxbar's database
+					window.selectStatement = selectStatement;
+					window.thisQuery = thisQuery;
 					tx.executeSql(selectStatement, urltitleWords, function (tx, results) {
+
 						window.waitingForResults = false;
 						var len = results.rows.length, i;
 
@@ -2803,6 +3456,7 @@ function getResults(noQuery) {
 								newItem.url = results.rows.item(i).url;
 								newItem.title = results.rows.item(i).title;
 								newItem.id = results.rows.item(i).id;
+								newItem.tag = results.rows.item(i).tag;
 								if (results.rows.item(i).type == 2) {
 									newItem.isBookmark = true;
 								}
@@ -2841,6 +3495,7 @@ function getResults(noQuery) {
 						var resultHtml = "";
 						var titleText = "";
 						var urlText = "";
+						var tagText = "";
 						var urlTextAttr = "";
 						var regEx = "";
 						var matchClasses = "";
@@ -2884,7 +3539,7 @@ function getResults(noQuery) {
 								resultIsOkay = true;
 
 								// Check to see if site is on the blacklist
-								if (blacksites.length) {
+								if (resultIsOkay == true && blacksites.length) {
 									for (var b in blacksites) {
 										var bs = blacksites[b].trim();
 										var blackparts = explode("*",bs);
@@ -2908,8 +3563,8 @@ function getResults(noQuery) {
 									if ($('.result[url="'+hI.url+'"] img.favstar').length == 0) {
 										if (!strstr(getAiSansSelected().toLowerCase(), "is:fav")) {
 											if (hI.isBookmark && !noQuery) { // bookmark
-												$('.result_title[url="'+hI.url+'"]').html('<img class="result_favicon" src="chrome://favicon/'+hI.url+'" />'+titleText);
-												$('.result[url="'+hI.url+'"]').prepend('<img class="favstar" />');
+												//$('.result_title[url="'+hI.url+'"]').html('<img class="result_favicon" src="chrome://favicon/'+hI.url+'" />'+titleText);
+												//$('.result[url="'+hI.url+'"]').prepend('<img class="favstar" />');
 											}
 											resultIsOkay = false;
 										}
@@ -2951,9 +3606,12 @@ function getResults(noQuery) {
 										}
 									}
 
+									tagText = hI.tag;
+
 									// Replace special characters with a bunch of % symbols
 									titleText = replaceSpecialChars(titleText);
 									urlText = replaceSpecialChars(urlText);
+									tagText = replaceSpecialChars(tagText);
 
 									// Wrap each word with some funky characters
 									for (var iii in words) {
@@ -2961,6 +3619,7 @@ function getResults(noQuery) {
 											regEx = new RegExp(words[iii], 'gi');
 											titleText = titleText.replace(regEx, '¸%%%%%¸$&¸%%%%¸');
 											urlText = urlText.replace(regEx, '¸%%%%%¸$&¸%%%%¸');
+											tagText = tagText.replace(regEx, '¸%%%%%¸$&¸%%%%¸');
 										}
 									}
 
@@ -2968,6 +3627,7 @@ function getResults(noQuery) {
 									// This is all in an effort to make RegExp work, so that the user can use full character searching :)
 									titleText = replacePercents(titleText);
 									urlText = replacePercents(urlText);
+									tagText = replacePercents(tagText);
 
 									// Prep the CSS classes to uses
 									matchClasses = " match ";
@@ -2986,14 +3646,19 @@ function getResults(noQuery) {
 									titleText = str_replace("¸%%%%¸", spanClose, titleText);
 									urlText = str_replace("¸%%%%%¸", spanOpen, urlText);
 									urlText = str_replace("¸%%%%¸", spanClose, urlText);
+									tagText = str_replace("¸%%%%%¸", spanOpen, tagText);
+									tagText = str_replace("¸%%%%¸", spanClose, tagText);
 
 									titleText = str_replace('&', '&amp;', titleText);
 									urlText = str_replace('&', '&amp;', urlText);
+									tagText = str_replace('&', '&amp;', tagText);
 
 									titleText = str_replace(spanOpen, "¸%%%%%¸", titleText);
 									titleText = str_replace(spanClose, "¸%%%%¸", titleText);
 									urlText = str_replace(spanOpen, "¸%%%%%¸", urlText);
 									urlText = str_replace(spanClose, "¸%%%%¸", urlText);
+									tagText = str_replace(spanOpen, "¸%%%%%¸", tagText);
+									tagText = str_replace(spanClose, "¸%%%%¸", tagText);
 
 									titleText = str_replace(">", "&gt;", titleText);
 									titleText = str_replace("<", "&lt;", titleText);
@@ -3001,10 +3666,15 @@ function getResults(noQuery) {
 									urlText = str_replace(">", "&gt;", urlText);
 									urlText = str_replace("<", "&lt;", urlText);
 
+									tagText = str_replace(">", "&gt;", tagText);
+									tagText = str_replace("<", "&lt;", tagText);
+
 									titleText = str_replace("¸%%%%%¸", spanOpen, titleText);
 									titleText = str_replace("¸%%%%¸", spanClose, titleText);
 									urlText = str_replace("¸%%%%%¸", spanOpen, urlText);
 									urlText = str_replace("¸%%%%¸", spanClose, urlText);
+									tagText = str_replace("¸%%%%%¸", spanOpen, tagText);
+									tagText = str_replace("¸%%%%¸", spanClose, tagText);
 
 									// Make the URL display the "Switch to tab" text if tab is already open in current window
 									urlTextAttr = urlText;
@@ -3028,11 +3698,14 @@ function getResults(noQuery) {
 											newHref = hI.url;
 										}
 
-										resultHtml += '<a class="result '+arrowedClass+'" url="'+hI.url+'" href="'+newHref+'" origtitle="'+hI.title+'" number="'+(currentRows+1)+'" onclick="'+resultOnClick+'" bmid="'+hI.id+'">';
+										resultHtml += '<a class="result '+arrowedClass+'" url="'+hI.url+'" href="'+newHref+'" origtitle="'+hI.title+'" number="'+(currentRows+1)+'" onclick="'+resultOnClick+'" bmid="'+hI.id+'" keyword="'+hI.tag+'">';
 										if (hI.isBookmark) {
-											resultHtml += '<img class="favstar" />';
+											resultHtml += '<img class="favstar" style="position:absolute;" />';
 										}
 										resultHtml += '	';
+										if (hI.tag) {
+											resultHtml += '<span class="resultTag" style="white-space:nowrap; position:absolute; display:block; font-size:'+localStorage.option_urlsize+'px; text-decoration:none">'+tagText+'</span>';
+										}
 										resultHtml += '	<div class="result_title" url="'+hI.url+'"><img class="result_favicon" src="chrome://favicon/'+hI.url+'" />'+titleText+'</div><br />';
 										resultHtml += '	<div class="result_url">'+addTileText+urlText+'</div>';
 										resultHtml += ' <div class="visitinfo" id="hi_'+hI.id+'" url="'+hI.url+'"></div>';
@@ -3083,7 +3756,11 @@ function getResults(noQuery) {
 							}
 
 							// Display results.
-							$("#results").css("display","block").css("opacity",0).css("width", $("#addresswrapper").outerWidth()-2+"px").css("margin-top","4px").css("margin-left","-4px");
+							$("#results").css("display","block").css("opacity",0).
+								css("width", $("#addresswrapper").outerWidth()-2+"px").css("position","fixed")
+								.css("top",$("#awesomeinput").offset().top+$("#awesomeinput").outerHeight()+4+"px")
+								.css("left",$("#addresswrapper").offset().left-2+"px")
+							;
 
 							// "Truncate" result titles and urls with "..." if they're too long.
 							// This is kind of dodgy because it's just creating a <span> containing "..." on top of the right side of the results.
@@ -3093,14 +3770,23 @@ function getResults(noQuery) {
 								window.cutoff = window.cutoff - getScrollBarWidth();
 							}
 
-							$(".result_url").each(function(){
-								if ($(this).innerWidth() > $("#results").innerWidth() - window.cutoff) {
-									$(this).css("width", ($("#results").innerWidth()-window.cutoff) + "px").prepend('<span class="dotdotdot">...</span>');
+							$("#results .result_url").each(function(){
+								if ($(this).innerWidth() > $("#results").innerWidth() - 52) {
+									$(this).css("width", ($("#results").innerWidth() - 52) + "px").prepend('<span class="dotdotdot">...</span>');
 								}
 							});
-							$(".result_title").each(function(){
-								if ($(this).innerWidth() > $("#results").innerWidth() - window.cutoff+21) {
-									$(this).css("width", ($("#results").innerWidth()-window.cutoff+21) + "px").prepend('<span class="dotdotdot">...</span>');
+
+							var starWidth = 0;
+
+							$("#results .result_title").each(function(){
+								starWidth = 16;
+								tagWidth = $(this).prev(".resultTag").innerWidth() + ($(this).prev(".resultTag").length * -6);
+
+								if ($(this).offset().left+$(this).outerWidth() > $("#results").offset().left+$("#results").innerWidth() - 10 - starWidth - tagWidth) {
+									$(this)
+										.css("width", ($("#results").outerWidth()-16-starWidth-tagWidth)+"px")
+										.prepend('<span class="dotdotdot" style="font-size:14px">...</span>')
+									;
 								}
 							});
 
@@ -3132,8 +3818,15 @@ function getResults(noQuery) {
 							}
 
 							// Show the results
-							$(".result").last().css("border-bottom",0);
-							$(".favstar").attr("src", $("#fauxstar").attr("src"));
+							$("#results .result").last().css("border-bottom",0);
+
+							var scrollbarWidth = window.resultsAreScrollable ? getScrollBarWidth() : 0;
+
+							$("#results .favstar").attr("src", $("#fauxstar").attr("src")).css("margin-left",($("#results").innerWidth()-25-scrollbarWidth)+"px").css("margin-top","2px");
+							$(".resultTag").each(function(){
+								$(this).css("left", $("#results").offset().left + $("#results").outerWidth() - $(this).outerWidth() - $(this).offset().left - ($(this).prev(".favstar").length*16) - scrollbarWidth);
+							});
+
 							if (keywordMatch == false && thisQuery == window.actualUserInput && !window.keywordEngine) {
 								toggleSwitchText();
 							}
@@ -3143,7 +3836,7 @@ function getResults(noQuery) {
 								hideResults();
 								return;
 							}
-							if (thisQuery.length > 1 || thisQuery == window.actualUserInput || !noQuery && $(".glow").length == 1) {
+							if (thisQuery.length || thisQuery == window.actualUserInput || (!noQuery && $(".glow").length == 1)) {
 								$("#results").attr("noquery",(noQuery?1:0)).css("opacity",1);
 							}
 
@@ -3227,8 +3920,8 @@ function hideResults() {
 
 // Update the tab's hash value with what's currently in the Address and Search Boxes, so that the input can be restored if the user navigates pages back/forth.
 function updateHash() {
-	var ai = $("#awesomeinput").hasClass("description") ? 'ai=' : 'ai='+urlencode(window.actualUserInput ? window.actualUserInput : $("#awesomeinput").val());
-	var os = $("#opensearchinput").hasClass("description") ? '&os=' : '&os='+urlencode($("#opensearchinput").val());
+	var ai = 'ai='+urlencode(window.actualUserInput ? window.actualUserInput : $("#awesomeinput").val());
+	var os = '&os='+urlencode($("#opensearchinput").val());
 	var sel = '&sel=';
 	var ke = '&ke=';
 	var options = "";

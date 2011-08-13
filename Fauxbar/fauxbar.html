@@ -1,15 +1,24 @@
 <html> <!-- Main Fauxbar page -->
 <head>
+	<script type="text/javascript">
+		chrome.tabs.getCurrent(function(tab){
+			chrome.tabs.update(tab.id, {selected:true});
+		});
+		window.bgPage = chrome.extension.getBackgroundPage();
+		var speech = localStorage.option_speech == 1 ? "x-webkit-speech" : "";
+	</script>
 	<title>Fauxbar</title>
 	<link href="fauxbar.css" media="screen" rel="stylesheet" type="text/css" />
 	<style type="text/css" id="customstyle"></style>
 	<style type="text/css" id="editTileStyle"></style>
+
 	<script type="text/javascript" src="jquery-1.6.2.min.js"></script>
 	<script type="text/javascript" src="common.js"></script>
 	<script type="text/javascript" src="logerror.js"></script>
 	<script type="text/javascript" src="md5-min.js"></script>
-	<script type="text/javascript" src="jquery.rangyinputs.js"></script>
 	<script type="text/javascript" src="fauxbar.js"></script>
+	<script type="text/javascript" src="fauxbar-2.js"></script>
+	<script type="text/javascript" src="jquery.rangyinputs.js"></script>
 	<!--
 		These scripts get loaded later:
 		 - mezzoblue-PaintbrushJS-098389a/common.js
@@ -17,33 +26,16 @@
 	-->
 </head>
 <body>
-	<!-- Hidden icon images that will get colored/tinted once the page loads -->
-	<img src="fauxstar.png" id="fauxstar" class="filter-tint" style="position:Relative; display:none; height:16px; width:16px;" />
-	<img src="goarrow.png" id="goarrow_hovered" class="filter-tint" data-pb-tint-opacity=".3" data-pb-tint-colour="#000" style="display:none; height:14px; width:14px" />
-	<img src="search.png" id="searchicon_hovered" class="filter-tint" data-pb-tint-opacity=".3" data-pb-tint-colour="#000" style="display:none; height:16px; width:16px;" />
+
 
 	<!-- Background container -->
 	<div id="background"></div>
-
-	<!-- First-run options "info bar" -->
-	<div id="optionsintro">
-		Welcome to Fauxbar. To open the options, click the
-		<img src="fauxbar16options.png" style="height:19px;width:19px; vertical-align:middle; position:relative; top:-2px; padding:0 2px 0 2px;" />
-		icon in the Omnibox above.
-	</div>
-	<script type="text/javascript">
-	<!--
-		if (localStorage.showintro != 0 && localStorage.indexedbefore == 1) {
-			$("#optionsintro").css("display","block");
-		}
-	-->
-	</script>
 
 	<!-- Container for the Fauxbar, Options, results and queries/suggestions -->
 	<div id="maindiv" style="padding:25px">
 
 		<!-- The gradient-filled, rounded-corner padding for the input boxes -->
-		<div class="wrapper" style="opacity:0;">
+		<div class="wrapper">
 
 			<!-- The input boxes -->
 			<div id="thefauxbar">
@@ -54,22 +46,39 @@
 							<div id="addresswrapper" class="inputwrapper">
 								<table cellpadding="0" cellspacing="0">
 									<tr>
-										<td style="width:1px; padding:0 4px 0 2px">
-											<img id="addressbaricon" src="chrome://favicon/null" style="opacity:.75; height:16px; width:16px" />
+										<td style="width:1px; padding:2px">
+											<div id="awesomeInsetButton" class="noInsetButton">
+												<table style="width:1px; border-collapse:collapse; margin:0;" cellpadding="0" cellspacing="0" title="Search..." origtitle="Search...">
+													<tr>
+														<td class="superselect" style="width:1px; padding:1px 1px 0 2px;">
+															<img id="addressbaricon" src="chrome://favicon/null" style="opacity:.75; height:16px; width:16px" />
+														</td>
+														<td class="switchtext superselect">
+															Switch to tab:
+														</td>
+														<td class="superselect" id="super_triangle" style="width:1px; padding-right:0px;">
+															<span class="triangle static" style="margin-top:2px">&#9660;</span>
+														</td>
+													</tr>
+												</table>
+											</div>
 										</td>
-										<td class="switchtext">
-											Switch to tab:
+										<td class="inputwrapper2" id="awesomeinputwrapper2">
+											<table style="width:100%; border-collapse:collapse; padding:0; margin:0;" cellpadding="0" cellspacing="0">
+												<tr>
+													<td id="awesomeinput_cell"></td>
+													<td style="width:1px; padding:1px 7px 0 9px;" id="address_goarrow" title="Go to the entered address">
+														<img src="goarrow.png" class="filter-tint" data-pb-tint-opacity="0" data-pb-tint-colour="#ff0000" />
+													</td>
+													<td id="addressbox_triangle" style="width:1px; padding-right:3px" title="Display your most frequented webpages" origtitle="Display your most frequented webpages">
+														<span class="triangle static" style="margin-top:1px">&#9660;</span>
+													</td>
+												</tr>
+											</table>
 										</td>
-										<td id="awesomeinput_cell"></td>
-										<td style="width:1px; padding:1px 9px 0 9px;" id="address_goarrow" title="Go to the entered address">
-											<img src="goarrow.png" class="filter-tint" data-pb-tint-opacity="0" data-pb-tint-colour="#ff0000" />
-										</td>
-										<td id="addressbox_triangle" style="width:1px; padding-right:3px" title="Display your most frequented webpages" origtitle="Display your most frequented webpages">
-											<span class="triangle static" style="margin-top:2px">&#9660;</span>
-										</td>
+
 									</tr>
 								</table>
-								<div id="results"></div>
 							</div>
 						</td>
 
@@ -81,274 +90,53 @@
 							<div id="searchwrapper" class="inputwrapper">
 								<table cellpadding="0" cellspacing="0">
 									<tr>
-										<td style="width:1px; padding-top:1px; padding-right:0" id="opensearch_triangle">
-											<span title="Search using..." style="white-space:nowrap">
-												<script type="text/javascript">
-													if (localStorage.osiconsrc) {
-														$("#opensearch_triangle span").html('<img class="opensearch_selectedicon" src="'+localStorage.osiconsrc+'" style="position:relative;top:2px" /><span class="triangle" style="margin:0 0 1px 1px; position:relative; top:0px">&#9660;</span>');
-													} else {
-														$("#opensearch_triangle span").html('<img class="opensearch_selectedicon" src="chrome://favicon/null" style="position:relative;top:2px" /><span class="triangle" style="margin:0 0 1px 1px; position:relative; top:0px">&#9660;</span>');
-													}
-												</script>
-											</span>
-											<div id="opensearchmenu"></div>
-											<input id="opensearch_menufocus" type="text" />
+										<td style="width:1px; padding:2px 0px 2px 3px">
+											<table style="width:1px; border-collapse:collapse; margin:0;" cellpadding="0" cellspacing="0">
+												<tr>
+													<td style="width:1px; padding-top:1px; padding-right:0; padding-left:3px" id="opensearch_triangle">
+														<span title="Search using..." style="white-space:nowrap;"><script type="text/javascript">
+															if (localStorage.osiconsrc) {
+																$("#opensearch_triangle span").html('<img class="opensearch_selectedicon" src="'+localStorage.osiconsrc+'" style="position:relative;top:2px" /><span class="triangle" style="margin:0 0 1px 1px; position:relative; top:0px; left:-1px">&#9660;</span>');
+															} else {
+																$("#opensearch_triangle span").html('<img class="opensearch_selectedicon" src="chrome://favicon/null" style="position:relative;top:2px" /><span class="triangle" style="margin:0 0 1px 1px; position:relative; top:0px; left:-1px">&#9660;</span>');
+															}
+														</script></span>
+													</td>
+												</tr>
+											</table>
 										</td>
-										<td id="opensearchinput_cell">
-											<!-- OpenSearch JSON-parsed suggestion elements will get jQueried into here -->
+										<td class="inputwrapper2" id="opensearchwrapper2">
+											<table style="width:100%; border-collapse:collapse; padding:0; margin:0;" cellpadding="0" cellspacing="0">
+												<tr>
+													<td id="opensearchinput_cell"></td>
+													<td style="width:1px; padding-left:5px; padding-right:2px;" id="searchicon_cell" title="Search">
+														<img src="search.png" class="filter-tint" id="searchicon" />
+													</td>
+												</tr>
+											</table>
 										</td>
+
 										<script type="text/javascript">
-											var speech = localStorage.option_speech == 1 ? "x-webkit-speech" : "";
-											$("#awesomeinput_cell").html('<input type="text" id="awesomeinput" spellcheck="false" autocomplete="off" '+speech+' onwebkitspeechchange="$(this).focus().removeClass(\'description\'); getResults()" />');
-											$("#opensearchinput_cell").html('<input type="text" id="opensearchinput" class="description" spellcheck="false" autocomplete="off" value="'+localStorage.osshortname+'" '+speech+' onwebkitspeechchange="$(this).focus().removeClass(\'description\'); setTimeout(getSearchSuggestions,100)" />')
+											$("#awesomeinput_cell").html('<input type="text" id="awesomeinput" '+(localStorage.option_openfauxbarfocus == "addressbox" ? "autofocus" : "")+' spellcheck="false" placeholder="Go to a web site" autocomplete="off" '+speech+' onwebkitspeechchange="$(this).focus(); getResults()" />');
+											$("#opensearchinput_cell").html('<input type="text" id="opensearchinput" '+(localStorage.option_openfauxbarfocus == "searchbox" ? "autofocus" : "")+' spellcheck="false" autocomplete="off" placeholder="'+str_replace('"', '&quot;', localStorage.osshortname)+'" '+speech+' onwebkitspeechchange="$(this).focus(); setTimeout(getSearchSuggestions,100)" />')
 										</script>
-										<td style="width:1px; padding-left:5px; padding-right:2px;" id="searchicon_cell" title="Search">
-											<img src="search.png" class="filter-tint" id="searchicon" />
-										</td>
+
 									</tr>
 								</table>
 							</div>
 						</td>
 					</tr>
 				</table>
-				<div id="opensearch_results"></div>
+
 
 			</div>
 		</div>
 
 		<!-- Top site thumb tiles -->
 		<div id="topthumbs"></div>
-		<script type="text/javascript">
-			function renderSiteTiles(thumbs) {
-
-				// Hide the site tiles if we're showing Chrome's installed apps instead
-				if (localStorage.sapps == 2) {
-					$("#topthumbs").css("opacity",0);
-				}
-
-				// Set max width for the thumbs container
-				$("#topthumbs").css("max-width",(localStorage.option_topsitecols*242)+"px").append(thumbs);
-
-				// If page title is too long for the tile, truncate it
-				var origTitle = '';
-				$("#topthumbs a .toptitle").each(function(){
-					truncatePageTileTitle(this);
-				});
-
-				// Display tiles or not
-				if (localStorage.sapps == 2 && localStorage.option_showapps == 1) {
-					$("#topthumbs").css("display","none").css("opacity",1);
-				} else {
-					$("#topthumbs").css("opacity",1);
-				}
-			}
-
-			window.bgPage = chrome.extension.getBackgroundPage();
-
-			// If user's opted to show top site tiles...
-			if (localStorage.option_showtopsites == 1) {
-
-				// Generate top sites if Fauxbar's index is fresh. Either way, show the tiles afterwards
-				//$(document).ready(function(){
-					$("#customstyle").append("#topthumbs a, #apps a { background-color:"+localStorage.option_resultbgcolor+"; color:"+localStorage.option_titlecolor+"; }");
-					$("#customstyle").append("#topthumbs a:hover, #apps a:hover { background-color:"+localStorage.option_selectedresultbgcolor+"; color:"+localStorage.option_selectedtitlecolor+"; }");
-					//setTimeout(function(){
-						chrome.tabs.getAllInWindow(null, function(tabs) {
-							window.currentTabs = tabs;
-							if (openDb()) {
-								window.db.transaction(function(tx){
-
-									// Get top sites
-									var urlMd5 = '';
-									var thumbs = '';
-
-									// Choose which page tiles to display
-									switch(localStorage.option_pagetilearrangement) {
-										case "manual":
-											if (localStorage.siteTiles) {
-												window.tiles = jQuery.parseJSON(localStorage.siteTiles);
-												for (var t in window.tiles) {
-													thumbs += renderPageTile(window.tiles[t].url, window.tiles[t].title);
-												}
-											}
-											renderSiteTiles(thumbs);
-											if (getHashVar("edittiles") == 1) {
-												setTimeout(enterTileEditMode, 10);
-											}
-											break;
-
-										// case: "frecency"
-										default:
-
-											function processTiles(tx) {
-
-												// Don't fetch file:/// URLs?
-												var hideFiles = localStorage.option_hidefiletiles == 1 ? ' url NOT LIKE "file:///%" AND ' : '';
-
-												// Don't fetch pinned URLs?
-												var hidePinned = '';
-												if (localStorage.option_hidepinnedtiles == 1) {
-													for (var t in window.currentTabs) {
-														if (window.currentTabs[t].pinned == true) {
-															hidePinned += ' url NOT LIKE "'+explode("#",window.currentTabs[t].url)[0]+'%" AND ';
-														}
-													}
-												}
-
-												// Don't fetch opened URLs?
-												var hideOpened = '';
-												if (localStorage.option_hideopentiles == 1) {
-													for (var ot in window.currentTabs) {
-														hideOpened += ' url NOT LIKE "'+explode("#",window.currentTabs[ot].url)[0]+'%" AND ';
-													}
-												}
-
-												// Get top sites
-												var statement = 'select url, title from thumbs WHERE '+hideFiles+hidePinned+hideOpened+' frecency > 0 order by frecency DESC limit ?';
-												tx.executeSql(statement, [localStorage.option_topsiterows*localStorage.option_topsitecols], function(tx, results){
-													var len = results.rows.length, i;
-													var newHref = '';
-													var thumbUrl = '';
-
-													// Create HTML for each site tile
-													for (var i = 0; i < len; i++) {
-														thumbUrl = results.rows.item(i).url;
-														thumbs += renderPageTile(thumbUrl, results.rows.item(i).title);
-													}
-													renderSiteTiles(thumbs);
-												});
-											}
-
-											if (!localStorage.almostdone || localStorage.almostdone == 1) {
-												tx.executeSql('UPDATE thumbs SET frecency = 0');
-												tx.executeSql('SELECT DISTINCT url, title, frecency FROM urls WHERE url NOT LIKE "data:%" AND title != "" ORDER BY frecency DESC LIMIT 30', [], function(tx, results){
-													var len = results.rows.length, i;
-													if (len > 0) {
-														for (var i = 0; i < len; i++) {
-															tx.executeSql('INSERT OR REPLACE INTO thumbs (url, title, frecency) VALUES (?, ?, ?)', [results.rows.item(i).url, results.rows.item(i).title, results.rows.item(i).frecency]);
-														}
-													}
-													localStorage.almostdone = 0;
-													processTiles(tx);
-												});
-											} else {
-												processTiles(tx);
-											}
-											break;
-									}
-								}, function(t){
-									errorHandler(t, getLineInfo());
-								});
-							}
-						});
-					//}, 1);
-				//});
-			}
-		</script>
 
 		<!-- Tiles for user's Chrome apps -->
-		<div id="apps">
-			<script type="text/javascript">
-
-				// If enabled to show...
-				if (localStorage.option_showapps == 1) {
-					//setTimeout(function(){
-						//$(document).ready(function(){
-
-							// Get all apps and set their uninstall link
-							window.uninstall = function(appId) {
-								chrome.management.getAll(function(apps){
-									for (var a in apps) {
-										if (apps[a].id == appId) {
-											confirm("Uninstall \""+apps[a].name+"\" from Chrome?") ? chrome.management.uninstall(apps[a].id)+$(".app"+apps[a].id).remove() : null;
-											return;
-										}
-									}
-								});
-							}
-							// When tile is moused over, show the uninstall icon after a moment; hide it when moused out
-							$(".app").live("mouseenter", function(){
-								$(".unin",this).animate({position:"relative"}, 700, function(){
-									$(this).css("display","inline-block");
-								});
-							});
-							$(".app").live("mouseleave", function(){
-								$(".unin",this).stop(true).css("display","none");
-							});
-
-							// Get all apps
-							chrome.management.getAll(function(apps){
-								var apps2 = {};
-								for (var a2 in apps) {
-									if (apps[a2].isApp) {
-										apps2[apps[a2].name] = apps[a2];
-									}
-								}
-								// Sort them alphabetically
-								apps2 = sortKeys(apps2).sort(function(x,y){
-									// Case insensitive sort: http://www.java2s.com/Code/JavaScript/Language-Basics/CaseInsensitiveComparisonfortheArraySortMethod.htm
-									var a = String(x).toUpperCase();
-									var b = String(y).toUpperCase();
-									if (a > b)
-										return 1
-									if (a < b)
-										return -1
-									return 0;
-							    });
-
-								for (var a3 in apps) {
-									for (a4 in apps2) {
-										if (apps[a3].isApp && apps[a3].name == apps2[a4]) {
-											apps2[a4] = apps[a3];
-										}
-									}
-								}
-
-								// Create their HTML
-								apps = apps2;
-								var appHtml = '';
-								var spanOpen = false;
-								for (var a in apps) {
-									if (apps[a].isApp == true) {
-										appHtml += '<a class="app app'+apps[a].id+'" href="'+apps[a].appLaunchUrl+'">';
-										appHtml += '<img class="unin" src="cross.png" onmousedown="uninstall(\''+apps[a].id+'\')" title="Uninstall '+apps[a].name+'..." />';
-										appHtml += '<img src="'+apps[a].icons[apps[a].icons.length-1].url+'" style="height:128px;width:128px;" /><br />';
-										appHtml += '<span title="'+apps[a].description+'" style="display:inline-block">'+apps[a].name+'</span>';
-										appHtml += '</a>';
-									}
-								}
-
-								// Get ready to display them
-								appHtml += '<a href="https://chrome.google.com/webstore"><img src="webstore.png" style="height:128px;width:128px;" /><br />Web Store</a>';
-								$("#apps").css("max-width",localStorage.option_maxwidth+"px").append(appHtml);
-								$("#apps").css("position","relative").css("opacity",0).css("display","block");
-
-								// Truncate names if they're too long
-								var origTitle = '';
-								$("#apps a span").each(function(){
-									if ($(this).outerWidth() > 128) {
-										origTitle = $(this).text();
-										while ($(this).outerWidth() > 120) {
-											$(this).text($(this).text().substring(0,$(this).text().length-1));
-										}
-										$(this).text($(this).text()+"...");
-										$(this).attr("title",origTitle+" - "+$(this).attr("title"));
-									}
-								});
-
-								// Display app tiles if required
-								if (localStorage.sapps == 1 && localStorage.option_showtopsites == 1) {
-									$("#apps").css("display","none").css("opacity",1);
-								} else {
-									$("#apps").css("opacity",1);
-								}
-							});
-						//});
-					//}, localStorage.sapps == 2 ? 1 : 500);
-				}
-			</script>
-
-		</div>
+		<div id="apps"></div>
 	</div>
 
 	<!-- The "sapps" (sites&apps) button switcher -->
@@ -356,47 +144,6 @@
 		<button id="sapps1" onclick="window.sapps(1)">Sites</button>
 		<button id="sapps2" onclick="window.sapps(2)">Apps</button>
 	</div>
-
-	<!-- Decide if the sapps switcher should be shown, and which of its buttons should be enabled or disabled -->
-	<script type="text/javascript">
-		if (localStorage.option_showapps == 1 && localStorage.option_showtopsites == 1 && localStorage.indexComplete == 1) {
-			window.sapped = false;
-			//$(document).ready(function(){
-				window.sapps = function (s) {
-					var trans = window.sapped ? 130 : 0;
-					if (s == 1) {
-						if (window.sapped == true) {
-							$("#apps").animate({opacity:0}, trans, function(){
-								$(this).css("display","none");
-								$("#topthumbs").css("opacity",0).css("display","block").animate({opacity:1}, trans);;
-							});
-						}
-						localStorage.sapps = 1;
-						$("#sapps1").prop("disabled",true);
-						$("#sapps2").prop("disabled",false);
-					} else {
-						if (window.sapped == true) {
-							$("#topthumbs").animate({opacity:0}, trans, function(){
-								$(this).css("display","none");
-								$("#apps").css("opacity",0).css("display","block").animate({opacity:1}, trans);;
-							});
-						}
-						localStorage.sapps = 2;
-						$("#sapps1").prop("disabled",false);
-						$("#sapps2").prop("disabled",true);
-					}
-					window.sapped = true;
-				}
-				setTimeout(function(){
-					$("#sapps").css("opacity",0).css("margin-left","-"+(Math.ceil($("#sapps").outerWidth()/2))+"px");
-					$("#sapps").css("opacity",1);
-				},50);
-				sapps(localStorage.sapps);
-			//});
-		} else {
-			$("#sapps").remove();
-		}
-	</script>
 
 	<!-- Error message balloon -->
 	<div id="errorBox" style="display:none">
@@ -410,10 +157,8 @@
 					<div style="margin-bottom:5px; font-size:110%;">
 						<b>Fauxbar has encountered an error</b>
 					</div>
-					<div style="max-width:320px" id="errorMessage">
-						SQL error: "the statement callback raised an exception or statement error callback did not return false"
-					</div>
-					<div style="opacity:.43"  id="errorLine">fauxbar.html, line 409</div>
+					<div style="max-width:320px" id="errorMessage"></div>
+					<div style="opacity:.43"  id="errorLine"></div>
 					<div style="margin-top:7px; font-size:95%; font-weight:bold">
 						<a href="fauxbar.errorlog.html" onclick="$('#errorBox').css('display','none'); return true;" target="_blank" style="color:#06c;">Open the error log</a>
 					</div>
@@ -421,5 +166,16 @@
 			</tr>
 		</table>
 	</div>
+
+	<!-- Hidden icon images that will get colored/tinted once the page loads -->
+	<img src="fauxstar.png" id="fauxstar" class="filter-tint" style="position:Relative; display:none; height:16px; width:16px;" />
+	<img src="goarrow.png" id="goarrow_hovered" class="filter-tint" data-pb-tint-opacity=".3" data-pb-tint-colour="#000" style="display:none; height:14px; width:14px" />
+	<img src="search.png" id="searchicon_hovered" class="filter-tint" data-pb-tint-opacity=".3" data-pb-tint-colour="#000" style="display:none; height:16px; width:16px;" />
+
+	<!-- Containers that get filled and positioned upon user input -->
+	<div id="opensearchmenu"></div>
+	<input id="opensearch_menufocus" type="text" />
+	<div id="opensearch_results"></div>
+	<div id="results"></div>
 </body>
 </html>

@@ -67,6 +67,45 @@ function loadDatabaseStats() {
 					$("#queriesplural").html('queries');
 				}
 			});
+
+			tx.executeSql('SELECT count(distinct url) as tags FROM tags', [], function(tx, results){
+				$("#stats_tags").html(number_format(results.rows.item(0).tags));
+				if (results.rows.item(0).tags == 1) {
+					$("#tagsplural").html('keyword');
+				} else {
+					$("#tagsplural").html('keywords');
+				}
+			});
+
+			tx.executeSql('SELECT count(distinct url) as thumbs FROM thumbs', [], function(tx, results){
+				$("#stats_thumbs").html(number_format(results.rows.item(0).thumbs));
+				if (results.rows.item(0).thumbs == 1) {
+					$("#thumbsplural").html('thumbnail');
+				} else {
+					$("#thumbsplural").html('thumbnails');
+				}
+			});
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
+	}
+}
+
+function reapplyKeywords() {
+	if (openDb()) {
+		window.db.transaction(function(tx){
+			tx.executeSql('SELECT * FROM tags', [], function(tx, results) {
+				var len = results.rows.length, i;
+				if (len > 0) {
+					for (var i = 0; i < len; i++) {
+						tx.executeSql('UPDATE urls SET tag = ? WHERE url = ?', [results.rows.item(i).tag, results.rows.item(i).url], [], function(tx, results2){
+							if (results2.rowsAffected == 0) {
+								tx.executeSql('DELETE FROM tags WHERE tag = ? AND url = ?', [results.rows.item(i).tag, results.rows.item(i).url]);
+							}
+						});
+					}
+				}
+			});
 		}, function(t){
 			errorHandler(t, getLineInfo());
 		});
@@ -212,17 +251,15 @@ function selectOpenSearchType(el, focusToo) {
 	$("img.opensearch_selectedicon").attr("src", $("img", el).attr("src"));
 	var shortNameHtml = $(".shortname", el).html();
 	var osi = $("#opensearchinput");
-	if (osi.hasClass("description") == true && $(".shortname", el).length) {
-		osi.val(html_entity_decode(shortNameHtml));
+	if ($(".shortname", el).length) {
+		osi.attr("placeholder",str_replace('"','&quot;',shortNameHtml));
 	}
 	window.openSearchShortname = shortNameHtml;
-	var newTitle = "Search using "+shortNameHtml;
+	var newTitle = "Search using "+str_replace('"','&quot',shortNameHtml);
 	osi.attr("title",newTitle).attr("realtitle",newTitle);
 	if (focusToo == true) {
 		osi.focus();
-		if (osi.val() !== window.openSearchShortname) {
-			osi.select();
-		}
+		osi.select();
 		if (openDb()) {
 			window.db.transaction(function (tx) {
 				tx.executeSql('UPDATE opensearches SET isdefault = 0');
@@ -235,7 +272,7 @@ function selectOpenSearchType(el, focusToo) {
 		}
 	}
 	$('#opensearchmenu .menuitem').removeClass("bold");
-	$('#opensearchmenu .menuitem[shortname="'+window.openSearchShortname+'"]').addClass("bold");
+	$('#opensearchmenu .menuitem[shortname="'+str_replace('"','&quot;',window.openSearchShortname)+'"]').addClass("bold");
 }
 
 // Fill the search engine menu with the engines that have been added to Fauxbar
@@ -249,6 +286,8 @@ function populateOpenSearchMenu(force) {
 				var defaultShortname = '';
 				var iconUrl = "";
 				var result = "";
+				var keyword = '';
+				var fakecount = 1;
 
 				for (var i = 0; i < len; i++) {
 					result = results.rows.item(i);
@@ -260,11 +299,13 @@ function populateOpenSearchMenu(force) {
 					if (iconUrl != "google.ico" && iconUrl != "yahoo.ico" && iconUrl != "bing.ico") {
 						iconUrl = "chrome://favicon/"+iconUrl;
 					}
-					menuItems += '<div class="menuitem" shortname="'+result.shortname+'" searchurl="'+result.searchurl+'" method="'+result.method+'" suggesturl="'+result.suggestUrl+'" keyword="'+result.keyword+'">';
+
+					keyword = result.keyword.length ? result.keyword : "fakekeyword_"+date("U")+"_"+fakecount++;
+					menuItems += '<div class="menuitem" shortname="'+str_replace('"',"&quot;",result.shortname)+'" iconsrc="'+iconUrl+'" searchurl="'+result.searchurl+'" method="'+result.method+'" suggesturl="'+result.suggestUrl+'" keyword="'+keyword+'">';
 					menuItems += '<div class="vertline2">';
 					menuItems += '<img src="'+iconUrl+'" style="height:16px;width:16px" /> ';
 					menuItems += '<div class="vertline shortname">' + result.shortname;
-					menuItems += '</div></div></div>';
+					menuItems += '</div></div></div>\n\n';
 				}
 
 				menuItems += '<div class="menuitemline" style="border:0">';
@@ -275,7 +316,7 @@ function populateOpenSearchMenu(force) {
 
 				menuItems += '<div class="osMenuLine" style="border-bottom:1px solid #fff; border-top:1px solid #e2e3e3; display:block; height:0px; line-height:0px; font-size:0px; width:100%; margin-left:27px; margin-top:-3px; position:absolute; "></div>';
 
-				menuItems += '<div class="menuitem"><div class="vertline2">';
+				menuItems += '<div class="menuitem edit"><div class="vertline2">';
 				menuItems += '	<img src="fauxbar16.png" style="height:16px; width:16px" /> ';
 				menuItems += '	<div class="vertline">Edit search engines...</div>';
 				menuItems += '</div></div>';
@@ -283,7 +324,7 @@ function populateOpenSearchMenu(force) {
 				osm.html(menuItems);
 				$(".osMenuLine").css("width", osm.outerWidth()-34+"px");
 				if (i > 0) {
-					selectOpenSearchType($('.menuitem[shortname="'+defaultShortname+'"]'), false);
+					selectOpenSearchType($('.menuitem[shortname="'+str_replace('"',"&quot;",defaultShortname)+'"]'), false);
 				}
 			});
 		}, function(t){
@@ -313,15 +354,21 @@ function clearIndex(reindexing) {
 
 			// Address Box history items and bookmarks
 			tx.executeSql('DROP TABLE IF EXISTS urls');
-			tx.executeSql('CREATE TABLE urls (url TEXT, type NUMERIC, title TEXT, frecency NUMERIC DEFAULT -1, queuedfordeletion NUMERIC DEFAULT 0, id NUMERIC DEFAULT 0)'); // type1 = history item, type2 = bookmark
+			tx.executeSql('CREATE TABLE urls (url TEXT, type NUMERIC, title TEXT, frecency NUMERIC DEFAULT -1, queuedfordeletion NUMERIC DEFAULT 0, id NUMERIC DEFAULT 0, tag TEXT DEFAULT "")'); // type1 = history item, type2 = bookmark
 			tx.executeSql('CREATE INDEX IF NOT EXISTS urlindex ON urls (url)');
 			tx.executeSql('CREATE INDEX IF NOT EXISTS titleindex ON urls (title)');
 			tx.executeSql('CREATE INDEX IF NOT EXISTS frecencyindex ON urls (frecency)');
 			tx.executeSql('CREATE INDEX IF NOT EXISTS idindex ON urls (id)');
 			tx.executeSql('CREATE INDEX IF NOT EXISTS typeindex ON urls (type)');
+			tx.executeSql('CREATE INDEX IF NOT EXISTS tagindex ON urls (tag)');
 
 			// Error log table
 			tx.executeSql('CREATE TABLE IF NOT EXISTS errors (id INTEGER PRIMARY KEY, date NUMERIC, version TEXT, url TEXT, file TEXT, line NUMERIC, message TEXT, count NUMERIC)');
+
+			// URL tag table
+			tx.executeSql('CREATE TABLE IF NOT EXISTS tags (url TEXT DEFAULT "", tag TEXT DEFAULT "")');
+			tx.executeSql('CREATE INDEX IF NOT EXISTS tagurlindex ON tags (url)');
+			tx.executeSql('CREATE INDEX IF NOT EXISTS tagtagindex ON tags (tag)');
 
 			// If we're setting up the database for the first time, and not just reindexing...
 			if (!localStorage.indexedbefore || localStorage.indexedbefore != 1) {
@@ -370,8 +417,9 @@ function isIndexingFinished() {
 		chrome.extension.sendRequest({message:"currentStatus",status:"Indexing complete.", step:8}); // Step 8
 		localStorage.almostdone = 1;
 		setTimeout(function(){
-			updateTopSites();
 			alert("Success!\n\nFauxbar has finished indexing your history items and bookmarks, and is now ready for use.\n\nFrom here on, Fauxbar's index will be silently updated on-the-fly for you.");
+			updateTopSites();
+			reapplyKeywords();
 			chrome.extension.sendRequest("DONE INDEXING");
 		},1200);
 		return true;

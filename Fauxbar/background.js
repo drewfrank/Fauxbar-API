@@ -51,7 +51,6 @@ chrome.management.getAll(function(extensions){
 	}
 });
 
-
 // If Helper detects computer is idle, Fauxbar will report back to restart Fauxbar IF no Fauxbar tabs are open.
 chrome.extension.onRequestExternal.addListener(function(request){
 	if (request == "restart fauxbar?" && localStorage.indexComplete == 1) {
@@ -82,8 +81,8 @@ $(document).ready(function(){
 	loadThumbsIntoMemory();
 
 	// New version info
-	var currentVersion = "0.4.1";
-	localStorage.updateBlurb = ". &nbsp;Search engines can now be used via keywords, and the startup crashes should hopefully be fixed.";
+	var currentVersion = "0.5.0";
+	localStorage.updateBlurb = ". &nbsp;What's new? Custom right-click context menus, URL keywords, and clickable search engine access from the Address Box.";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
 		localStorage.readUpdateMessage = 0;
 	}
@@ -157,6 +156,24 @@ $(document).ready(function(){
 	}
 
 	if (openDb()) {
+
+		// Vacuum the DB upon start, to help keep it speedy. Added in 0.5.0
+		window.db.transaction(function(tx){
+			tx.executeSql('VACUUM');
+		});
+
+		// Add `tag` table, added in 0.5.0
+		window.db.transaction(function(tx){
+			tx.executeSql('CREATE TABLE IF NOT EXISTS tags (url TEXT DEFAULT "", tag TEXT DEFAULT "")');
+			tx.executeSql('CREATE INDEX IF NOT EXISTS tagurlindex ON tags (url)');
+			tx.executeSql('CREATE INDEX IF NOT EXISTS tagtagindex ON tags (tag)');
+		});
+
+		// Add `tag` column to `urls`, added in 0.5.0
+		window.db.transaction(function(tx){
+			tx.executeSql('ALTER TABLE urls ADD COLUMN tag TEXT DEFAULT ""');
+			tx.executeSql('CREATE INDEX IF NOT EXISTS tagindex ON urls (tag)');
+		});
 
 		// Add `keyword` columns to `opensearches`, and apply keywords to the big three. Added in 0.4.0
 		window.db.transaction(function(tx){
@@ -306,8 +323,10 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 			if (text.length > 0) { // equivalent to "!noQuery" (see getResults() in fauxbar.js)
 				var words = explode(" ", text);
 				var urltitleWords = new Array();
-				var urltitleQMarks = new Array();
+				var urltitleQMarks1 = new Array();
+				var urltitleQMarks2 = new Array();
 				var modifiers = '';
+				urltitleWords[urltitleWords.length] = text+"%";
 				for (var w in words) {
 					if (words[w] != "") {
 						// If word is "is:fav", add it as a modifier to the SQL query statement
@@ -315,8 +334,8 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 							modifiers += ' AND type = 2 ';
 						}
 						else {
-							urltitleWords[urltitleWords.length] = '%'+words[w]+'%';
-							urltitleQMarks[urltitleQMarks.length] = ' urltitle like ? ';
+							urltitleWords[urltitleWords.length] = '%'+str_replace("_","¸_",str_replace("%","¸%",words[w]))+'%';
+							urltitleQMarks2[urltitleQMarks2.length] = ' urltitletag LIKE ? ESCAPE "¸" ';
 						}
 					}
 				}
@@ -341,7 +360,7 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 				}
 
 				// Ignore titleless results if user has opted. But still keep proper files like .pdf, .json, .js, .php, .html, etc. And also allow untitled URLs ending with "/"
-				var titleless = localStorage.option_ignoretitleless == 1 ? ' AND (title != "" OR url LIKE "%.__" OR url LIKE "%.___" OR url LIKE "%.____" OR url LIKE "%/") ' : "";
+				var titleless = localStorage.option_ignoretitleless == 1 ? ' AND (title != "" OR urls.url LIKE "%.__" OR urls.url LIKE "%.___" OR urls.url LIKE "%.____" OR urls.url LIKE "%/") ' : "";
 
 				// If there's no input...
 				if (text.length == 0) {
@@ -349,7 +368,13 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 				}
 				// Else, If we have words...
 				else if (urltitleWords.length > 0) {
-					var selectStatement = 'SELECT url, title, type, (url||" "||title) AS urltitle FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' AND '+implode(" and ", urltitleQMarks) + titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
+					var selectStatement = ''
+						+ ' SELECT urls.url, title, type, urls.tag, (urls.url||" "||title||" "||urls.tag) AS urltitletag, tags.url*0 as tagscore'
+						+ ' FROM urls '
+						+ ' LEFT JOIN tags '
+						+ ' ON urls.url = tags.url AND tags.tag LIKE ? ' 																  //OR tags.tag LIKE ?
+						+ ' WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' '+(urltitleQMarks2.length ? ' AND '+implode(" AND ", urltitleQMarks2) : ' ')+' ' + titleless
+						+ ' ORDER BY tagscore DESC, frecency DESC, type DESC LIMIT '+resultLimit;
 				}
 				// Else, this probably doesn't ever get used.
 				else {
@@ -371,6 +396,7 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 						newItem = {};
 						newItem.url = results.rows.item(i).url;
 						newItem.title = results.rows.item(i).title;
+						newItem.tag = results.rows.item(i).tag;
 						if (results.rows.item(i).type == 2) {
 							newItem.isBookmark = true;
 						}
@@ -386,6 +412,7 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 					var resultIsOkay = true;
 					var titleText = "";
 					var urlText = "";
+					var tagText = "";
 					var regEx = "";
 					var divvy = "";
 					var resultString = "";
@@ -471,9 +498,12 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 									urlText = urlText.substring(0,localStorage.option_omniboxurltruncate);
 								}
 
+								tagText = hI.tag;
+
 								// Replace special characters with funky ¸%%%%%%¸ symbols
 								titleText = replaceSpecialChars(titleText);
 								urlText = replaceSpecialChars(urlText);
+								tagText = replaceSpecialChars(tagText);
 
 								// Wrap each word with more funky symbols
 								for (var i in words) {
@@ -481,28 +511,35 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 										regEx = new RegExp(words[i], 'gi');
 										titleText = titleText.replace(regEx, '¸%%%%%¸$&¸%%%%¸');
 										urlText = urlText.replace(regEx, '¸%%%%%¸$&¸%%%%¸');
+										tagText = tagText.replace(regEx, '¸%%%%%¸$&¸%%%%¸');
 									}
 								}
 
 								// Replace the previous symbols with their original characters; this was to let all characters work with RegExp
 								titleText = replacePercents(titleText);
 								urlText = replacePercents(urlText);
+								tagText = replacePercents(tagText);
 
 								// Replace <match> and </match> with symbols
 								titleText = str_replace("¸%%%%%¸", matchOpen, titleText);
 								titleText = str_replace("¸%%%%¸", matchClose, titleText);
 								urlText = str_replace("¸%%%%%¸", matchOpen, urlText);
 								urlText = str_replace("¸%%%%¸", matchClose, urlText);
+								tagText = str_replace("¸%%%%%¸", matchOpen, tagText);
+								tagText = str_replace("¸%%%%¸", matchClose, tagText);
 
 								// Replace &
 								titleText = str_replace('&', '&amp;', titleText);
 								urlText = str_replace('&', '&amp;', urlText);
+								tagText = str_replace('&', '&amp;', tagText);
 
 								// Replace symbols back to <match> and </match>
 								titleText = str_replace(matchOpen, "¸%%%%%¸", titleText);
 								titleText = str_replace(matchClose, "¸%%%%¸", titleText);
 								urlText = str_replace(matchOpen, "¸%%%%%¸", urlText);
 								urlText = str_replace(matchClose, "¸%%%%¸", urlText);
+								tagText = str_replace(matchOpen, "¸%%%%%¸", tagText);
+								tagText = str_replace(matchClose, "¸%%%%¸", tagText);
 
 								// Replace opening and closing tags
 								titleText = str_replace(">", "&gt;", titleText);
@@ -511,10 +548,15 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 								urlText = str_replace(">", "&gt;", urlText);
 								urlText = str_replace("<", "&lt;", urlText);
 
+								tagText = str_replace(">", "&gt;", tagText);
+								tagText = str_replace("<", "&lt;", tagText);
+
 								titleText = str_replace("¸%%%%%¸", matchOpen, titleText);
 								titleText = str_replace("¸%%%%¸", matchClose, titleText);
 								urlText = str_replace("¸%%%%%¸", matchOpen, urlText);
 								urlText = str_replace("¸%%%%¸", matchClose, urlText);
+								tagText = str_replace("¸%%%%%¸", matchOpen, tagText);
+								tagText = str_replace("¸%%%%¸", matchClose, tagText);
 
 								// Make URLs say "Switch to tab" if tab is open
 								for (var ct in window.currentTabs) {
@@ -540,6 +582,10 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 											resultString += '<dim>&#9733;</dim> ';
 										}
 										resultString += titleText;
+									}
+
+									if (tagText.length) {
+										resultString += ' <dim>- '+tagText+'</dim>';
 									}
 
 									resultObjects[resultObjects.length] = {content:hI.url, description:resultString};
@@ -812,7 +858,7 @@ chrome.tabs.onCreated.addListener(function() {
 // When user changes tabs, send request if the tab has not been scrolled down, to see if the page should have a new top site tile thumbnail generated
 chrome.tabs.onSelectionChanged.addListener(function(tabId, selectInfo){
 	chrome.tabs.get(tabId, function(tab){
-		if (tab.url && (tab.url.substr(0,7) == 'http://' || tab.url.substr(0,8) == 'https://')) {
+		if (tab && tab.url && (tab.url.substr(0,7) == 'http://' || tab.url.substr(0,8) == 'https://')) {
 			if (tab.selected == true && tab.status == "complete") {
 				chrome.tabs.executeScript(tab.id, {file:"getscrolltop.js"});
 			}
@@ -923,7 +969,7 @@ chrome.history.onVisited.addListener(function(historyItem) {
 								tx.executeSql('UPDATE thumbs SET frecency = ? WHERE url = ?', [frecency, historyItem.url]);
 							}, function(t){
 								errorHandler(t, getLineInfo());
-							});
+							}, reapplyKeywords);
 						}
 					});
 				}
@@ -1016,10 +1062,15 @@ chrome.bookmarks.onCreated.addListener(function(id, bookmark){
 		chrome.history.getVisits({url:bookmark.url}, function(visits){
 			visits.reverse();
 			window.db.transaction(function(tx){
-				tx.executeSql('INSERT INTO urls (url, title, type, id, frecency) VALUES (?, ?, ?, ?, ?)', [bookmark.url, bookmark.title, 2, bookmark.id, visits.length > 0 ? calculateFrecency(visits) : localStorage.option_frecency_unvisitedbookmark]);
+				var frec = calculateFrecency(visits);
+				tx.executeSql('INSERT INTO urls (url, title, type, id, frecency) VALUES (?, ?, ?, ?, ?)', [bookmark.url, bookmark.title, 2, bookmark.id, visits.length > 0 ? frec : localStorage.option_frecency_unvisitedbookmark]);
+				if (visits.length > 0) {
+					tx.executeSql('UPDATE urls SET frecency = ? WHERE url = ?', [frec, bookmark.url]);
+					tx.executeSql('UPDATE thumbs SET frecency = ? WHERE url = ?', [frec, bookmark.url]);
+				}
 			}, function(t){
 				errorHandler(t, getLineInfo());
-			});
+			}, reapplyKeywords);
 		});
 	}
 });
@@ -1035,7 +1086,7 @@ function reindexBookmarks(bookmarkTreeNode) {
 					tx.executeSql('INSERT OR REPLACE INTO urls (url, type, title, frecency, id) VALUES (?, ?, ?, ?, ?)', [node.url, 2, node.title, calculateFrecency(visitItems), node.id]);
 				}, function(t){
 					errorHandler(t, getLineInfo());
-				});
+				}, reapplyKeywords);
 			});
 		}, 100);
 	}
@@ -1073,5 +1124,12 @@ chrome.bookmarks.onRemoved.addListener(function(id, removeInfo){
 				});
 			}
 		});
+	}
+});
+
+chrome.management.onInstalled.addListener(function(app) {
+	if (app.isApp) {
+		localStorage.option_showapps = 1;
+		localStorage.sapps = 2;
 	}
 });

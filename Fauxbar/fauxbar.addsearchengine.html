@@ -25,7 +25,7 @@
 				});
 				$("b").html(message.title);
 				if (message.improper && message.improper == true) {
-					$("#note").html('<br />Fauxbar <i>thinks</i> this site has a search engine it can use,<Br />but with no <a style="color:#0066cc" href="http://www.opensearch.org/Home" target="_new">OpenSearch</a> declaration, it\'s hard to tell.<br /><span style="position:relative;top:6px">As such, searching this site via Fauxbar may deliver<br />unexpected results, but feel free to give it a go.</span>');
+					$("#note").html('<br />Fauxbar <i>thinks</i> this site has a search engine it can use,<br />but with no <a style="color:#0066cc" href="http://www.opensearch.org/Home" target="_new">OpenSearch</a> declaration, it\'s hard to tell.<br /><span style="position:relative;top:6px">As such, searching this site via Fauxbar may deliver<br />unexpected results, but feel free to give it a go.</span>');
 				}
 				else {
 					$("#note").html('<br />This site can be used as a Fauxbar search engine.');
@@ -97,10 +97,24 @@
 										suggestUrl = $('Url[type="application/x-suggestions+json"]',xml).attr("template");
 									}
 
-									var insertBits = [$("ShortName",xml).text(), window.tab.url, $("Url",xml).attr("template"), window.urlToGet, (new XMLSerializer()).serializeToString(window.responseXml), 0, method, suggestUrl]
+									var searchUrl = $('Url[type="text/html"]',xml).attr("template");
+									if ($('Url[type="text/html"] Param',xml).length) {
+										searchUrl += "?";
+										var count = 0;
+										$('Url[type="text/html"] Param',xml).each(function(){
+											if (count > 0) {
+												searchUrl += "&";
+											}
+											searchUrl += $(this).attr("name")+"="+$(this).attr("value");
+											count++;
+										});
+									}
+
+									var insertBits = [$("ShortName",xml).text(), window.tab.url, searchUrl, window.urlToGet, (new XMLSerializer()).serializeToString(window.responseXml), 0, method, suggestUrl]
 									tx.executeSql('DELETE FROM opensearches WHERE shortname = ?', [$("ShortName",xml).text()]);
 									tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, suggestUrl) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', insertBits);
-									// success!
+
+									// Success!
 									$("#buttons").html('<button class="close">OK</button>');
 									$("button.close").focus();
 									$("#maintext").html('"<b style="font-size:inherit">'+window.openSearchInfo.title+'</b>" has been added to Fauxbar.');

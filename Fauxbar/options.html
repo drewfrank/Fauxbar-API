@@ -11,7 +11,7 @@
 			<span class="optionmenucat">Options</span>
 			<div id="option_section_general" class="section_selected" optionbox="generaloptions">General</div>
 			<div id="option_section_addressbox" class="section_general" optionbox="addressoptions">Address Box</div>
-			<div id="option_section_searchengines" class="section_general" optionbox="searchoptions">Search Box</div>
+			<div id="option_section_searchengines" class="section_general" optionbox="searchoptions">Search Engines</div>
 			<div id="option_section_tiles" class="section_general" optionbox="tilesoptions">Tiles</div>
 			<div id="option_section_results" class="section_general" optionbox="resultoptions">Results &amp; Suggestions</div>
 			<div id="option_section_background" class="section_general" optionbox="backgroundoptions">Page Background</div>
@@ -103,7 +103,7 @@
 								<div id="siteTileEditInfo" style="margin-top:6px" style="display:none;">
 									<button onclick="editSiteTiles()" style="font-size:12px">Edit Tiles...</button>
 									<div class="optionstip" style="margin-top:0px">
-										Site tiles can also be edited by clicking the <img src="fauxbar16options.png" style="vertical-align:middle; margin-top:-3px; padding-left:2px" /> icon in Chrome's Omnibox.
+										Site tiles can also be edited by right-clicking Fauxbar's background (when the Options aren't showing).
 									</div>
 								</div>
 							</div>
@@ -140,7 +140,9 @@
 					Fauxbar Options: Address Box
 				</h1>
 				Find your history items, bookmarks and opened tabs by typing into the Address Box.<br />
-				Search engines can also be accessed by typing a keyword and pressing spacebar.
+				Search engines can also be accessed by typing their keyword and pressing spacebar, or by clicking the
+				<img src="chrome://favicon/null" style="opacity:.75; vertical-align:middle; position:relative; top:-3px" />
+				icon.
 				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
@@ -154,10 +156,10 @@
 								</select>
 							</label>
 							<label class="legend">
-								Display up to <input name="option_maxaddressboxresultsshown" id="option_maxaddressboxresultsshown" class="upto inputoption" type="number" min="0" max="100" step="1" value="" maxlength="3" size="4" style="text-align:center; padding:0" /> retrieved results without needing to scroll
+								Retrieve up to <input name="option_maxaddressboxresults" id="option_maxaddressboxresults" class="upto inputoption" type="number" min="0" max="100" step="1" value="" maxlength="3" size="4" style="text-align:center; padding:0" /> results at a time
 							</label>
 							<label class="legend">
-								Retrieve up to <input name="option_maxaddressboxresults" id="option_maxaddressboxresults" class="upto inputoption" type="number" min="0" max="100" step="1" value="" maxlength="3" size="4" style="text-align:center; padding:0" /> results at a time
+								Display up to <input name="option_maxaddressboxresultsshown" id="option_maxaddressboxresultsshown" class="upto inputoption" type="number" min="0" max="100" step="1" value="" maxlength="3" size="4" style="text-align:center; padding:0" /> retrieved results without needing to scroll
 							</label>
 							<label class="legend">
 								<input name="option_showmatchinghistoryitems" id="option_showmatchinghistoryitems" type="checkbox" /> Show matching results from my browsing history
@@ -202,7 +204,7 @@
 														placeholder="badsite.com, goodsite.org/*badDirectory"></td>
 								</tr></table>
 							</label>
-							<div class="optionstip" style="margin-left:-2px">
+							<div class="optionstip">
 								Separate unwanted domains and/or URLs with commas. Use <b>*</b> for mid-match wildcards.
 							</div>
 						</td>
@@ -316,10 +318,10 @@
 				<img src="cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
 				<h1>
 					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
-					Fauxbar Options: Search Box
+					Fauxbar Options: Search Engines
 				</h1>
-				You can add search engines to Fauxbar's Search Box when you visit certain websites.<br />
-				The Search Box can also display suggestions and previous queries while you type.
+				You can add search engines to Fauxbar when you visit certain websites.<br />
+				While typing a search query, suggestions and previous queries can also be displayed.
 				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
@@ -362,7 +364,7 @@
 								<input name="option_osimproper" id="option_osimproper" type="checkbox" /> when an undeclared engine has <i>possibly</i> been detected <i>(experimental)</i>
 							</label>
 							<div class="optionstip">
-								Clicking the icon will let you add a new search engine to Fauxbar.
+								Left-clicking the icon lets you add a new search engine to Fauxbar.
 							</div>
 						</td>
 					</tr>
@@ -643,28 +645,6 @@
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
-						<th>The Fauxbar</th>
-						<td>
-							<label class="legend" style="margin-top:-4px">
-								Maximum width: <input name="option_maxwidth" id="option_maxwidth" type="number" min="700" max="9999" step="100" spellcheck="false" maxlength="4" size="6" spellcheck="false" style="text-align:center" /> pixels
-							</label>
-							<div style="margin-top:-4px">
-								Top background gradient:
-								<input title="Default: #000000" name="option_topgradient" id="option_topgradient" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
-								<input title="Default: 12%" name="option_topopacity" id="option_topopacity" class="opacity" type="number" min="0" max="100" step="5" maxlength="3" size="4" spellcheck="false" style="text-align:center" />%
-							</div>
-							<div style="margin-top:3px">
-								Bottom background gradient:
-								<input title="Default: #000000" name="option_bottomgradient" id="option_bottomgradient" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
-								<input title="Default: 50%" name="option_bottomopacity" id="option_bottomopacity" class="opacity" type="number" min="0" max="100" step="5" maxlength="3" size="4" spellcheck="false" style="text-align:center" />%
-							</div>
-							<label class="legend" style="margin-top:6px">
-								<input name="option_shadow" id="option_shadow" type="checkbox" /> Show a drop shadow
-							</label>
-						</td>
-					</tr>
-					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
-					<tr>
 						<th>Input Boxes</th>
 						<td>
 							<label class="legend">
@@ -705,6 +685,28 @@
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
+						<th>The Fauxbar</th>
+						<td>
+							<label class="legend" style="margin-top:-4px">
+								Maximum width: <input name="option_maxwidth" id="option_maxwidth" type="number" min="700" max="9999" step="100" spellcheck="false" maxlength="4" size="6" spellcheck="false" style="text-align:center" /> pixels
+							</label>
+							<div style="margin-top:-4px">
+								Top background gradient:
+								<input title="Default: #000000" name="option_topgradient" id="option_topgradient" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+								<input title="Default: 12%" name="option_topopacity" id="option_topopacity" class="opacity" type="number" min="0" max="100" step="5" maxlength="3" size="4" spellcheck="false" style="text-align:center" />%
+							</div>
+							<div style="margin-top:3px">
+								Bottom background gradient:
+								<input title="Default: #000000" name="option_bottomgradient" id="option_bottomgradient" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+								<input title="Default: 50%" name="option_bottomopacity" id="option_bottomopacity" class="opacity" type="number" min="0" max="100" step="5" maxlength="3" size="4" spellcheck="false" style="text-align:center" />%
+							</div>
+							<label class="legend" style="margin-top:6px">
+								<input name="option_shadow" id="option_shadow" type="checkbox" /> Show a drop shadow
+							</label>
+						</td>
+					</tr>
+					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr>
 						<th>Omnibox</th>
 						<td style="padding-top:2px">
 							<label class="legend" style="margin-bottom:10px">
@@ -733,7 +735,7 @@
 					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px;" />
 					Fauxbar Management
 				</h1>
-				Fauxbar version 0.4.1 &nbsp;<span style="opacity:.5">(5 Aug 2011)</span>
+				Fauxbar version 0.5.0 &nbsp;<span style="opacity:.5">(13 Aug 2011)</span>
 				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
@@ -741,10 +743,12 @@
 						<td>
 							<label class="legend" style="margin-top:1px">
 								Your Fauxbar database currently contains:<br />
-								&nbsp;&bull; <span id="stats_historyitems">???</span> history <span id="itemsplural">items</span><br />
-								&nbsp;&bull; <span id="stats_bookmarks">???</span> <span id="bookmarksplural">bookmarks</span><br />
-								&nbsp;&bull; <span id="stats_searchengines">???</span> search <span id="enginesplural">engines</span><br />
-								&nbsp;&bull; <span id="stats_searchqueries">???</span> search <span id="queriesplural">queries</span>
+								&nbsp;&bull; <span id="stats_historyitems">?</span> history <span id="itemsplural">items</span><br />
+								&nbsp;&bull; <span id="stats_bookmarks">?</span> <span id="bookmarksplural">bookmarks</span><br />
+								&nbsp;&bull; <span id="stats_searchengines">?</span> search <span id="enginesplural">engines</span><br />
+								&nbsp;&bull; <span id="stats_searchqueries">?</span> search <span id="queriesplural">queries</span><br />
+								&nbsp;&bull; <span id="stats_thumbs">?</span> tile <span id="thumbsplural">thumbnails</span><br />
+								&nbsp;&bull; <span id="stats_tags">?</span> URL <span id="tagsplural">keywords</span>
 							</label>
 							<br />
 							<button onclick="confirm('Reindex Fauxbar\'s history items and bookmarks?\n\nIf Fauxbar\'s Address Box results seem stale, or if you\'ve just altered the Frecency options, click OK - reindexing will ensure Fauxbar\'s database is up to date.\n\nOtherwise, click Cancel - reindexing probably won\'t accomplish much.\n') ? tellBgToReindex() : ''" style="font-size:95%">Reindex...</button>
@@ -775,7 +779,7 @@
 								</div>
 								<textarea id="backup" disabled style="font-size:12px; width:90%; height:200px; margin-top:10px"></textarea>
 								<div class="optionstip" style="margin-top:6px">
-									Backups contain all cosmetic and functionality settings you've chosen, including your site tiles, Fauxbar search engines, and blacklist.<br />
+									Backups contain all cosmetic and functionality settings you've chosen, including your site tiles, Fauxbar search engines, URL keywords, and blacklist.<br />
 									<div style="margin-top:8px">However, backups do <i>not</i> contain your history items, bookmarks, or search queries.</div>
 								</div>
 							</div>
@@ -789,7 +793,7 @@
 								</div>
 								<textarea id="restore" style="font-size:12px; width:90%; height:200px; margin-top:10px"></textarea>
 								<div class="optionstip" style="margin-top:6px">
-									Backups contain all cosmetic and functionality settings you've chosen, including your site tiles, Fauxbar search engines, and blacklist.<br />
+									Backups contain all cosmetic and functionality settings you've chosen, including your site tiles, Fauxbar search engines, URL keywords, and blacklist.<br />
 									<div style="margin-top:8px">However, backups do <i>not</i> contain your history items, bookmarks, or search queries.</div>
 								</div>
 							</div>
@@ -801,7 +805,7 @@
 						<td>
 							<label class="legend" style="margin-top:1px" id="errorLabel">
 								<span>Checking the error log...</span>
-								<a style="color:#06c" href="fauxbar.errorlog.html" target="_blank">Open the error log</a>
+								<a style="color:#06c; text-decoration:underline" href="fauxbar.errorlog.html" target="_blank">Open the error log</a>
 							</label>
 							<label class="legend" style="margin-top:1px">
 								<input name="option_alert" id="option_alert" type="checkbox" /> Show a message if an error occurs
@@ -838,7 +842,7 @@
 					Fauxbar Options: Frecency Scoring
 				</h1>
 				Fauxbar uses the
-				<a class="goodlink" href="https://developer.mozilla.org/en/The_Places_frecency_algorithm" target="_blank">frecency algorithm</a>
+				<a class="goodlink" style="text-decoration:underline" href="https://developer.mozilla.org/en/The_Places_frecency_algorithm" target="_blank">frecency algorithm</a>
 				to determine the order of your history items and bookmarks.<br />
 				Below, you can alter how the frecency scores are measured.
 				<table>

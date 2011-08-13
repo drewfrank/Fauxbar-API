@@ -2,8 +2,8 @@
 
 /* Some generic defaults */
 img { border:0; }
-body { cursor:default; font-family:Segoe UI, Arial, sans-serif; font-size:13px; padding:0 0; margin:0; }
-a, a:visited, a:link, a:active, a:hover { color:inherit; }
+body { cursor:default; font-family:Segoe UI, Arial, sans-serif; font-size:13px; padding:0; margin:0; }
+a, a:visited, a:link, a:active, a:hover { text-decoration:none; }
 
 /* Address Box results are divs, so make sure they clear each other */
 .result { clear:both; }
@@ -18,9 +18,27 @@ a, a:visited, a:link, a:active, a:hover { color:inherit; }
 /* *::selection { background:rgba(0,0,0,0); color:inherit; } */
 
 /* Rounded-corner input "boxes" - parent wrappers for the actual input boxes and icons within */
-.inputwrapper { border-radius:4px; border:0px solid rgba(0,0,0,.5); padding:3px 4px 3px 4px; background-color:#fff;
+.inputwrapper { border-radius:4px;
+	padding:3px 4px 3px 4px; padding:0;
+	background-color:#fff;
 	box-shadow: inset 0 0px 2px rgba(0,0,0,.4), 0 0 0 1px rgba(0,0,0,.2), 0 2px 0px rgba(255,255,255,.35);
 }
+.inputwrapper2 { border-radius:0 4px 4px 0; padding:2px 4px 2px 1px; }
+
+.insetButton {
+	background-color:rgba(0,0,0,.00);
+	padding:2px 4px 2px 2px;
+	border-radius:4px 0 0 4px;
+	border-radius:3px;
+	           /*        border                          shading             */
+	box-shadow:inset 0 0 0 1px rgba(0,0,0,.15), inset 0 -1px 5px rgba(0,0,0,.2);
+}
+.insetButton:hover {
+	box-shadow:inset 0 0 0 1px rgba(0,102,204,.3), inset 0 -1px 5px rgba(0,102,204,.2);
+	background-color:rgba(0,102,204,.02);
+	background-color:#fff;
+}
+.noInsetButton { padding-left:2px; margin-right:-1px; }
 
 /* Default font name for the main Fauxbar elements */
 #results *, #opensearch_results *, #awesomeinput, #opensearchinput, #opensearchmenu { font-family:Segoe UI, Arial, sans-serif; }
@@ -40,7 +58,7 @@ button { padding:3px 12px; }
 .wrapper {
 	max-width:1000px; margin:0 auto 0 auto; text-align:center; padding:8px; border-radius:9px;
 	background:-webkit-gradient(linear, left top, left bottom, from(rgba(0,0,0,.12)), to(rgba(0,0,0,.50)));
-	position:relative; box-shadow:0 5px 7px rgba(0,0,0,.25);
+	position:relative; box-shadow:0 5px 7px rgba(0,0,0,.27);
 }
 
 /* Address Box results and Search Box suggestions/queries */
@@ -57,7 +75,7 @@ button { padding:3px 12px; }
 /* More Address Box results and Search Box suggestions/queries */
 /* .arrowed is for hovered/highlighted/selected results */
 .result, .resultpreview { border-bottom:1px solid rgba(0,0,0,.11); padding: 3px 5px 4px 5px; display:block; }
-.arrowed { background-color:#3399ff; color:#fff; }
+.arrowed, .rightClickedResult { background-color:#3399ff; color:#fff; }
 .result_url, #options .result_url { padding-left:21px; white-space:nowrap; font-size:12px; overflow:hidden; display:inline-block; }
 .result_title, #options .result_title { font-size:14px; line-height:140%; white-space:nowrap; overflow:hidden; display:inline-block; }
 .result_favicon { height:16px; width:16px; padding-right:5px; vertical-align:middle; margin-top:-4px; }
@@ -73,15 +91,15 @@ button { padding:3px 12px; }
 
 /* "Truncated" dotting for Address Box result titles and URLs */
 .dotdotdot { position:relative; float:right; }
-.arrowed .result_title .dotdotdot, .arrowed .result_url .dotdotdot { background-color:rgba(0,0,0,0); }
+.arrowed .result_title .dotdotdot, .arrowed .result_url .dotdotdot, .rightClickedResult .result_title .dotdotdot, .rightClickedResult .result_url .dotdotdot { background-color:rgba(0,0,0,0); }
 
 /* Generic placeholder text for Address Box and Search Box, like "Go to a web site" or "Google" */
 .description { font-style:italic; color:rgba(0,0,0,.5); }
 
 /* The down-arrow/upside-down triangle in the Address Box and Search Box */
-.triangle { font-family:Times New Roman, Arial, sans-serif; font-size:13px; display:inline-block; -webkit-transform:scale(1, .5); color:rgba(0,0,0,.5); position:relative; }
-#addressbox_triangle:hover .triangle, #opensearch_triangle:hover .triangle { color:rgba(0,0,0,.59);}
-#addressbox_triangle .glow, #opensearch_triangle .glow { text-shadow:0 1px 15px rgba(0,204,255,.5); }
+.triangle { font-family:Times New Roman, Arial, sans-serif; font-size:13px; display:inline-block; -webkit-transform:scale(.8, .45); color:rgba(0,0,0,.5); position:relative; }
+#addressbox_triangle:hover .triangle, #opensearch_triangle:hover .triangle, #super_triangle:hover .triangle { color:rgba(0,0,0,.59);}
+#addressbox_triangle .glow, #opensearch_triangle .glow, #super_triangle .glow { text-shadow:0 1px 15px rgba(0,204,255,.5); }
 
 /* Generic default table */
 table { border:0; border-collapse:collapse; width:100%; display:table; }
@@ -111,7 +129,9 @@ table { border:0; border-collapse:collapse; width:100%; display:table; }
 #opensearch_menufocus { position:absolute; z-index:-999; opacity:0; display:none; }
 
 /* "Switch to tab" text in front of the Address Box's input box, used when user has navigated to a "Switch to tab"-laden result */
-.switchtext, td.addtile { white-space:nowrap; border-right:0px solid rgba(0,0,0,.2); color:rgba(0,0,0,.6); font-family:Segoe UI, Arial, sans-serif; font-size:15px; padding-right:4px; padding-left:0px; display:none; width:1px; }
+.switchtext, td.addtile { white-space:nowrap; border-right:0px solid rgba(0,0,0,.2); font-family:Segoe UI, Arial, sans-serif; font-size:15px; padding-right:2px; padding-left:3px; display:none; width:1px;
+	color:rgba(0,0,0,.6); color:rgba(0,0,0,.6); text-shadow:0 1px 0 #fff;
+}
 
 /* The hidden URL of a "Switch to tab" replacement text */
 .result_url_hidden { display:none; }
@@ -137,7 +157,7 @@ progress { width:100%; margin-top:6px; }
 #topthumbs .toptitle { white-space:nowrap; overflow:hidden; display:inline-block; }
 #topthumbs .toptitle img { height:16px; width:16px; vertical-align:middle; margin-top:-4px; }
 #topthumbs a, #topthumbs a * { white-space:normal; position:relative; }
-#topthumbs a:hover, #apps a:hover, #topthumbs a.draggingTile { box-shadow:0 2px 12px -1px rgba(0,0,0,.85); background-color:#3399FF; color:#fff; }
+#topthumbs a:hover, #apps a:hover, #topthumbs a.draggingTile, #topthumbs a.rightClickedTile { box-shadow:0 2px 12px -1px rgba(0,0,0,.85); background-color:#3399FF; color:#fff; }
 
 /* App tiles */
 #apps { display:none; }
@@ -184,3 +204,14 @@ progress { width:100%; margin-top:6px; }
 #errorBox img { padding-right:5px; }
 .errorBoxCross { opacity:.3; }
 .errorBoxCross:hover { opacity:1; }
+
+#contextMenu { background-color:#fff; padding:3px; border-radius:1px; box-shadow:0px 3px 6px rgba(0,0,0,.4); position:absolute; z-index:4000000; display:inline-block; border:1px solid rgba(0,0,0,.3); }
+#contextMenu .menuOption { padding:3px 30px 3px 25px; font-size:12px; border-radius:2px; white-space:nowrap; minimum-width:500px; }
+#contextMenu .menuOption:hover { background-color:#3399FF; color:#fff; box-shadow:inset 0 -15px 15px -5px rgba(0,0,0,.12); }
+#contextMenu .menuHr { font-size:1px; line-height:1px; height:1px; background-color:#f0f0f0; margin:3px 0 3px 0; }
+#contextMenu .disabled { opacity:.3;}
+#contextMenu .disabled:hover { background:none; color:#000; box-shadow:none; }
+
+input::-webkit-input-placeholder { color:rgba(0,0,0,.5); font-style:italic; }
+
+.resultTag { padding:2px 5px 0 8px; text-decoration:none; }
