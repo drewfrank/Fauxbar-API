@@ -1,9 +1,11 @@
 <html> <!-- Main Fauxbar page -->
 <head>
 	<script type="text/javascript">
-		chrome.tabs.getCurrent(function(tab){
-			chrome.tabs.update(tab.id, {selected:true});
-		});
+		if (localStorage.option_openfauxbarfocus != "chrome") {
+			chrome.tabs.getCurrent(function(tab){
+				chrome.tabs.update(tab.id, {selected:true});
+			});
+		}
 		window.bgPage = chrome.extension.getBackgroundPage();
 		var speech = localStorage.option_speech == 1 ? "x-webkit-speech" : "";
 	</script>

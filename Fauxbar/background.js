@@ -81,8 +81,8 @@ $(document).ready(function(){
 	loadThumbsIntoMemory();
 
 	// New version info
-	var currentVersion = "0.5.0";
-	localStorage.updateBlurb = ". &nbsp;What's new? Custom right-click context menus, URL keywords, and clickable search engine access from the Address Box.";
+	var currentVersion = "0.5.1";
+	localStorage.updateBlurb = ". &nbsp;Fixed a bug where the Omnibox would lose focus incorrectly.";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
 		localStorage.readUpdateMessage = 0;
 	}
