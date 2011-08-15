@@ -1,3 +1,18 @@
+function resizeTileThumbs() {
+	var shortestHeight = 132;
+	$("#topthumbs div.thumb img").each(function(){
+		if ($(this).innerHeight()-200 < $(this).parent().outerHeight() && $(this).innerHeight()-200 < shortestHeight && $(this).innerHeight()-200 > 0) {
+			shortestHeight = $(this).innerHeight()-200;
+			$("#topthumbs div.thumb").css("height",shortestHeight+"px");
+		}
+	});
+}
+
+function setMaxTilesPerRow(cols) {
+	// Set max width for the thumbs container
+	$("#topthumbs").css("max-width",(cols*242)+"px");
+}
+
 function renderSiteTiles(thumbs) {
 
 	// Hide the site tiles if we're showing Chrome's installed apps instead
@@ -5,8 +20,13 @@ function renderSiteTiles(thumbs) {
 		$("#topthumbs").css("opacity",0);
 	}
 
-	// Set max width for the thumbs container
-	$("#topthumbs").css("max-width",(localStorage.option_topsitecols*242)+"px").append(thumbs);
+	setMaxTilesPerRow(localStorage.option_topsitecols);
+	$("#topthumbs").append(thumbs);
+
+	// Shrink thumbs if needed (used when browser window screenshots are rather wide)
+	$("#topthumbs div.thumb img").bind("load", resizeTileThumbs);
+
+	resizeTileThumbs();
 
 	// If page title is too long for the tile, truncate it
 	var origTitle = '';

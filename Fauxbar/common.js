@@ -175,7 +175,8 @@ function resetOptions() {
 	localStorage.option_pagetilearrangement = "frecency";	// Page tile arrangement. Possible values: "frecency" "visitcount" "manual" "bookmarkbar"
 	localStorage.option_prerender = 1;						// Let Chrome pre-render the first Address Box result if possible.
 	localStorage.option_prerenderMs = 50;					// How many milliseconds to wait before pre-rendering
-	localStorage.option_quickdelete = "0";					// Don't enable Quick Delete by default. Don't want the user randomly deleting their history without knowing it.
+	localStorage.option_quickdelete = 1;					// Don't enable Quick Delete by default. Don't want the user randomly deleting their history without knowing it.
+	localStorage.option_quickdelete_confirm = 1;			// Prompt user to confirm before deleting a history result using Quick Delete.
 	localStorage.option_recentvisits = 10;					// Number of recent visits to sample when calculating frecency scores for URLs.
 	localStorage.option_recordsearchboxqueries = 1;			// Keep a record of the user's Search Box queries, to suggest them to the user later on if they search for something similar.
 	localStorage.option_resultbgcolor = "#FFFFFF";			// Background color for results and suggestions/queries.
@@ -195,6 +196,7 @@ function resetOptions() {
 	localStorage.option_showSuggestionsViaKeyword = 1;		// Show suggestions from search engine when using keywords in the Address Box.
 	localStorage.option_showtopsites = 1;					// Show top site tiles.
 	localStorage.option_speech = "0";						// Show speech input icons in the Address Box and Search Box.
+	localStorage.option_switchToTab = "replace";			// Toggleable switch to tab functionality. Possible values: "replace", "before", "disable"
 	localStorage.option_timing = "immediately";				// Only show Address Box results once the user has stopped typing. "immediately" shows results after every keystroke instead.
 	localStorage.option_titlecolor = "#000000";				// Result title and query/suggestion font color.
 	localStorage.option_titlesize = window.OS == "Mac" ? 12 : 14;					// Result title font size (px).

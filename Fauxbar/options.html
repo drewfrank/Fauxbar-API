@@ -196,6 +196,14 @@
 								<input name="option_underline" id="option_underline" type="checkbox" /> Underline matching words
 							</label>
 							<label class="legend">
+								If a tab exists for a result:
+								<select id="option_switchToTab" name="option_switchToTab">
+									<option value="replace">Replace the URL with "Switch to tab"</option>
+									<option value="before">Show "Switch to tab" before the URL</option>
+									<option value="disable">Don't use the "Switch to tab" feature</option>
+								</select>
+							</label>
+							<label class="legend">
 								<input name="option_ignoretitleless" id="option_ignoretitleless" type="checkbox" /> Don't show dynamically-generated untitled results
 							</label>
 							<label class="legend" style="width:100%">
@@ -205,7 +213,7 @@
 								</tr></table>
 							</label>
 							<div class="optionstip">
-								Separate unwanted domains and/or URLs with commas. Use <b>*</b> for mid-match wildcards.
+								Separate unwanted domains and/or URLs with commas. Use <b>*</b> for mid-URL wildcards.
 							</div>
 						</td>
 					</tr>
@@ -417,26 +425,26 @@
 					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Fauxbar Options: Results &amp; Suggestions
 				</h1>
-				Define how Fauxbar's Address Box results and Search Box queries/suggestions should look and behave.
+				Define how Fauxbar's Address Box results and search engine queries/suggestions should look and behave.
 				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
 						<th>Normal Styles</th>
 						<td>
 							<label class="legend" style="margin-top:1px">
-								Result Title and Suggestion font color:
+								Primary font color:
 								<input title="Default: #000000" name="option_titlecolor" id="option_titlecolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
 							</label>
 							<label class="legend" style="margin-top:-4px">
-								Result Title and Suggestion font size:
+								Primary font size:
 								<input name="option_titlesize" id="option_titlesize" class="fontsize" type="number" min="8" maxlength="2" size="3" spellcheck="false" style="text-align:center" /> pixels
 							</label>
 							<label class="legend">
-								Result URL font color:
+								Secondary font color:
 								<input title="Default: #0066CC" name="option_urlcolor" id="option_urlcolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
 							</label>
 							<label class="legend" style="margin-top:-4px">
-								Result URL and Suggestion font size:
+								Secondary font size:
 								<input name="option_urlsize" id="option_urlsize" class="fontsize" type="number" min="8" maxlength="2" size="3" spellcheck="false" style="text-align:center" /> pixels
 							</label>
 							<label class="legend">
@@ -454,11 +462,11 @@
 						<th>Highlighted Styles</th>
 						<td>
 							<label class="legend" style="margin-top:1px">
-								Result Title and Suggestion font color:
+								Primary font color:
 								<input title="Default: #FFFFFF" name="option_selectedtitlecolor" id="option_selectedtitlecolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
 							</label>
 							<label class="legend">
-								Result URL font color:
+								Secondary font color:
 								<input title="Default: #FFFFFF" name="option_selectedurlcolor" id="option_selectedurlcolor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
 							</label>
 							<label class="legend">
@@ -521,11 +529,14 @@
 						<th>Quick Delete</th>
 						<td>
 							<label class="legend">
-								<input name="option_quickdelete" id="option_quickdelete" type="checkbox" /> Delete a highlighted Result or Query Suggestion by pressing <b>Delete</b>
+								<input name="option_quickdelete" id="option_quickdelete" type="checkbox" /> Delete a highlighted history result or search query by pressing <b>Delete</b>
+							</label>
+							<label class="legend">
+								<input name="option_quickdelete_confirm" id="option_quickdelete_confirm" type="checkbox" /> Prompt me to confirm before deleting a history result
 							</label>
 							<div class="optionstip" style="line-height:145%">
 								If Quick Delete is enabled and you press <b>Delete</b>:<br />
-								&nbsp;&bull; any highlighted history results will be deleted from Chrome's history without prompt.<br />
+								&nbsp;&bull; any highlighted history results will be deleted from both Chrome and Fauxbar.<br />
 								&nbsp;&bull; any highlighted search queries will be deleted from Fauxbar's query history.<br />
 								Highlighted bookmarks remain safe and will not be deleted, though they may temporarily disappear for a moment.
 							</div>
@@ -721,7 +732,7 @@
 								To use Fauxbar from Chrome's Omnibox, focus the Omnibox and press <b>F</b>+<b>Spacebar</b>
 							</div>
 							<div class="optionstip">
-								Certain <span style="text-decoration:underline; cursor:pointer; font-size:12px" class="fakelink" onmouseup='$("#option_menu div").removeClass("section_selected"); $("#option_section_addressbox").addClass("section_selected"); $("div.optionbox").css("display","none"); $("#addressoptions").css("display","block"); localStorage.option_optionpage = "option_section_addressbox";'>Address Box options</span> also apply to Omnibox results.
+								Certain <span style="text-decoration:underline; cursor:pointer; font-size:12px" class="fakelink" onmouseup='$("#option_menu div").removeClass("section_selected"); $("#option_section_addressbox").addClass("section_selected"); $("div.optionbox").css("display","none"); $("#addressoptions").css("display","block"); localStorage.option_optionpage = "option_section_addressbox";'>Address Box options</span> also apply to Fauxbar's Omnibox results.
 							</div>
 						</td>
 					</tr>
@@ -735,7 +746,7 @@
 					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px;" />
 					Fauxbar Management
 				</h1>
-				Fauxbar version 0.5.1 &nbsp;<span style="opacity:.5">(13 Aug 2011)</span>
+				Fauxbar version 0.5.2 &nbsp;<span style="opacity:.5">(15 Aug 2011)</span>
 				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>

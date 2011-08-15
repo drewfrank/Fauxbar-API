@@ -62,7 +62,6 @@
 ////// Fauxbar-crafted code below ///////
 
 function showContextMenu(e) {
-
 	var html = '';
 	var usingSuperTriangle = e.currentTarget && e.currentTarget.className && (strstr(e.currentTarget.className,"superselect") ? true : false);
 	if (usingSuperTriangle == true) {
@@ -178,6 +177,10 @@ function showContextMenu(e) {
 					html += '	<div class="menuOption">Add Bookmark</div>';
 				}
 				html += '	<div class="menuHr"></div>';
+
+				html += '	<div class="menuOption">Delete from History'+(localStorage.option_quickdelete_confirm == 1 ? "..." : "")+'</div>';
+				html += '	<div class="menuHr"></div>';
+
 				if (!$(window.rightClickedResult).attr("keyword")) {
 					html += '	<div class="menuOption fauxbar16">Add Keyword...</div>';
 				} else {
@@ -278,6 +281,7 @@ function removeContextMenu() {
 }
 
 $(document).ready(function(){
+
 	$(".superselect").live("mousedown",function(e){
 		if (localStorage.indexComplete == 1) {
 			if ($("#super_triangle .triangle.glow").length) {
@@ -323,7 +327,7 @@ $(document).ready(function(){
 			switch ($(this).text()) {
 
 				case "Edit Bookmark...":
-					chrome.tabs.create({url:"chrome://bookmarks/?#q="+$(window.rightClickedResult).attr("url"), selected:true});
+					chrome.tabs.create({url:"chrome://bookmarks/?#q="+$(window.rightClickedResult).attr("url"), selected:false});
 					break;
 
 				case "Add Bookmark":
@@ -344,6 +348,20 @@ $(document).ready(function(){
 							}
 						}
 					});
+					break;
+
+				case "Delete from History":
+					$("#contextMenu").css("opacity",0);
+					if (deleteHistoryUrl($(window.rightClickedResult).attr("url"), $(window.rightClickedResult).attr("bmid"))) {
+						$(window.rightClickedResult).remove();
+					}
+					break;
+
+				case "Delete from History...":
+					$("#contextMenu").css("opacity",0);
+					if (deleteHistoryUrl($(window.rightClickedResult).attr("url"), $(window.rightClickedResult).attr("bmid"))) {
+						$(window.rightClickedResult).remove();
+					}
 					break;
 
 				case "Add Keyword...":
@@ -466,18 +484,6 @@ $(document).ready(function(){
 
 				case "Cancel Changes":
 					cancelTiles();
-					break;
-
-				case "Reload":
-					window.location.reload();
-					break;
-
-				case "Back":
-					window.history.go(-1);
-					break;
-
-				case "Forward":
-					window.history.go(1);
 					break;
 
 				case "Cut":
@@ -715,6 +721,7 @@ function saveSiteTiles(justChecking) {
 			}, function(){
 				// success
 				chrome.extension.sendRequest("loadThumbsIntoMemory");
+				localStorage.option_topsitecols = $("select").val();
 				localStorage.siteTiles = JSON.stringify(tiles);
 				chrome.tabs.getCurrent(function(tab){
 					chrome.tabs.update(tab.id, {url:"fauxbar.html"});
@@ -739,6 +746,8 @@ function enterTileEditMode() {
 	$("#awesomeInsetButton").removeClass("insetButton").addClass("noInsetButton");
 	$("#addressbaricon").attr("src","chrome://favicon/null").css("opacity",.75);
 	$(".switchtext").html("Switch to tab:").css("display","");
+	$("#address_goarrow img").attr("src","plus.png");
+	$("#address_goarrow").attr("title","Add the entered address as a tile");
 	$("#awesomeinput").focus();
 
 	window.document.title = "Fauxbar: Edit Tiles";
@@ -775,7 +784,12 @@ function enterTileEditMode() {
 			window.topThumbA = this;
 			setTimeout(function(){
 				if (window.draggingTile == true) {
-					$(window.topThumbA).addClass("draggingTile").removeClass("sitetile").css("top",(e.pageY-66)+"px").css("left",(e.pageX-106)+"px").after('<a class="holderTile"><div class="thumb" style="background:none"></div><span class="toptitle">&nbsp;</span></a>');
+					$(window.topThumbA)
+						.addClass("draggingTile")
+						.removeClass("sitetile")
+						.css("top",(e.pageY-66)+"px")
+						.css("left",(e.pageX-106)+"px")
+						.after('<a class="holderTile"><div class="thumb" style="background:none; height:'+$("div.thumb").first().innerHeight()+"px"+'"></div><span class="toptitle">&nbsp;</span></a>');
 					$("body").css("cursor","move").append('<div id="cursorbox" style="top:'+e.pageY+'px;left:'+e.pageX+'"></div>');
 					$(".tileCross").css("display","none");
 				}
@@ -819,7 +833,6 @@ function enterTileEditMode() {
 	$("#topthumbs").attr("title","Click and drag to move.\nRight-click to rename.");
 	$("#editTileStyle").append('#topthumbs a { cursor:move; }');
 	$("#editTileStyle").append('#topthumbs a:hover, #topthumbs a.draggingTile { background-color:'+localStorage.option_resultbgcolor+'; color:'+localStorage.option_titlecolor+'; }');
-	$("#editTileStyle").append('#address_goarrow { display:none; }');
 	if (navigator.appVersion.indexOf("Mac")!=-1) {
 		$("#editTileStyle").append('#manualmode { font-size:13px; }');
 	}
@@ -829,7 +842,17 @@ function enterTileEditMode() {
 	$("#searchwrapper").parent().css("display","none");
 	$(".wrapper").css("max-width",maxWidth+"px");
 	$("#editmodeContainer").remove();
-	$("#maindiv").before('<div id="editmodeContainer" style="opacity:0; box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="fauxbar48.png" /> <b>Tile editing enabled.</b> Add sites as tiles using the modified Address Box below. Drag tiles to rearrange. Right-click to rename.</div></div>');
+	$("#maindiv").before('<div id="editmodeContainer" style="opacity:0; box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="fauxbar48.png" /> <b>Tile editing enabled.</b> Add sites as tiles using the modified Address Box below. Drag tiles to rearrange. Right-click to rename.&nbsp;'
+							+' <div style="display:inline; white-space:nowrap">Maximum tiles per row: <select style="position:relative; z-index:999; font-family:inherit; margin-bottom:-2px">'
+							+'<option value="1">1</option>'
+							+'<option value="2">2</option>'
+							+'<option value="3">3</option>'
+							+'<option value="4">4</option>'
+							+'<option value="5">5</option></select></div></div></div>');
+	$('option[value="'+localStorage.option_topsitecols+'"]').prop("selected",true);
+	$("select").bind("change", function(){
+		setMaxTilesPerRow($(this).val());
+	});
 	$("#editmodeContainer").prepend('<div id="editModeButtons"><button onclick="saveSiteTiles()" style="font-family:'+localStorage.option_font+', Lucida Grande, Segoe UI, Arial, sans-serif;">Save</button>&nbsp;<button onclick="cancelTiles()" style="font-family:'+localStorage.option_font+', Lucida Grande, Segoe UI, Arial, sans-serif;">Cancel</button></div>');
 	$("#editmodeContainer").animate({opacity:1}, 325);
 	chrome.tabs.getCurrent(function(tab){
@@ -924,11 +947,11 @@ function renderPageTile(url, title, startHidden) {
 		thumbs += '<span class="tileCross" title="Remove tile" onclick="removeTile(this); return false"><img src="cross.png" /></span>';
 	}
 
-	thumbs += '		<div class="thumb" ';
+	var height = window.tileEditMode && $("div.thumb").length ? ' style="height:'+$("div.thumb").first().innerHeight()+'px"' : '';
+
+	thumbs += '		<div class="thumb" '+height+'>';
 	if (window.bgPage.md5thumbs[urlMd5]) {
-		thumbs += '>	<img src="'+window.bgPage.md5thumbs[urlMd5]+'" />';
-	} else {
-		thumbs += '>';
+		thumbs += '<img src="'+window.bgPage.md5thumbs[urlMd5]+'" />';
 	}
 	thumbs += '		</div>';
 	thumbs += '		<span class="toptitle"><img src="chrome://favicon/'+url+'" />';
@@ -1021,7 +1044,7 @@ chrome.extension.onRequest.addListener(function (request, sender) {
 	}
 
 	// Update Address Box result links, mainly to show the "Switch to tab" text or not
-	else if (request.message && request.message == "refreshResults" && $(".result").length > 0 && $("#awesomeinput.description").length == 0) {
+	else if (request.message && request.message == "refreshResults" && $(".result").length > 0 && $("#awesomeinput.description").length == 0 && localStorage.option_switchToTab != "disable") {
 		chrome.tabs.getAllInWindow(null, function(tabs){
 			var theTabs = [];
 			for (var t in tabs) {
@@ -1029,7 +1052,11 @@ chrome.extension.onRequest.addListener(function (request, sender) {
 			}
 			$(".result").each(function(){
 				if (theTabs[$(this).attr("url")]) {
-					$(this).children(".result_url").html('<img src="tabicon.png" style="opacity:.6" /> <span class="switch">Switch to tab</span>');
+					if (localStorage.option_switchToTab == "replace") {
+						$(this).children(".result_url").html('<img src="tabicon.png" style="opacity:.6" /> <span class="switch">Switch to tab</span>');
+					} else {
+						$(this).children(".result_url").html('<img src="tabicon.png" style="opacity:.6" /> <span class="switch">Switch to tab:</span> '+$(this).children(".result_url").html());
+					}
 				} else {
 					$(this).children(".result_url").html($(this).children(".result_url_hidden").html());
 				}
@@ -1462,6 +1489,26 @@ function getSearchEngines() {
 	}
 }
 
+function deleteHistoryUrl(url, bookmarkId) {
+	if (openDb() && localStorage.option_quickdelete_confirm == 0 || confirm("Delete \""+url+"\" from your Chrome browsing history?"
+	 + (bookmarkId > 0 ? "\n\nYour bookmark(s) for this URL will remain intact, though they may seem to disappear from Fauxbar for a moment." : ""))) {
+		window.db.transaction(function(tx){
+			tx.executeSql('DELETE FROM urls WHERE url = ? AND type = 1', [url]);
+			tx.executeSql('UPDATE urls SET frecency = ? WHERE url = ?', [localStorage.option_frecency_unvisitedbookmark, url]);
+			tx.executeSql('DELETE FROM thumbs WHERE url = ? AND manual != 1', [url]);
+			tx.executeSql('UPDATE thumbs SET frecency = -1 WHERE url = ?', [url]);
+			chrome.history.deleteUrl({url:url});
+			var nextNumber = $(".arrowed").next(".result").attr("number");
+			$(".arrowed").remove();
+			$('.result[number="'+nextNumber+'"]').addClass("arrowed");
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
+		return true;
+	}
+}
+
+
 // Once the Fauxbar page code has been loaded and is ready to go...
 $(document).ready(function(){
 
@@ -1888,21 +1935,23 @@ $(document).ready(function(){
 
 	// When user clicks an Address Box result, decide what to do...
 	window.clickResult = function(resultEl) {
-		chrome.tabs.getAllInWindow(null, function(tabs){
-			for (var t in tabs) {
-				if (tabs[t].url == $(resultEl).attr("url")) {
-					chrome.tabs.update(tabs[t].id, {selected:true});
-					// Close current tab if the tab just had Fauxbar open to switch to find a tab to switch to
-					if (history.length == 1) {
-						chrome.tabs.getCurrent(function(tab){
-							chrome.tabs.remove(tab.id);
-						});
+		if (localStorage.option_switchToTab != "disable") {
+			chrome.tabs.getAllInWindow(null, function(tabs){
+				for (var t in tabs) {
+					if (tabs[t].url == $(resultEl).attr("url")) {
+						chrome.tabs.update(tabs[t].id, {selected:true});
+						// Close current tab if the tab just had Fauxbar open to switch to find a tab to switch to
+						if (history.length == 1) {
+							chrome.tabs.getCurrent(function(tab){
+								chrome.tabs.remove(tab.id);
+							});
+						}
+						updateHash();
+						return false;
 					}
-					updateHash();
-					return false;
 				}
-			}
-		});
+			});
+		}
 		// Since clicking takes focus away from the Address Box, regain focus and possibly reselect auto-filled text/URL
 		setTimeout(function(){
 			window.dontGetResults = true;
@@ -1948,12 +1997,20 @@ $(document).ready(function(){
 
 	// When user hovers over the Address Box's go arrow, make it change color slightly
 	$("#address_goarrow").bind("mouseenter", function(){
-		$("#address_goarrow img").attr("tintedsrc",$("#address_goarrow img").attr("src")).attr("src",$("#goarrow_hovered").attr("src"));
+		if (window.tileEditMode) {
+			$("#address_goarrow img").attr("src","plus_dark.png");
+		} else {
+			$("#address_goarrow img").attr("tintedsrc",$("#address_goarrow img").attr("src")).attr("src",$("#goarrow_hovered").attr("src"));
+		}
 	});
 
 	// When user stops hovering over the Address Box's go arrow, change the color back
 	$("#address_goarrow").bind("mouseleave", function(){
-		$("#address_goarrow img").attr("src",$("#address_goarrow img").attr("tintedsrc"));
+		if (window.tileEditMode) {
+			$("#address_goarrow img").attr("src","plus.png");
+		} else {
+			$("#address_goarrow img").attr("src",$("#address_goarrow img").attr("tintedsrc"));
+		}
 	});
 
 	// When user clicks the Search Box's magnifying glass, submit the search if text is entered
@@ -2095,20 +2152,11 @@ $(document).ready(function(){
 					return false;
 				}
 				else if (openDb()) {
-					window.db.transaction(function(tx){
-						var arrowedUrl = $(".arrowed").attr("url");
-						if (arrowedUrl) {
-							tx.executeSql('UPDATE urls SET queuedfordeletion = 1 WHERE url = ? AND type = 1', [arrowedUrl]);
-							tx.executeSql('DELETE FROM thumbs WHERE url = ? AND manual != 1', [arrowedUrl]);
-							tx.executeSql('UPDATE thumbs SET frecency = -1 WHERE url = ?', [arrowedUrl]);
-							chrome.history.deleteUrl({url:arrowedUrl});
-							var nextNumber = $(".arrowed").next(".result").attr("number");
-							$(".arrowed").remove();
-							$('.result[number="'+nextNumber+'"]').addClass("arrowed");
-						}
-					}, function(t){
-						errorHandler(t, getLineInfo());
-					});
+					var arrowedUrl = $(".arrowed").attr("url");
+					var bmid = $(".arrowed").attr("bmid");
+					if (arrowedUrl) {
+						deleteHistoryUrl(arrowedUrl, bmid);
+					}
 					$(this).val(window.actualUserInput);
 				}
 				return false;
@@ -2797,10 +2845,18 @@ $(document).ready(function(){
 	else {
 		$("#address_goarrow")
 			.live("mouseenter", function(){
-				$("img",this).attr("src","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAAAi0lEQVQoU2NkwAGsYmtngqSOLW5Ox6aEEZugbXyt9T8GxiMguf///s/CphmrRpAGy/i6SCYGhmW4NOPUSEgzXo34NDPaxNca4wogmPi/fwzGf///m8nEyMQAtAnsZ0aruNozQAUENf/8/Zfh////YLM4WFkekq+RbKcS8h+uaKF+dJCVAChKcoQSOQCI22/3L6cKGwAAAABJRU5ErkJggg==");
+				if (window.tileEditMode) {
+					$("img",this).attr("src","plus_dark.png");
+				} else {
+					$("img",this).attr("src","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAAAi0lEQVQoU2NkwAGsYmtngqSOLW5Ox6aEEZugbXyt9T8GxiMguf///s/CphmrRpAGy/i6SCYGhmW4NOPUSEgzXo34NDPaxNca4wogmPi/fwzGf///m8nEyMQAtAnsZ0aruNozQAUENf/8/Zfh////YLM4WFkekq+RbKcS8h+uaKF+dJCVAChKcoQSOQCI22/3L6cKGwAAAABJRU5ErkJggg==");
+				}
 			})
 			.live("mouseleave", function(){
-				$("img",this).attr("src","goarrow.png");
+				if (window.tileEditMode) {
+					$("img",this).attr("src","plus.png");
+				} else {
+					$("img",this).attr("src","goarrow.png");
+				}
 			});
 		$("#searchicon_cell")
 			.live("mouseenter", function(){
@@ -3678,10 +3734,14 @@ function getResults(noQuery) {
 
 									// Make the URL display the "Switch to tab" text if tab is already open in current window
 									urlTextAttr = urlText;
-									if (!window.tileEditMode && !window.keywordEngine) {
+									if (!window.tileEditMode && !window.keywordEngine && localStorage.option_switchToTab != "disable") {
 										for (var ct in window.currentTabs) {
 											if (currentTabs[ct].url == hI.url) {
-												urlText = '<img src="tabicon.png" style="opacity:.6" /> <span class="switch">Switch to tab</span>';
+												if (localStorage.option_switchToTab == "replace") {
+													urlText = '<img src="tabicon.png" style="opacity:.6" /> <span class="switch">Switch to tab</span>';
+												} else {
+													urlText = '<img src="tabicon.png" style="opacity:.6" /> <span class="switch">Switch to tab</span>: '+urlText;
+												}
 											}
 										}
 									}
@@ -3698,7 +3758,7 @@ function getResults(noQuery) {
 											newHref = hI.url;
 										}
 
-										resultHtml += '<a class="result '+arrowedClass+'" url="'+hI.url+'" href="'+newHref+'" origtitle="'+hI.title+'" number="'+(currentRows+1)+'" onclick="'+resultOnClick+'" bmid="'+hI.id+'" keyword="'+hI.tag+'">';
+										resultHtml += '<a class="result '+arrowedClass+'" url="'+hI.url+'" href="'+newHref+'" origtitle="'+str_replace('"','&quot;',hI.title)+'" number="'+(currentRows+1)+'" onclick="'+resultOnClick+'" bmid="'+hI.id+'" keyword="'+hI.tag+'">';
 										if (hI.isBookmark) {
 											resultHtml += '<img class="favstar" style="position:absolute;" />';
 										}
@@ -4336,7 +4396,6 @@ if (getHashVar("options") == 1) {
 	function editSiteTiles() {
 		chrome.tabs.getAllInWindow(null, function(tabs){
 			for (var t in tabs) {
-				console.log(tabs[t].title+" - "+tabs[t].url);
 				if (tabs[t].title == "Fauxbar: Edit Tiles" && (strstr(tabs[t].url, chrome.extension.getURL("fauxbar.html")) || strstr(tabs[t].url, "chrome://newtab"))) {
 					chrome.tabs.update(tabs[t].id, {selected:true});
 					return;

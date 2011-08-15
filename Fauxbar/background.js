@@ -81,10 +81,20 @@ $(document).ready(function(){
 	loadThumbsIntoMemory();
 
 	// New version info
-	var currentVersion = "0.5.1";
-	localStorage.updateBlurb = ". &nbsp;Fixed a bug where the Omnibox would lose focus incorrectly.";
+	var currentVersion = "0.5.2";
+	localStorage.updateBlurb = ". &nbsp;A few minor improvements have been implemented.";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
 		localStorage.readUpdateMessage = 0;
+	}
+
+	// Switch to tab toggleable functionality. Added in 0.5.2
+	if (!localStorage.option_switchToTab) {
+		localStorage.option_switchToTab = "replace";
+	}
+
+	// Prompt user to confirm before deleting a history result via Quick Delete. Added in 0.5.2
+	if (!localStorage.option_quickdelete_confirm) {
+		localStorage.option_quickdelete_confirm = 1;
 	}
 
 	// Add keyword suggestions/queries options, added in 0.4.0
@@ -364,7 +374,7 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 
 				// If there's no input...
 				if (text.length == 0) {
-					var selectStatement = 'SELECT url, title, type FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
+					var selectStatement = 'SELECT url, title, type, tag FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
 				}
 				// Else, If we have words...
 				else if (urltitleWords.length > 0) {
@@ -378,7 +388,7 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 				}
 				// Else, this probably doesn't ever get used.
 				else {
-					var selectStatement = 'SELECT url, title, type FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers + titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
+					var selectStatement = 'SELECT url, title, type, tag FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers + titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
 				}
 
 				// If user text no longer equals the text we're processing, cancel.
@@ -559,9 +569,11 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 								tagText = str_replace("¸%%%%¸", matchClose, tagText);
 
 								// Make URLs say "Switch to tab" if tab is open
-								for (var ct in window.currentTabs) {
-									if (currentTabs[ct].url == hI.url) {
-										urlText = 'Switch to tab';
+								if (localStorage.option_switchToTab != "disable") {
+									for (var ct in window.currentTabs) {
+										if (currentTabs[ct].url == hI.url) {
+											urlText = localStorage.option_switchToTab == "replace" ? 'Switch to tab' : '</url><dim>Switch to tab:</dim> <url>'+urlText;
+										}
 									}
 								}
 
@@ -584,7 +596,7 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 										resultString += titleText;
 									}
 
-									if (tagText.length) {
+									if (tagText != null && tagText.length) {
 										resultString += ' <dim>- '+tagText+'</dim>';
 									}
 
@@ -612,10 +624,12 @@ chrome.omnibox.onInputEntered.addListener(function(text){
 	}
 
 	// Switch to tab if needed
-	for (var t in window.currentTabs) {
-		if (window.currentTabs[t].url == url) {
-			chrome.tabs.update(window.currentTabs[t].id, {selected:true});
-			return false;
+	if (localStorage.option_switchToTab != "disable") {
+		for (var t in window.currentTabs) {
+			if (window.currentTabs[t].url == url) {
+				chrome.tabs.update(window.currentTabs[t].id, {selected:true});
+				return false;
+			}
 		}
 	}
 
@@ -654,7 +668,9 @@ chrome.omnibox.onInputEntered.addListener(function(text){
 // Used when a tab opens, closes or changes.
 // Refreshing is basically so that "Switch to tab" text can be shown or displayed as needed.
 function refreshResults() {
-	chrome.extension.sendRequest({message:"refreshResults"});
+	if (localStorage.option_switchToTab != "disable") {
+		chrome.extension.sendRequest({message:"refreshResults"});
+	}
 }
 
 // Starts the indexing procress.
@@ -774,10 +790,10 @@ chrome.extension.onRequest.addListener(function(request, sender){
 	// Chrome sometimes truncates page titles for its history items. Don't know why.
 	// So, have Fauxbar update it's own database with proper, updated current titles.
 	else if (request.action && request.action == "updateUrlTitles") {
-		if (sender && sender.tab && sender.tab.url && openDb()) {
+		if (openDb()) {
 			window.db.transaction(function (tx) {
-				tx.executeSql('UPDATE urls SET title = ? WHERE url = ? AND type = 1', [request.urltitle, sender.tab.url]);
-				tx.executeSql('UPDATE thumbs SET title = ? WHERE url = ?', [request.urltitle, sender.tab.url]);
+				tx.executeSql('UPDATE urls SET title = ? WHERE url = ? AND type = 1', [request.urltitle, request.url]);
+				tx.executeSql('UPDATE thumbs SET title = ? WHERE url = ?', [request.urltitle, request.url]);
 			}, function(t){
 				errorHandler(t, getLineInfo());
 			});
@@ -874,11 +890,6 @@ function processUpdatedTab(tabId, tab) {
 
 	// If URL is a web page...
 	if (tab.url.substr(0,7) == 'http://' || tab.url.substr(0,8) == 'https://') {
-
-		// If page has finished loading, update its title in Fauxbar's database so it's not stale
-		if (tab.status == "complete") {
-			chrome.tabs.executeScript(tabId, {file:"updatetitle.js"});
-		}
 
 		// If user has opted to enable Alt+D, Ctrl+L or Ctrl+L functionality, make it so
 		if ((localStorage.option_altd && localStorage.option_altd == 1) || (localStorage.option_ctrll && localStorage.option_ctrll == 1) || (localStorage.option_ctrlk && localStorage.option_ctrlk == 1)) {
