@@ -188,6 +188,7 @@ function date (format, timestamp) {
 
 // Do a bit of stack tracing and return filename, line # and column #
 function getLineInfo() {
+	console.log(new Error().stack);
 	var lines = new Error().stack.split("\n");
 	var line = lines[lines.length-1];
 	var file = line.split(chrome.extension.getURL(""), 2);

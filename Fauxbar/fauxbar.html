@@ -1,31 +1,29 @@
 <html> <!-- Main Fauxbar page -->
 <head>
+<script type="text/javascript" src="jquery-1.6.2.min.js"></script>
 	<script type="text/javascript">
-		if (localStorage.option_openfauxbarfocus != "chrome") {
-			chrome.tabs.getCurrent(function(tab){
-				chrome.tabs.update(tab.id, {selected:true});
+		chrome.tabs.getCurrent(function(tab){
+			chrome.tabs.update(tab.id, {selected:localStorage.option_openfauxbarfocus == "chrome" ? false : true}, function(){
+				$(document).ready(function(){
+					jQuery.getScript("md5-min.js");
+					jQuery.getScript("fauxbar-2.js");
+					jQuery.getScript("common-1.js");
+					jQuery.getScript("fauxbar-1.js");
+
+				});
 			});
-		}
-		window.bgPage = chrome.extension.getBackgroundPage();
+		});
 		var speech = localStorage.option_speech == 1 ? "x-webkit-speech" : "";
 	</script>
 	<title>Fauxbar</title>
-	<link href="fauxbar.css" media="screen" rel="stylesheet" type="text/css" />
+	<link href="fauxbar.css" rel="stylesheet" type="text/css" />
 	<style type="text/css" id="customstyle"></style>
 	<style type="text/css" id="editTileStyle"></style>
 
-	<script type="text/javascript" src="jquery-1.6.2.min.js"></script>
 	<script type="text/javascript" src="common.js"></script>
 	<script type="text/javascript" src="logerror.js"></script>
-	<script type="text/javascript" src="md5-min.js"></script>
 	<script type="text/javascript" src="fauxbar.js"></script>
-	<script type="text/javascript" src="fauxbar-2.js"></script>
 	<script type="text/javascript" src="jquery.rangyinputs.js"></script>
-	<!--
-		These scripts get loaded later:
-		 - mezzoblue-PaintbrushJS-098389a/common.js
-		 - mezzoblue-PaintbrushJS-098389a/paintbrush.js
-	-->
 </head>
 <body>
 
@@ -41,6 +39,7 @@
 
 			<!-- The input boxes -->
 			<div id="thefauxbar">
+
 				<table>
 					<tr>
 						<!-- Address Box -->
@@ -119,8 +118,8 @@
 										</td>
 
 										<script type="text/javascript">
-											$("#awesomeinput_cell").html('<input type="text" id="awesomeinput" '+(localStorage.option_openfauxbarfocus == "addressbox" ? "autofocus" : "")+' spellcheck="false" placeholder="Go to a web site" autocomplete="off" '+speech+' onwebkitspeechchange="$(this).focus(); getResults()" />');
-											$("#opensearchinput_cell").html('<input type="text" id="opensearchinput" '+(localStorage.option_openfauxbarfocus == "searchbox" ? "autofocus" : "")+' spellcheck="false" autocomplete="off" placeholder="'+str_replace('"', '&quot;', localStorage.osshortname)+'" '+speech+' onwebkitspeechchange="$(this).focus(); setTimeout(getSearchSuggestions,100)" />')
+											$("#awesomeinput_cell").html('<input type="text" id="awesomeinput" '+(localStorage.option_openfauxbarfocus == "addressbox" ? "autofocus" : "")+' spellcheck="false" placeholder="Go to a web site" autocomplete="off" '+speech+' onwebkitspeechchange="setTimeout(function(){$(\'#awesomeinput\').setSelection($(\'#awesomeinput\').val().length,$(\'#awesomeinput\').val().length); getResults()},250)" />');
+											$("#opensearchinput_cell").html('<input type="text" id="opensearchinput" '+(localStorage.option_openfauxbarfocus == "searchbox" ? "autofocus" : "")+' spellcheck="false" autocomplete="off" placeholder="'+str_replace('"', '&quot;', localStorage.osshortname)+'" '+speech+' onwebkitspeechchange="setTimeout(function(){$(\'#opensearchinput\').setSelection($(\'#opensearchinput\').val().length,$(\'#opensearchinput\').val().length); getSearchSuggestions()},250)" />');
 										</script>
 
 									</tr>

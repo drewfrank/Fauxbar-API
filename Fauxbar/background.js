@@ -1,31 +1,13 @@
 // This file gets loaded into Fauxbar's background page.
 
-window.md5thumbs = {};
+// Initialise the file system
+window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;
 
-function loadThumbsIntoMemory() {
-	if (openDb() && localStorage.option_pagetilearrangement) {
-		window.db.transaction(function(tx){
-			delete window.md5thumbs;
-			window.md5thumbs = {};
-			var statement = '';
-			if (localStorage.option_pagetilearrangement == "manual") {
-				statement = 'SELECT url, data FROM thumbs WHERE manual = 1';
-			} else {
-				statement = 'SELECT url, data FROM thumbs ORDER BY frecency DESC LIMIT '+((parseFloat(localStorage.option_topsiterows) * parseFloat(localStorage.option_topsitecols))+4); // 4 for probable pinned tabs
-			}
-			tx.executeSql(statement, [], function(tx, results){
-				var len = results.rows.length, i;
-				if (len > 0) {
-					for (var i = 0; i < len; i++) {
-						window.md5thumbs[hex_md5(results.rows.item(i).url)] = results.rows.item(i).data;
-					}
-				}
-			});
-		}, function(t){
-			errorHandler(t, getLineInfo());
-		});
-	}
-}
+window.requestFileSystem(window.PERSISTENT, 50*1024*1024, function(fs){
+	fs.root.getDirectory('thumbs', {create:true}, function(dirEntry) {}, fileErrorHandler);
+}, fileErrorHandler);
+
+loadThumbsIntoMemory = function() { }
 
 // Record if we should restart the Helper next time it's disabled
 chrome.management.onDisabled.addListener(function(extension) {
@@ -81,8 +63,8 @@ $(document).ready(function(){
 	loadThumbsIntoMemory();
 
 	// New version info
-	var currentVersion = "0.5.2";
-	localStorage.updateBlurb = ". &nbsp;A few minor improvements have been implemented.";
+	var currentVersion = "0.5.3";
+	localStorage.updateBlurb = ". &nbsp;Thumbnail images have been reset (sorry), but start-up loading times have been improved.";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
 		localStorage.readUpdateMessage = 0;
 	}
@@ -218,8 +200,34 @@ $(document).ready(function(){
 				} else {
 					window.frecencyThreshold = 75;
 				}
-				tx.executeSql('DELETE FROM thumbs WHERE frecency < ? AND frecency > -1 AND manual != 1', [window.frecencyThreshold]);
+				tx.executeSql('SELECT url FROM thumbs WHERE frecency < ? AND manual != 1', [window.frecencyThreshold], function(tx, results2){
+					var len = results2.rows.length, i;
+					if (len > 0) {
+						window.thumbsToDelete = new Array();
+						for (var i = 0; i < len; i++) {
+							console.log("Adding "+results2.rows.item(i).url);
+							window.thumbsToDelete[window.thumbsToDelete.length] = results2.rows.item(i).url;
+						}
+					}
+				});
+				tx.executeSql('DELETE FROM thumbs WHERE frecency < ? AND manual != 1', [window.frecencyThreshold]);
 			});
+		}, null, function(){
+			if (window.thumbsToDelete) {
+				var deleteThumb = function(url) {
+					window.requestFileSystem(window.PERSISTENT, 50*1024*1024, function(fs) {
+						fs.root.getFile('/thumbs/'+hex_md5(url)+".png", {create:false}, function(fileEntry) {
+							fileEntry.remove();
+						});
+					});
+					if (window.thumbsToDelete.length) {
+						deleteThumb(window.thumbsToDelete.pop());
+					} else {
+						delete window.thumbsToDelete;
+					}
+				};
+				deleteThumb(window.thumbsToDelete.pop());
+			}
 		});
 	}
 });
@@ -681,6 +689,33 @@ function beginIndexing() {
 	reindex();
 }
 
+// canvas.toBlob is not implemented in Chrome yet! So we have to build the blob ourselves.
+// http://mustachified.com/master.js
+// via http://lists.whatwg.org/pipermail/whatwg-whatwg.org/2011-April/031243.html
+// via https://bugs.webkit.org/show_bug.cgi?id=51652
+// via http://code.google.com/p/chromium/issues/detail?id=67587
+function dataURItoBlob(dataURI, callback) {
+	// convert base64 to raw binary data held in a string
+	// doesn't handle URLEncoded DataURIs
+	var byteString = atob(dataURI.split(',')[1]);
+
+	// separate out the mime component
+	var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
+
+	// write the bytes of the string to an ArrayBuffer
+	var ab = new ArrayBuffer(byteString.length);
+	var ia = new Uint8Array(ab);
+	for (var i = 0; i < byteString.length; i++) {
+	    ia[i] = byteString.charCodeAt(i);
+	}
+
+	// write the ArrayBuffer to a blob, and you're done
+	var bb = new window.WebKitBlobBuilder();
+	bb.append(ab);
+	return bb.getBlob(mimeString);
+};
+
+
 // Capture tab screenshot and save it
 function captureScreenshot(sender) {
 	if (openDb()) {
@@ -724,14 +759,19 @@ function captureScreenshot(sender) {
 											context.drawImage(img,0,0, width, height);
 
 											// Save image data
-											if (urlIsManualTile || localStorage.option_pagetilearrangement == "frecency") {
-												window.md5thumbs[hex_md5(sender.tab.url)] = myCanvas.toDataURL("image/png");
-											}
-											window.md5thumbs[hex_md5(sender.tab.url)] = myCanvas.toDataURL("image/png");
+
+											window.requestFileSystem(window.PERSISTENT, 50*1024*1024, function(fs){
+												fs.root.getFile('/thumbs/'+hex_md5(sender.tab.url)+'.png', {create:true}, function(fileEntry) {
+													fileEntry.createWriter(function(fileWriter) {
+														fileWriter.write(dataURItoBlob(myCanvas.toDataURL("image/png")));
+													}, fileErrorHandler);
+												}, fileErrorHandler);
+											}, fileErrorHandler);
+
 											window.db.transaction(function(tx){
-												tx.executeSql('UPDATE thumbs SET data = ?, title = ?, frecency = ? WHERE url = ?', [myCanvas.toDataURL("image/png"), sender.tab.title, frecency, sender.tab.url], function(tx, results){
+												tx.executeSql('UPDATE thumbs SET title = ?, frecency = ? WHERE url = ?', [sender.tab.title, frecency, sender.tab.url], function(tx, results){
 													if (results.rowsAffected == 0) {
-														tx.executeSql('INSERT INTO thumbs (url, data, title, frecency) VALUES (?, ?, ?, ?)', [sender.tab.url, myCanvas.toDataURL("image/png"), sender.tab.title, frecency]);
+														tx.executeSql('INSERT INTO thumbs (url, title, frecency) VALUES (?, ?, ?)', [sender.tab.url, sender.tab.title, frecency]);
 													}
 												});
 											}, function(t){
@@ -1024,8 +1064,8 @@ chrome.history.onVisitRemoved.addListener(function(removed) {
 			console.log("Removing all history URLs!");
 			window.db.transaction(function(tx){
 				tx.executeSql('DELETE FROM urls WHERE type = 1');
-				tx.executeSql('DELETE FROM thumbs WHERE manual != 1');
 				tx.executeSql('UPDATE thumbs SET frecency = -1');
+				tx.executeSql('UPDATE thumbs SET frecency = -2 WHERE manual != 1');
 				tx.executeSql('UPDATE urls SET frecency = ? WHERE type = 2', [localStorage.option_frecency_unvisitedbookmark]);
 			}, function(t){
 				errorHandler(t, getLineInfo());
@@ -1037,8 +1077,8 @@ chrome.history.onVisitRemoved.addListener(function(removed) {
 			window.db.transaction(function (tx) {
 				for (var r in removed.urls) {
 					tx.executeSql('DELETE FROM urls WHERE type = 1 AND url = ?', [removed.urls[r]]);
-					tx.executeSql('DELETE FROM thumbs WHERE url = ? AND manual != 1', [removed.urls[r]]);
 					tx.executeSql('UPDATE thumbs SET frecency = -1 WHERE url = ?', [removed.urls[r]]);
+					tx.executeSql('UPDATE thumbs SET frecency = -2 WHERE url = ? AND manual != 1', [removed.urls[r]]);
 					tx.executeSql('UPDATE urls SET frecency = ? WHERE url = ? AND type = 2', [localStorage.option_frecency_unvisitedbookmark, removed.urls[r]]);
 				}
 			}, function(t){
@@ -1144,3 +1184,339 @@ chrome.management.onInstalled.addListener(function(app) {
 		localStorage.sapps = 2;
 	}
 });
+
+// Check to see if the indexing finished
+function isIndexingFinished() {
+	if (window.sqlLastExecution && getMs() - window.sqlLastExecution > 1500 && window.doneApplyingFrecencyScores == 1) {
+		$("#indexing").remove();
+		window.stepsDone++;
+		window.reindexing = false;
+		localStorage.indexComplete = 1;
+		localStorage.indexedbefore = 1;
+		console.log("Indexing complete.");
+		chrome.extension.sendRequest({message:"currentStatus",status:"Indexing complete.", step:8}); // Step 8
+		localStorage.almostdone = 1;
+		setTimeout(function(){
+			alert("Success!\n\nFauxbar has finished indexing your history items and bookmarks, and is now ready for use.\n\nFrom here on, Fauxbar's index will be silently updated on-the-fly for you.");
+			updateTopSites();
+			reapplyKeywords();
+			chrome.extension.sendRequest("DONE INDEXING");
+		},1200);
+		return true;
+	}
+	else {
+		chrome.extension.sendRequest({message:"currentStatus",status:window.indexStatus});
+		setTimeout(isIndexingFinished, 500);
+	}
+}
+
+// Really start the indexing process
+function startIndexing() {
+	if (openDb(true)) {
+		setTimeout(isIndexingFinished, 2000);
+		window.indexStatus = "Processing your history items and bookmarks..."; // Step 4
+		chrome.extension.sendRequest({message:"currentStatus",status:"Processing your history items and bookmarks...", step:4});
+		chrome.history.search({text:"", startTime:1, maxResults:999999999}, function(historyItems){
+			window.historyItemsToCopy = historyItems;
+			var hi = "";
+			window.db.transaction(function(tx){
+				for (var h in window.historyItemsToCopy) {
+					hi = window.historyItemsToCopy[h];
+					tx.executeSql('INSERT INTO urls (url, type, title, frecency) VALUES (?, ?, ?, ?)', [hi.url, 1, hi.title, -1]);
+					window.sqlLastExecution = getMs();
+				}
+				tx.executeSql('DELETE FROM urls WHERE url LIKE "data:%" OR url LIKE "javascript:void%"');
+				window.indexStatus = "Processing your history items and bookmarks..."; // Step 5
+				chrome.extension.sendRequest({message:"currentStatus",status:"Processing your history items and bookmarks...", step:5});
+				chrome.bookmarks.getTree(function(bookmarkTreeNodes){
+					for (var b in bookmarkTreeNodes) {
+						indexBookmarks(bookmarkTreeNodes[b]);
+					}
+				});
+				console.log("Total history items: "+window.historyItemsToCopy.length);
+
+				window.frecencyStatements = new Array();
+				chrome.extension.sendRequest({message:"currentStatus",status:"Calculating frecency scores for "+number_format(window.historyItemsToCopy.length)+" different URLs...", step:6}); // Step 6
+				window.indexStatus = "Calculating frecency scores for "+number_format(window.historyItemsToCopy.length)+" different URLs...";
+				window.historyItemsToCopyLength = window.historyItemsToCopy.length;
+				assignFrecencies(true);
+			}, function(t){
+				errorHandler(t, getLineInfo());
+			});
+		});
+	}
+}
+
+// Calculate and apply frecency scores for all the URLs
+function assignFrecencies() {
+	if (window.historyItemsToCopy.length > 0) {
+		window.hi2 = window.historyItemsToCopy[window.historyItemsToCopy.length-1];
+		chrome.history.getVisits({url:window.hi2.url}, function(visitItems){
+			if (visitItems.length > 0 && visitItems[0]) {
+				visitItems.reverse();
+				var frecency = calculateFrecency(visitItems);
+				window.frecencyStatements[window.frecencyStatements.length] = {statement:'UPDATE urls SET frecency = ? WHERE url = ?', inputs:[frecency, window.hi2.url]};
+			}
+			window.sqlLastExecution = getMs();
+			window.historyItemsToCopy.pop();
+			assignFrecencies();
+		});
+	}
+	else {
+		console.log("Executing frecency updates, please wait...");
+		window.indexStatus = "Applying frecency scores to "+number_format(window.historyItemsToCopyLength)+" different URLs..."; // Step 7
+		chrome.extension.sendRequest({message:"currentStatus",status:"Applying frecency scores to "+number_format(window.historyItemsToCopyLength)+" different URLs...", step:7});
+		window.historyItemsToCopy = null;
+		window.db.transaction(function(tx){
+			for (var fs in window.frecencyStatements) {
+				tx.executeSql(window.frecencyStatements[fs].statement, window.frecencyStatements[fs].inputs);
+			}
+			window.doneApplyingFrecencyScores = 1;
+			delete window.frecencyStatements;
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
+	}
+}
+
+// Current number of seconds since the epoch
+function getMs() {
+	var currentTime = new Date();
+	return currentTime.getTime();
+}
+
+// Generate a frecency score number for a URL.
+// Scoring derived from https://developer.mozilla.org/en/The_Places_frecency_algorithm
+// Make sure visitItems has been .reverse()'d before calling this function
+function calculateFrecency(visitItems) {
+	var vi = '';
+	var singleVisitPoints = 0;
+	var summedVisitPoints = 0;
+	var bonus = 0;
+	var bucketWeight = 0;
+	var days = 0;
+	var frecency = -1;
+	var x = 0;
+
+	// If user has opted to use custom scoring...
+	if (localStorage.option_customscoring == 1) {
+
+		// For each sampled recent visits to this URL...
+		for (x=0; x < Math.min(visitItems.length,localStorage.option_recentvisits); x++) {
+			singleVisitPoints = 0;
+			bonus = 0;
+			bucketWeight = 0;
+			days = 0;
+			vi = visitItems[x];
+
+			// Determine which bonus score to give
+			switch (vi.transition) {
+				case "link":
+					bonus = localStorage.option_frecency_link;
+					break;
+				case "typed":
+					bonus = localStorage.option_frecency_typed;
+					break;
+				case "auto_bookmark":
+					bonus = localStorage.option_frecency_auto_bookmark;
+					break;
+				case "reload":
+					bonus = localStorage.option_frecency_reload;
+					break;
+				case "start_page":
+					bonus = localStorage.option_frecency_start_page;
+					break;
+				case "form_submit":
+					bonus = localStorage.option_frecency_form_submit;
+					break;
+				case "keyword":
+					bonus = localStorage.option_frecency_keyword;
+					break;
+				case "generated":
+					bonus = localStorage.option_frecency_generated;
+					break;
+				default:
+					break;
+			}
+
+			// Determine the weight of the score, based on the age of the visit
+			days = Math.floor(Math.round(getMs() - vi.visitTime) / 86400);
+			if (days < localStorage.option_cutoff1) {
+				bucketWeight = localStorage.option_weight1;
+			} else if (days < localStorage.option_cutoff2) {
+				bucketWeight = localStorage.option_weight2;
+			} else if (days < localStorage.option_cutoff3) {
+				bucketWeight = localStorage.option_weight3;
+			} else if (days < localStorage.option_cutoff4) {
+				bucketWeight = localStorage.option_weight4;
+			} else {
+				bucketWeight = localStorage.option_weight5;
+			}
+
+			// Calculate the points
+			singleVisitPoints = (bonus / 100) * bucketWeight;
+			summedVisitPoints = summedVisitPoints + singleVisitPoints;
+		}
+
+	// Else, if user has not opted to use custom scoring, just use the defaults...
+	} else {
+		// For each sampled visit...
+		for (x=0; x < Math.min(visitItems.length,10); x++) {
+			singleVisitPoints = 0;
+			bonus = 0;
+			bucketWeight = 0;
+			days = 0;
+			vi = visitItems[x];
+
+			// Assign bonus score based on visit type
+			switch (vi.transition) {
+				case "link":
+					bonus = 100;
+					break;
+				case "typed":
+					bonus = 100;
+					break;
+				case "auto_bookmark":
+					bonus = 75;
+					break;
+				case "reload":
+					bonus = 100;
+					break;
+				case "start_page":
+					bonus = 100;
+					break;
+				case "form_submit":
+					bonus = 100;
+					break;
+				case "keyword":
+					bonus = 100;
+					break;
+				case "generated":
+					bonus = 100;
+					break;
+				default:
+					break;
+			}
+
+			// Assign weight based on visit's age
+			days = Math.floor(Math.round(getMs() - vi.visitTime) / 86400);
+			if (days < 4) {
+				bucketWeight = 100;
+			} else if (days < 14) {
+				bucketWeight = 70;
+			} else if (days < 31) {
+				bucketWeight = 50;
+			} else if (days < 90) {
+				bucketWeight = 30;
+			} else {
+				bucketWeight = 10;
+			}
+
+			// Calculate points
+			singleVisitPoints = (bonus / 100) * bucketWeight;
+			summedVisitPoints = summedVisitPoints + singleVisitPoints;
+		}
+	}
+
+	// Calculate the frecency score for the URL
+	frecency = Math.ceil(visitItems.length * summedVisitPoints / x);
+	return frecency;
+}
+
+// Add bookmarks to Fauxbar's database
+function indexBookmarks(bookmarkTreeNode) {
+	if (bookmarkTreeNode.url) {
+		window.db.transaction(function(tx){
+			tx.executeSql('INSERT OR REPLACE INTO urls (url, type, title, frecency, id) VALUES (?, ?, ?, ?, ?)', [bookmarkTreeNode.url, 2, bookmarkTreeNode.title, localStorage.option_frecency_unvisitedbookmark, bookmarkTreeNode.id]);
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
+	}
+	if (bookmarkTreeNode.children) {
+		for (var b in bookmarkTreeNode.children) {
+			indexBookmarks(bookmarkTreeNode.children[b]);
+		}
+	}
+}
+
+// Reset or create the database tables
+function clearIndex(reindexing) {
+	if (openDb(true)) {
+		window.clearingIndex = true;
+		window.db.transaction(function(tx){
+			window.indexStatus = "Creating database tables..."; // Step 2
+			chrome.extension.sendRequest({message:"currentStatus",status:"Creating database tables...", step:2}); // Step 2
+
+			// Address Box history items and bookmarks
+			tx.executeSql('DROP TABLE IF EXISTS urls');
+			tx.executeSql('CREATE TABLE urls (url TEXT, type NUMERIC, title TEXT, frecency NUMERIC DEFAULT -1, queuedfordeletion NUMERIC DEFAULT 0, id NUMERIC DEFAULT 0, tag TEXT DEFAULT "")'); // type1 = history item, type2 = bookmark
+			tx.executeSql('CREATE INDEX IF NOT EXISTS urlindex ON urls (url)');
+			tx.executeSql('CREATE INDEX IF NOT EXISTS titleindex ON urls (title)');
+			tx.executeSql('CREATE INDEX IF NOT EXISTS frecencyindex ON urls (frecency)');
+			tx.executeSql('CREATE INDEX IF NOT EXISTS idindex ON urls (id)');
+			tx.executeSql('CREATE INDEX IF NOT EXISTS typeindex ON urls (type)');
+			tx.executeSql('CREATE INDEX IF NOT EXISTS tagindex ON urls (tag)');
+
+			// Error log table
+			tx.executeSql('CREATE TABLE IF NOT EXISTS errors (id INTEGER PRIMARY KEY, date NUMERIC, version TEXT, url TEXT, file TEXT, line NUMERIC, message TEXT, count NUMERIC)');
+
+			// URL tag table
+			tx.executeSql('CREATE TABLE IF NOT EXISTS tags (url TEXT DEFAULT "", tag TEXT DEFAULT "")');
+			tx.executeSql('CREATE INDEX IF NOT EXISTS tagurlindex ON tags (url)');
+			tx.executeSql('CREATE INDEX IF NOT EXISTS tagtagindex ON tags (tag)');
+
+			// If we're setting up the database for the first time, and not just reindexing...
+			if (!localStorage.indexedbefore || localStorage.indexedbefore != 1) {
+
+				// Site tile thumbnails
+				tx.executeSql('DROP TABLE IF EXISTS thumbs');
+				tx.executeSql('CREATE TABLE thumbs (url TEXT UNIQUE ON CONFLICT REPLACE, data BLOB, date INTEGER, title TEXT, frecency NUMERIC DEFAULT -1, manual NUMERIC DEFAULT 0)'); // "manual" meaning, is the thumb a user-defined site tile, not necessarily a top frecency scored one
+				tx.executeSql('CREATE INDEX IF NOT EXISTS urlindex ON thumbs (url)');
+				tx.executeSql('CREATE INDEX IF NOT EXISTS frecencyindex ON thumbs (frecency)');
+
+				// Search Box search engines
+				tx.executeSql('DROP TABLE IF EXISTS opensearches');
+				tx.executeSql('CREATE TABLE opensearches (shortname TEXT UNIQUE ON CONFLICT REPLACE, iconurl TEXT, searchurl TEXT, xmlurl TEXT, xml TEXT, isdefault NUMERIC DEFAULT 0, method TEXT DEFAULT "get", position NUMERIC DEFAULT 0, suggestUrl TEXT, keyword TEXT DEFAULT "")');
+
+				// Search Box search queries
+				tx.executeSql('DROP TABLE IF EXISTS searchqueries');
+				tx.executeSql('CREATE TABLE searchqueries (id INTEGER PRIMARY KEY AUTOINCREMENT, query TEXT)');
+				tx.executeSql('CREATE INDEX IF NOT EXISTS queryindex ON searchqueries (query)');
+
+				window.indexStatus = "Adding search engines..."; // Step 3
+				chrome.extension.sendRequest({message:"currentStatus",status:"Adding search engines...", step:3}); // Step 3
+
+				// Add Google, Yahoo! and Bing to the Search Box
+				tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, suggestUrl, keyword) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', ["Google", "google.ico", "http://www.google.com/search?q={searchTerms}", "", "", "1", "get", "http://suggestqueries.google.com/complete/search?json&q={searchTerms}", "g"]);
+				tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, suggestUrl, keyword) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', ["Yahoo!", "yahoo.ico", "http://search.yahoo.com/search?p={searchTerms}", "", "", "0", "get", "http://ff.search.yahoo.com/gossip?output=fxjson&amp;command={searchTerms}", "y"]);
+				tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, suggestUrl, keyword) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', ["Bing", "bing.ico", "http://www.bing.com/search?q={searchTerms}", "", "", "0", "get", "http://api.bing.com/osjson.aspx?query={searchTerms}", "b"]);
+			} else {
+				window.indexStatus = "Skipping search engines..."; // Step 3
+				chrome.extension.sendRequest({message:"currentStatus",status:"Skipping search engines...", step:3}); // Step 3
+			}
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		}, startIndexing);
+	}
+}
+
+function reapplyKeywords() {
+	if (openDb()) {
+		window.db.transaction(function(tx){
+			tx.executeSql('SELECT * FROM tags', [], function(tx, results) {
+				var len = results.rows.length, i;
+				if (len > 0) {
+					for (var i = 0; i < len; i++) {
+						tx.executeSql('UPDATE urls SET tag = ? WHERE url = ?', [results.rows.item(i).tag, results.rows.item(i).url], [], function(tx, results2){
+							if (results2.rowsAffected == 0) {
+								tx.executeSql('DELETE FROM tags WHERE tag = ? AND url = ?', [results.rows.item(i).tag, results.rows.item(i).url]);
+							}
+						});
+					}
+				}
+			});
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
+	}
+}

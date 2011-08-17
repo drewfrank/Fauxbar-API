@@ -1,7 +1,29 @@
+// http://stackoverflow.com/questions/890807/iterate-over-a-javascript-associative-array-in-sorted-order
+function sortKeys(obj) {
+    var keys = [];
+    for(var key in obj) {
+        keys.push(key);
+    }
+    return keys;
+}
+
+// Truncate a page tile title and add "..." to its end
+function truncatePageTileTitle(tileTitle) {
+	if ($(tileTitle).outerWidth() > 212) {
+		var origTitle = $(".toptitletext",tileTitle).text();
+		while ($(tileTitle).outerWidth() > 200) {
+			$(".toptitletext",tileTitle).text($(".toptitletext",tileTitle).text().substring(0,$(".toptitletext",tileTitle).text().length-1));
+		}
+		$(".toptitletext",tileTitle).text($(".toptitletext",tileTitle).text()+"...");
+		$(tileTitle).attr("title",origTitle);
+	}
+}
+
+
 function resizeTileThumbs() {
 	var shortestHeight = 132;
 	$("#topthumbs div.thumb img").each(function(){
-		if ($(this).innerHeight()-200 < $(this).parent().outerHeight() && $(this).innerHeight()-200 < shortestHeight && $(this).innerHeight()-200 > 0) {
+		if ($(this).innerHeight()-200 < $(this).parent().outerHeight() && $(this).innerHeight()-200 < shortestHeight && $(this).innerHeight()-200 > 20) {
 			shortestHeight = $(this).innerHeight()-200;
 			$("#topthumbs div.thumb").css("height",shortestHeight+"px");
 		}
@@ -11,6 +33,27 @@ function resizeTileThumbs() {
 function setMaxTilesPerRow(cols) {
 	// Set max width for the thumbs container
 	$("#topthumbs").css("max-width",(cols*242)+"px");
+}
+
+function setTileOnLoads() {
+	// Shrink thumbs if needed (used when browser window screenshots are rather wide)
+	$("#topthumbs div.thumb img")
+	.bind("load", function(){
+		truncatePageTileTitle($(this).parents(".sitetile").children(".toptitle"));
+		$(this).parents(".sitetile").attr("doneLoading",1); //css("opacity",1);
+		resizeTileThumbs();
+		if ($(".sitetile").length == $('.sitetile[doneLoading="1"]').length) {
+			$(".sitetile").css("opacity",1);
+		}
+	})
+	.bind("error",function(){
+		truncatePageTileTitle($(this).parents(".sitetile").children(".toptitle"));
+		$(this).parents(".sitetile").attr("doneLoading",1); //css("opacity",1);
+		$(this).remove();
+		if ($(".sitetile").length == $('.sitetile[doneLoading="1"]').length) {
+			$(".sitetile").css("opacity",1);
+		}
+	});
 }
 
 function renderSiteTiles(thumbs) {
@@ -23,22 +66,117 @@ function renderSiteTiles(thumbs) {
 	setMaxTilesPerRow(localStorage.option_topsitecols);
 	$("#topthumbs").append(thumbs);
 
-	// Shrink thumbs if needed (used when browser window screenshots are rather wide)
-	$("#topthumbs div.thumb img").bind("load", resizeTileThumbs);
+	setTileOnLoads();
 
 	resizeTileThumbs();
-
-	// If page title is too long for the tile, truncate it
-	var origTitle = '';
-	$("#topthumbs a .toptitle").each(function(){
-		truncatePageTileTitle(this);
-	});
 
 	// Display tiles or not
 	if (localStorage.sapps == 2 && localStorage.option_showapps == 1) {
 		$("#topthumbs").css("display","none").css("opacity",1);
 	} else {
 		$("#topthumbs").css("opacity",1);
+	}
+}
+
+// If user's opted to show top site tiles...
+if (localStorage.indexComplete == 1 && !getHashVar("options")) {
+	if (localStorage.option_showtopsites == 1) {
+
+		// Generate top sites if Fauxbar's index is fresh. Either way, show the tiles afterwards
+		$("#customstyle").append("#topthumbs a, #apps a { background-color:"+localStorage.option_resultbgcolor+"; color:"+localStorage.option_titlecolor+"; }");
+		$("#customstyle").append("#topthumbs a:hover, #apps a:hover, #apps a.rightClickedApp { background-color:"+localStorage.option_selectedresultbgcolor+"; color:"+localStorage.option_selectedtitlecolor+"; }");
+
+		if (localStorage.option_pagetilearrangement == "manual" && localStorage.siteTiles) {
+			window.tiles = jQuery.parseJSON(localStorage.siteTiles);
+			var thumbs = '';
+			for (var t in window.tiles) {
+				thumbs += renderPageTile(window.tiles[t].url, window.tiles[t].title);
+			}
+			renderSiteTiles(thumbs);
+			if (getHashVar("edittiles") == 1) {
+				setTimeout(enterTileEditMode, 10);
+			}
+		} else {
+
+			chrome.tabs.getAllInWindow(null, function(tabs) {
+				window.currentTabs = tabs;
+				if (openDb()) {
+					window.db.transaction(function(tx){
+
+						// Get top sites
+						var urlMd5 = '';
+						var thumbs = '';
+
+						// Choose which page tiles to display
+						switch(localStorage.option_pagetilearrangement) {
+							case "manual":
+								break;
+
+							// case: "frecency"
+							default:
+
+								function processTiles(tx) {
+
+									// Don't fetch file:/// URLs?
+									var hideFiles = localStorage.option_hidefiletiles == 1 ? ' url NOT LIKE "file:///%" AND ' : '';
+
+									// Don't fetch pinned URLs?
+									var hidePinned = '';
+									if (localStorage.option_hidepinnedtiles == 1) {
+										for (var t in window.currentTabs) {
+											if (window.currentTabs[t].pinned == true) {
+												hidePinned += ' url NOT LIKE "'+explode("#",window.currentTabs[t].url)[0]+'%" AND ';
+											}
+										}
+									}
+
+									// Don't fetch opened URLs?
+									var hideOpened = '';
+									if (localStorage.option_hideopentiles == 1) {
+										for (var ot in window.currentTabs) {
+											hideOpened += ' url NOT LIKE "'+explode("#",window.currentTabs[ot].url)[0]+'%" AND ';
+										}
+									}
+
+									// Get top sites
+									var statement = 'select url, title from thumbs WHERE '+hideFiles+hidePinned+hideOpened+' frecency > 0 order by frecency DESC limit ?';
+									tx.executeSql(statement, [localStorage.option_topsiterows*localStorage.option_topsitecols], function(tx, results){
+										var len = results.rows.length, i;
+										var newHref = '';
+										var thumbUrl = '';
+
+										// Create HTML for each site tile
+										for (var i = 0; i < len; i++) {
+											thumbUrl = results.rows.item(i).url;
+											thumbs += renderPageTile(thumbUrl, results.rows.item(i).title);
+										}
+										renderSiteTiles(thumbs);
+									});
+								}
+
+								if (!localStorage.almostdone || localStorage.almostdone == 1) {
+									tx.executeSql('UPDATE thumbs SET frecency = 0');
+									tx.executeSql('SELECT DISTINCT url, title, frecency FROM urls WHERE url NOT LIKE "data:%" AND title != "" ORDER BY frecency DESC LIMIT 30', [], function(tx, results){
+										var len = results.rows.length, i;
+										if (len > 0) {
+											for (var i = 0; i < len; i++) {
+												tx.executeSql('INSERT OR REPLACE INTO thumbs (url, title, frecency) VALUES (?, ?, ?)', [results.rows.item(i).url, results.rows.item(i).title, results.rows.item(i).frecency]);
+											}
+										}
+										localStorage.almostdone = 0;
+										processTiles(tx);
+									});
+								} else {
+									processTiles(tx);
+								}
+								break;
+						}
+					}, function(t){
+						errorHandler(t, getLineInfo());
+					});
+				}
+			});
+		}
 	}
 }
 
@@ -49,105 +187,10 @@ $(document).ready(function(){
 	$("#customstyle").append("#contextMenu .menuOption:hover { background-color:"+localStorage.option_selectedresultbgcolor+"; color:"+localStorage.option_selectedtitlecolor+"; }");
 	$("#customstyle").append("#contextMenu .disabled:hover { color:"+localStorage.option_titlecolor+"; background:none; }");
 
-	// If user's opted to show top site tiles...
-	if (localStorage.option_showtopsites == 1) {
 
-		// Generate top sites if Fauxbar's index is fresh. Either way, show the tiles afterwards
-		$("#customstyle").append("#topthumbs a, #apps a { background-color:"+localStorage.option_resultbgcolor+"; color:"+localStorage.option_titlecolor+"; }");
-		$("#customstyle").append("#topthumbs a:hover, #apps a:hover, #apps a.rightClickedApp { background-color:"+localStorage.option_selectedresultbgcolor+"; color:"+localStorage.option_selectedtitlecolor+"; }");
-
-		chrome.tabs.getAllInWindow(null, function(tabs) {
-			window.currentTabs = tabs;
-			if (openDb()) {
-				window.db.transaction(function(tx){
-
-					// Get top sites
-					var urlMd5 = '';
-					var thumbs = '';
-
-					// Choose which page tiles to display
-					switch(localStorage.option_pagetilearrangement) {
-						case "manual":
-							if (localStorage.siteTiles) {
-								window.tiles = jQuery.parseJSON(localStorage.siteTiles);
-								for (var t in window.tiles) {
-									thumbs += renderPageTile(window.tiles[t].url, window.tiles[t].title);
-								}
-							}
-							renderSiteTiles(thumbs);
-							if (getHashVar("edittiles") == 1) {
-								setTimeout(enterTileEditMode, 10);
-							}
-							break;
-
-						// case: "frecency"
-						default:
-
-							function processTiles(tx) {
-
-								// Don't fetch file:/// URLs?
-								var hideFiles = localStorage.option_hidefiletiles == 1 ? ' url NOT LIKE "file:///%" AND ' : '';
-
-								// Don't fetch pinned URLs?
-								var hidePinned = '';
-								if (localStorage.option_hidepinnedtiles == 1) {
-									for (var t in window.currentTabs) {
-										if (window.currentTabs[t].pinned == true) {
-											hidePinned += ' url NOT LIKE "'+explode("#",window.currentTabs[t].url)[0]+'%" AND ';
-										}
-									}
-								}
-
-								// Don't fetch opened URLs?
-								var hideOpened = '';
-								if (localStorage.option_hideopentiles == 1) {
-									for (var ot in window.currentTabs) {
-										hideOpened += ' url NOT LIKE "'+explode("#",window.currentTabs[ot].url)[0]+'%" AND ';
-									}
-								}
-
-								// Get top sites
-								var statement = 'select url, title from thumbs WHERE '+hideFiles+hidePinned+hideOpened+' frecency > 0 order by frecency DESC limit ?';
-								tx.executeSql(statement, [localStorage.option_topsiterows*localStorage.option_topsitecols], function(tx, results){
-									var len = results.rows.length, i;
-									var newHref = '';
-									var thumbUrl = '';
-
-									// Create HTML for each site tile
-									for (var i = 0; i < len; i++) {
-										thumbUrl = results.rows.item(i).url;
-										thumbs += renderPageTile(thumbUrl, results.rows.item(i).title);
-									}
-									renderSiteTiles(thumbs);
-								});
-							}
-
-							if (!localStorage.almostdone || localStorage.almostdone == 1) {
-								tx.executeSql('UPDATE thumbs SET frecency = 0');
-								tx.executeSql('SELECT DISTINCT url, title, frecency FROM urls WHERE url NOT LIKE "data:%" AND title != "" ORDER BY frecency DESC LIMIT 30', [], function(tx, results){
-									var len = results.rows.length, i;
-									if (len > 0) {
-										for (var i = 0; i < len; i++) {
-											tx.executeSql('INSERT OR REPLACE INTO thumbs (url, title, frecency) VALUES (?, ?, ?)', [results.rows.item(i).url, results.rows.item(i).title, results.rows.item(i).frecency]);
-										}
-									}
-									localStorage.almostdone = 0;
-									processTiles(tx);
-								});
-							} else {
-								processTiles(tx);
-							}
-							break;
-					}
-				}, function(t){
-					errorHandler(t, getLineInfo());
-				});
-			}
-		});
-	}
 
 	// If enabled to show...
-	if (localStorage.option_showapps == 1) {
+	if (localStorage.option_showapps == 1 && !getHashVar("options")) {
 
 		// Get all apps and set their uninstall link
 		window.uninstall = function(appId) {
@@ -247,7 +290,10 @@ $(document).ready(function(){
 				if (window.sapped == true) {
 					$("#apps").animate({opacity:0}, trans, function(){
 						$(this).css("display","none");
-						$("#topthumbs").css("opacity",0).css("display","block").animate({opacity:1}, trans);;
+						$("#topthumbs").css("opacity",0).css("display","block").animate({opacity:1}, trans);
+						$(".toptitle").each(function(){
+							truncatePageTileTitle(this);
+						});
 					});
 				}
 				localStorage.sapps = 1;
@@ -257,7 +303,7 @@ $(document).ready(function(){
 				if (window.sapped == true) {
 					$("#topthumbs").animate({opacity:0}, trans, function(){
 						$(this).css("display","none");
-						$("#apps").css("opacity",0).css("display","block").animate({opacity:1}, trans);;
+						$("#apps").css("opacity",0).css("display","block").animate({opacity:1}, trans);
 					});
 				}
 				localStorage.sapps = 2;
