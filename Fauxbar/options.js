@@ -232,10 +232,10 @@ $.get("options.html", function(response){
 	$("#option_font").live("change", function(){
 		var newFont = $(this).val().trim();
 		if (newFont) {
-			$("#customstyle").append('#thefauxbar *, #options .resultpreview * { font-family:'+newFont+', Segoe UI, Arial, sans-serif; }');
+			$("#customstyle").append('#thefauxbar *, #options .resultpreview * { font-family:'+newFont+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; }');
 		} else {
 			var lucida = window.OS == "Mac" ? "Lucida Grande, " : "";
-			$("#customstyle").append('#thefauxbar *, #options .resultpreview * { font-family:'+lucida+' Segoe UI, Arial, sans-serif; }');
+			$("#customstyle").append('#thefauxbar *, #options .resultpreview * { font-family:'+lucida+' Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; }');
 		}
 	});
 
@@ -304,12 +304,12 @@ $.get("options.html", function(response){
 
 	// Update favorite/bookmark icon if user changes it
 	$("#option_favopacity").live("change", function(){
-		$("#fauxstar").attr("src","fauxstar.png").attr("data-pb-tint-opacity", $(this).val() / 100);
+		$("#fauxstar").addClass("filter-tint").attr("src","fauxstar.png").attr("data-pb-tint-opacity", $(this).val() / 100);
 		processFilters();
 		$(".favstar").attr("src",$("#fauxstar").attr("src"));
 	});
 	$("#option_favcolor").live("change", function(){
-		$("#fauxstar").attr("src","fauxstar.png").attr("data-pb-tint-colour",$(this).val());
+		$("#fauxstar").addClass("filter-tint").attr("src","fauxstar.png").attr("data-pb-tint-colour",$(this).val());
 		processFilters();
 		$(".favstar").attr("src",$("#fauxstar").attr("src"));
 	});
@@ -340,6 +340,10 @@ $.get("options.html", function(response){
 		toAppend += "#contextMenu .menuHr { background-color:"+$("#option_separatorcolor").val()+"; }";
 		toAppend += ".inputwrapper { background-color:"+$("#option_inputbgcolor").val()+"; }";
 		toAppend += ".inputwrapper input { color:"+$("#option_fauxbarfontcolor").val()+"; }";
+
+		var placeholderRGBA = hexToR(localStorage.option_fauxbarfontcolor)+','+hexToG(localStorage.option_fauxbarfontcolor)+','+hexToB(localStorage.option_fauxbarfontcolor);
+		toAppend += "input::-webkit-input-placeholder, .triangle { color:rgba("+placeholderRGBA+",.5); }";
+		toAppend += "#addressbox_triangle:hover .triangle, #opensearch_triangle:hover .triangle, #super_triangle:hover .triangle { color:rgba("+placeholderRGBA+",.59); }";
 		$("#customstyle").append(toAppend);
 	}
 
@@ -722,12 +726,6 @@ function loadOptionsJS() {
 		}
 	});
 
-	$("#option_pagetilearrangement, #option_topsiterows, #option_topsitecols").bind("change", function(){
-		setTimeout(function(){
-			chrome.extension.sendRequest("loadThumbsIntoMemory");
-		}, 200);
-	});
-
 	// Get Fauxbar's Twitter RSS feed, find the first non-reply, and use it as a news message
 	// If there's no cache or if cache is more than an hour old, fetch news
 	if (!localStorage.latestNewsTime || !localStorage.latestNews || parseFloat(date("U")) - parseFloat(localStorage.latestNewsTime) > 3600) {
@@ -844,8 +842,75 @@ function loadDatabaseStats() {
 					$("#thumbsplural").html('thumbnails');
 				}
 			});
+
+			tx.executeSql('SELECT count(distinct url) as urls FROM inputurls', [], function(tx, results){
+				$("#stats_inputurls").html(number_format(results.rows.item(0).urls));
+				if (results.rows.item(0).urls == 1) {
+					$("#inputurlsplural").html('URL');
+				} else {
+					$("#inputurlsplural").html('URLs');
+				}
+			});
 		}, function(t){
 			errorHandler(t, getLineInfo());
+		});
+	}
+}
+
+// Let user add a search engine manually
+function addEngineManually() {
+	if (openDb()) {
+		window.db.transaction(function(tx){
+			tx.executeSql('INSERT INTO opensearches (shortname, searchurl, keyword) VALUES (?, ?, ?)', ['Untitled', '', '']);
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		}, getSearchEngines);
+	}
+}
+
+// Save background image from user's computer
+$("#bgFile").live("change",function(e){
+	var file = e.target.files[0];
+	if (!strstr(file.type, "image/")) {
+		alert("Error: File is not an image.");
+		return;
+	}
+	var reader = new FileReader();
+	reader.onload = (function(theFile) {
+		return function(e) {
+			window.requestFileSystem(window.PERSISTENT, 50*1024*1024, function(fs){
+				fs.root.getFile('/background.image', {create:true}, function(fileEntry) {
+					fileEntry.createWriter(function(fileWriter) {
+						fileWriter.write(dataURItoBlob(e.target.result));
+						$("#option_bgimg").val("").change();
+						setTimeout(function(){
+							$("#option_bgimg").val('filesystem:'+chrome.extension.getURL("persistent/background.image")).change();
+						},1);
+						window.location.reload();
+					}, fileErrorHandler);
+				}, fileErrorHandler);
+			}, fileErrorHandler);
+		};
+	})(file);
+	reader.readAsDataURL(file);
+});
+
+$(document).ready(function(){
+	if (window.OS == "Mac") {
+		setTimeout(function(){
+			$("h1").css("font-size","18px");
+		},100);
+	}
+});
+
+function clearUsageHabits() {
+	if (openDb()) {
+		window.db.transaction(function(tx){
+			tx.executeSql('DELETE FROM inputurls');
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		}, function(){
+			window.location.reload();
 		});
 	}
 }

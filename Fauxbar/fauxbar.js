@@ -10,6 +10,9 @@ window.placeholder = "Go to a web site";
 // Now that the Fauxbar page is pretty much loaded, load the JS files to apply custom colors to the various icons, if they're not the defaults.
 // Page loads a bit slower if these are loaded first, so that's why we're loading them now.
 if (localStorage.option_iconcolor.toLowerCase() != "#3374ab" || localStorage.option_favopacity != 0 || getHashVar("options") == 1) {
+	if (localStorage.option_favopacity != 0) {
+		$("#fauxstar").addClass("filter-tint");
+	}
 	//setTimeout(function(){
 		delete processFilters;
 		jQuery.getScript("mezzoblue-PaintbrushJS-098389a/common.js");
@@ -92,8 +95,8 @@ function changeInputFontSize() {
 		if (newPadding > 10) {
 			newPadding = 10;
 		}
-		if (newPadding < 6) {
-			newPadding = 6;
+		if (newPadding < 7) {
+			newPadding = 7;
 		}
 
 		var newWidth = newSize-11;
@@ -199,7 +202,7 @@ $(document).ready(function(){
 	if (!localStorage.customStyles) {
 
 		// Load the user's font name
-		$("#customstyle").append("#apps, #topthumbs { font-family:"+localStorage.option_font+",Segoe UI, Arial, sans-serif; font-size:"+localStorage.option_sappsfontsize+"px; }");
+		$("#customstyle").append("#apps, #topthumbs { font-family:"+localStorage.option_font+",Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; font-size:"+localStorage.option_sappsfontsize+"px; }");
 
 		// Show or hide the Fauxbar's drop shadow
 		if (localStorage.option_shadow && localStorage.option_shadow != 1) {
@@ -243,12 +246,19 @@ $(document).ready(function(){
 
 		// Apply the user's global font name, if selected
 		if (localStorage.option_font && localStorage.option_font.length) {
-			$("#customstyle").append("#thefauxbar *, #options .resultpreview * { font-family:"+localStorage.option_font+", Segoe UI, Arial, sans-serif; }");
+			$("#customstyle").append("#thefauxbar *, #options .resultpreview * { font-family:"+localStorage.option_font+", Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; }");
 		}
 
 		// Apply the user's specified font size for the Address Box and Search Box
 		if (localStorage.option_inputfontsize && localStorage.option_inputfontsize.length) {
-			$("#customstyle").append("#addresswrapper input, #searchwrapper input { font-size:"+localStorage.option_inputfontsize+"px; }");
+			$("#customstyle").append("#addresswrapper input, #searchwrapper input, .switchtext, .insetButton { font-size:"+localStorage.option_inputfontsize+"px; }");
+			if (localStorage.option_inputfontsize == 13) {
+				$("#customstyle").append(".insetButton { padding:2px 3px 1px 1px; } .insetButton .triangle { position:relative; top:0px; }");
+			}
+		}
+
+		if (window.OS == "Mac") {
+			$("#customstyle").append(".triangle { position:relative; top:1px; }");
 		}
 
 		// Apply the user's specified color for Address Box result title texts, and Search Box queries/suggestions
@@ -330,11 +340,13 @@ $(document).ready(function(){
 			changeFauxbarColors();
 		}
 
-
-
 		// Apply custom Address Box and Search Box font color
 		if (localStorage.option_fauxbarfontcolor && localStorage.option_fauxbarfontcolor.length) {
+			var placeholderRGBA = hexToR(localStorage.option_fauxbarfontcolor)+','+hexToG(localStorage.option_fauxbarfontcolor)+','+hexToB(localStorage.option_fauxbarfontcolor);
 			$("#customstyle").append(".inputwrapper input { color:"+localStorage.option_fauxbarfontcolor+"; }");
+			$("#customstyle").append("input::-webkit-input-placeholder, .triangle { color:rgba("+placeholderRGBA+",.5); }");
+			$("#customstyle").append("input::-webkit-input-placeholder { font-style:"+(window.OS == "Windows" ? "italic" : "normal")+" }");
+			$("#customstyle").append("#addressbox_triangle:hover .triangle, #opensearch_triangle:hover .triangle, #super_triangle:hover .triangle { color:rgba("+placeholderRGBA+",.59); }");
 		}
 
 		// So, just make the Fauxbar appear instantly, now that all the custom colors and stuff have been applied.

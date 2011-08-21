@@ -7,8 +7,6 @@ window.requestFileSystem(window.PERSISTENT, 50*1024*1024, function(fs){
 	fs.root.getDirectory('thumbs', {create:true}, function(dirEntry) {}, fileErrorHandler);
 }, fileErrorHandler);
 
-loadThumbsIntoMemory = function() { }
-
 // Record if we should restart the Helper next time it's disabled
 chrome.management.onDisabled.addListener(function(extension) {
 	if (window.doEnable == true && extension.name == "Fauxbar Memory Helper") {
@@ -60,11 +58,10 @@ chrome.extension.onRequestExternal.addListener(function(request){
 });
 
 $(document).ready(function(){
-	loadThumbsIntoMemory();
 
 	// New version info
-	var currentVersion = "0.5.3";
-	localStorage.updateBlurb = ". &nbsp;Thumbnail images have been reset (sorry), but start-up loading times have been improved.";
+	var currentVersion = "0.5.4";
+	localStorage.updateBlurb = " (release candidate). &nbsp;Several improvements and fixes have been added.";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
 		localStorage.readUpdateMessage = 0;
 	}
@@ -91,11 +88,6 @@ $(document).ready(function(){
 		}
 	}
 
-	// Re-enable error alerts for this release (0.2.0)
-	if (!localStorage.currentVersion || (currentVersion == "0.2.0" && localStorage.currentVersion != "0.2.0")) {
-		localStorage.option_alert = 1;
-	}
-
 	// Set current version
 	localStorage.currentVersion = currentVersion;
 
@@ -113,9 +105,6 @@ $(document).ready(function(){
 			}
 		}, function(t){
 			errorHandler(t, getLineInfo());
-		}, function(){
-			// Load top site tile thumbnails into memory upon load
-			loadThumbsIntoMemory();
 		});
 	}
 
@@ -152,6 +141,13 @@ $(document).ready(function(){
 		// Vacuum the DB upon start, to help keep it speedy. Added in 0.5.0
 		window.db.transaction(function(tx){
 			tx.executeSql('VACUUM');
+		});
+
+		// Add `inputurls` table, added in 0.5.4
+		window.db.transaction(function(tx){
+			tx.executeSql('CREATE TABLE IF NOT EXISTS inputurls (input TEXT, url TEXT)');
+			tx.executeSql('CREATE INDEX IF NOT EXISTS inputindex ON inputurls (input)');
+			tx.executeSql('CREATE INDEX IF NOT EXISTS urlindex ON inputurls (url)');
 		});
 
 		// Add `tag` table, added in 0.5.0
@@ -205,7 +201,6 @@ $(document).ready(function(){
 					if (len > 0) {
 						window.thumbsToDelete = new Array();
 						for (var i = 0; i < len; i++) {
-							console.log("Adding "+results2.rows.item(i).url);
 							window.thumbsToDelete[window.thumbsToDelete.length] = results2.rows.item(i).url;
 						}
 					}
@@ -689,33 +684,6 @@ function beginIndexing() {
 	reindex();
 }
 
-// canvas.toBlob is not implemented in Chrome yet! So we have to build the blob ourselves.
-// http://mustachified.com/master.js
-// via http://lists.whatwg.org/pipermail/whatwg-whatwg.org/2011-April/031243.html
-// via https://bugs.webkit.org/show_bug.cgi?id=51652
-// via http://code.google.com/p/chromium/issues/detail?id=67587
-function dataURItoBlob(dataURI, callback) {
-	// convert base64 to raw binary data held in a string
-	// doesn't handle URLEncoded DataURIs
-	var byteString = atob(dataURI.split(',')[1]);
-
-	// separate out the mime component
-	var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
-
-	// write the bytes of the string to an ArrayBuffer
-	var ab = new ArrayBuffer(byteString.length);
-	var ia = new Uint8Array(ab);
-	for (var i = 0; i < byteString.length; i++) {
-	    ia[i] = byteString.charCodeAt(i);
-	}
-
-	// write the ArrayBuffer to a blob, and you're done
-	var bb = new window.WebKitBlobBuilder();
-	bb.append(ab);
-	return bb.getBlob(mimeString);
-};
-
-
 // Capture tab screenshot and save it
 function captureScreenshot(sender) {
 	if (openDb()) {
@@ -755,7 +723,7 @@ function captureScreenshot(sender) {
 											var width = 430; // Double width than the actual displayed tile size, so that it gets shrunk and looks nice.
 											var height = Math.round(img.height * width / img.width);
 											myCanvas.width = width;
-											myCanvas.height = height;
+											myCanvas.height = height > 268 ? 268 : height;
 											context.drawImage(img,0,0, width, height);
 
 											// Save image data
@@ -800,6 +768,18 @@ chrome.extension.onRequest.addListener(function(request, sender){
 		captureScreenshot(sender);
 	}
 
+	// Record what the user typed to go to a URL, to help out the pre-rendering guesswork
+	else if (request.action && request.action == "record input url") {
+		if (localStorage.option_prerender == 1 && openDb()) {
+			window.db.transaction(function(tx){
+				tx.executeSql('DELETE FROM inputurls WHERE input = ?', [request.input.toLowerCase()]);
+				tx.executeSql('INSERT INTO inputurls (input, url) VALUES (?, ?)', [request.input.toLowerCase(), request.url]);
+			}, function(t){
+				errorHandler(t, getLineInfo());
+			});
+		}
+	}
+
 	// Pre-rendered page is being navigated to, so let's process it in a moment
 	else if (request == "process prerendered page") {
 
@@ -810,16 +790,6 @@ chrome.extension.onRequest.addListener(function(request, sender){
 				captureScreenshot(sender);
 			});
 		}, 500);
-	}
-
-	// User has switched tile selection type, so reload thumbs data into background page
-	else if (request == "loadThumbsIntoMemory") {
-		loadThumbsIntoMemory();
-	}
-
-	// Store top site thumbs html II
-	else if (request.action && request.action == "md5thumb") {
-		window.md5thumbs[request.md5] = request.data;
 	}
 
 	// Request received to do the indexing process
@@ -1067,6 +1037,7 @@ chrome.history.onVisitRemoved.addListener(function(removed) {
 				tx.executeSql('UPDATE thumbs SET frecency = -1');
 				tx.executeSql('UPDATE thumbs SET frecency = -2 WHERE manual != 1');
 				tx.executeSql('UPDATE urls SET frecency = ? WHERE type = 2', [localStorage.option_frecency_unvisitedbookmark]);
+				tx.executeSql('DELETE FROM inputurls');
 			}, function(t){
 				errorHandler(t, getLineInfo());
 			});
@@ -1080,6 +1051,7 @@ chrome.history.onVisitRemoved.addListener(function(removed) {
 					tx.executeSql('UPDATE thumbs SET frecency = -1 WHERE url = ?', [removed.urls[r]]);
 					tx.executeSql('UPDATE thumbs SET frecency = -2 WHERE url = ? AND manual != 1', [removed.urls[r]]);
 					tx.executeSql('UPDATE urls SET frecency = ? WHERE url = ? AND type = 2', [localStorage.option_frecency_unvisitedbookmark, removed.urls[r]]);
+					tx.executeSql('DELETE FROM inputurls WHERE url = ?', [removed.urls[r]]);
 				}
 			}, function(t){
 				errorHandler(t, getLineInfo());
@@ -1126,6 +1098,8 @@ chrome.bookmarks.onCreated.addListener(function(id, bookmark){
 	}
 });
 
+delete localStorage.reindexingBookmarks;
+
 function reindexBookmarks(bookmarkTreeNode) {
 	if (bookmarkTreeNode.url) {
 		window.bookmarkNodesToReindex[window.bookmarkNodesToReindex.length] = bookmarkTreeNode;
@@ -1137,11 +1111,21 @@ function reindexBookmarks(bookmarkTreeNode) {
 					tx.executeSql('INSERT OR REPLACE INTO urls (url, type, title, frecency, id) VALUES (?, ?, ?, ?, ?)', [node.url, 2, node.title, calculateFrecency(visitItems), node.id]);
 				}, function(t){
 					errorHandler(t, getLineInfo());
-				}, reapplyKeywords);
+				}, function(){
+					window.lastBookmarkReindexTime = date("U");
+					setTimeout(function(){
+						if (date("U") - window.lastBookmarkReindexTime > 3) {
+							chrome.extension.sendRequest("done reindexing bookmarks");
+							delete localStorage.reindexingBookmarks;
+						}
+					}, 4000);
+					reapplyKeywords();
+				});
 			});
 		}, 100);
 	}
 	if (bookmarkTreeNode.children) {
+		window.bookmarksToIndex = window.bookmarksToIndex + bookmarkTreeNode.children.length;
 		for (var b in bookmarkTreeNode.children) {
 			reindexBookmarks(bookmarkTreeNode.children[b]);
 		}
@@ -1169,8 +1153,12 @@ chrome.bookmarks.onRemoved.addListener(function(id, removeInfo){
 			if (window.results.rowsAffected == 0) {
 				window.bookmarkNodesToReindex = new Array;
 				chrome.bookmarks.getTree(function(bookmarkTreeNodes){
-					for (var b in bookmarkTreeNodes) {
-						reindexBookmarks(bookmarkTreeNodes[b]);
+					if (bookmarkTreeNodes.length) {
+						localStorage.reindexingBookmarks = 1;
+						chrome.extension.sendRequest("reindexing bookmarks");
+						for (var b in bookmarkTreeNodes) {
+							reindexBookmarks(bookmarkTreeNodes[b]);
+						}
 					}
 				});
 			}
@@ -1464,6 +1452,11 @@ function clearIndex(reindexing) {
 			tx.executeSql('CREATE TABLE IF NOT EXISTS tags (url TEXT DEFAULT "", tag TEXT DEFAULT "")');
 			tx.executeSql('CREATE INDEX IF NOT EXISTS tagurlindex ON tags (url)');
 			tx.executeSql('CREATE INDEX IF NOT EXISTS tagtagindex ON tags (tag)');
+
+			// User input > url table, for helping out with the pre-rendering guesswork
+			tx.executeSql('CREATE TABLE IF NOT EXISTS inputurls (input TEXT, url TEXT)');
+			tx.executeSql('CREATE INDEX IF NOT EXISTS inputindex ON inputurls (input)');
+			tx.executeSql('CREATE INDEX IF NOT EXISTS urlindex ON inputurls (url)');
 
 			// If we're setting up the database for the first time, and not just reindexing...
 			if (!localStorage.indexedbefore || localStorage.indexedbefore != 1) {

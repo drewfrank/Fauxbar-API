@@ -105,12 +105,10 @@ function compareStringLengths (a, b) {
   return 0; // a and b are the same length
 }
 
-
-
 // Set localStorage vars with default Fauxbar values.
 // Used when first loading Fauxbar, or when user chooses to reset all the values.
 function resetOptions() {
-	localStorage.option_alert = 1; 							// Show a message when there's a database error.
+	localStorage.option_alert = 0; 							// Show a message when there's a database error.
 	localStorage.option_altd = 1; 							// Use Alt+D functionality.
 	localStorage.option_autofillurl = 1; 					// Auto-fill the Address Box's input with a matching URL when typing.
 	localStorage.option_bgcolor = "#F0F0F0"; 				// Page background color.
@@ -145,7 +143,7 @@ function resetOptions() {
 	localStorage.option_frecency_typed = 100;
 	localStorage.option_frecency_unvisitedbookmark = 1;
 
-	localStorage.option_font = window.OS == "Mac" ? "Lucida Grande" : "Segoe UI";	// Global font name(s).
+	localStorage.option_font = window.OS == "Mac" ? "Lucida Grande" : window.OS == "Linux" ? "Ubuntu" : "Segoe UI";	// Global font name(s).
 	localStorage.option_forceoptionsicon = 0;				// Always show the options icon on every page. Disabled by default.
 	localStorage.option_hidehttp = 1;						// Hide "http://" from the beginning of URLs.
 	localStorage.option_hidefiletiles = 1;					// Prevent top site tiles from displaying file:/// URLs.
@@ -155,21 +153,20 @@ function resetOptions() {
 	localStorage.option_ignoretitleless = 1;				// Ignore titleless Address Box results.
 	localStorage.option_inputbgcolor = "#FFFFFF";			// Address Box and Search Box background color.
 	localStorage.option_inputboxdisplayorder = "addressleft_searchright";	// Order of which Box comes first.
-	localStorage.option_inputfontsize = window.OS == "Mac" ? 13 : 15;	// Address & Search Box font size.
+	localStorage.option_inputfontsize = window.OS == "Mac" ? 13 : 15;	// Address & Search Box font size (px).
 	localStorage.option_leftcellwidthpercentage = 66;		// Width percentage of the Address Box.
 	localStorage.option_maxaddressboxresults = 16;			// Max Address Box results to display to the user at a time.
 	localStorage.option_maxaddressboxresultsshown = 8;		// Max Address Box results to be shown at a time; extra results will have to be scrolled to see.
 	localStorage.option_maxretrievedsuggestions = 10;		// Max Search Box saved queries to retrieve. This option name is misleading; suggestions are generally JSON results from the search engine.
 	localStorage.option_maxsuggestionsvisible = 20;			// Max queries/suggestions to display before needing to scroll. So with these 2 default options, 10 JSON suggestions will probably be displayed.
-	localStorage.option_maxwidth = 1100;					// Max-width for the Fauxbar('s wrapper).
+	localStorage.option_maxwidth = 1200;					// Max-width for the Fauxbar('s wrapper).
 	localStorage.option_omniboxurltruncate = 55;			// Truncate Omnibox+Fauxbar URLs so that the titles can still be seen (hopefully).
-	localStorage.option_openfauxbarfocus = "addressbox";	// Focus the Address Box when Fauxbar opens.
+	localStorage.option_openfauxbarfocus = "addressbox";	// What to focus when Fauxbar opens. Can be "chrome", "addressbox" or "searchbox"
 	localStorage.option_optionpage = "option_section_general";	// Option section/subpage to load when Options are shown.
 	localStorage.option_osimproper = 1;						// Scan webpages for non-OpenSearch search engines; eg scan just lone input boxes.
 	localStorage.option_osproper = 1;						// Scan webpages for proper OpenSearch declarations.
 	localStorage.option_pagetilearrangement = "frecency";	// Page tile arrangement. Possible values: "frecency" "visitcount" "manual" "bookmarkbar"
 	localStorage.option_prerender = 1;						// Let Chrome pre-render the first Address Box result if possible.
-	localStorage.option_prerenderMs = 150;					// How many milliseconds to wait before pre-rendering
 	localStorage.option_quickdelete = 1;					// Don't enable Quick Delete by default. Don't want the user randomly deleting their history without knowing it.
 	localStorage.option_quickdelete_confirm = 1;			// Prompt user to confirm before deleting a history result using Quick Delete.
 	localStorage.option_recentvisits = 10;					// Number of recent visits to sample when calculating frecency scores for URLs.
@@ -182,7 +179,7 @@ function resetOptions() {
 	localStorage.option_separatorcolor = "#E3E3E3";			// Color of the 1px separator line between results.
 	localStorage.option_shadow = 1;							// Drop shadow for the Fauxbar.
 	localStorage.option_showapps = 1;						// Display app tiles.
-	localStorage.option_showErrorCount = 1;					// Show an error count on the Options' side menu.
+	localStorage.option_showErrorCount = 0;					// Show an error count on the Options' side menu.
 	localStorage.option_showjsonsuggestions = 1;			// Show Search Box suggestions from the selected search engine when user is typing a query.
 	localStorage.option_showmatchingfavs = 1;				// Search for and display matching bookmarks from the Address Box.
 	localStorage.option_showmatchinghistoryitems = 1;		// Search for and display matching history items from the Address Box.
@@ -194,14 +191,14 @@ function resetOptions() {
 	localStorage.option_switchToTab = "replace";			// Toggleable switch to tab functionality. Possible values: "replace", "before", "disable"
 	localStorage.option_timing = "immediately";				// Only show Address Box results once the user has stopped typing. "immediately" shows results after every keystroke instead.
 	localStorage.option_titlecolor = "#000000";				// Result title and query/suggestion font color.
-	localStorage.option_titlesize = window.OS == "Mac" ? 12 : 14;					// Result title font size (px).
+	localStorage.option_titlesize = window.OS == "Mac" ? 12 : 14;	// Result title font size (px).
 	localStorage.option_topgradient = "#000000";			// Fauxbar wrapper top gradient background color.
 	localStorage.option_topopacity = 12;					// Fauxbar wrapper top gradient background opacity.
 	localStorage.option_topsitecols = 4;					// Top site tiles, max columns.
 	localStorage.option_topsiterows = 2;					// Top site titles, max rows.
 	localStorage.option_underline = "0";					// Underline matching words in Address Box results. Off by default, looks a bit too busy/messy.
 	localStorage.option_urlcolor = "#0066CC";				// Result URL font color.
-	localStorage.option_urlsize = window.OS == "Mac" ? 11 : 12;						// Result URL font size (px).
+	localStorage.option_urlsize = window.OS == "Mac" ? 11 : window.OS == "Linux" ? 13 : 12;		// Result URL font size (px).
 	localStorage.option_weight1 = 100;						// Frecency bucket cutoff weight #1
 	localStorage.option_weight2 = 70;						// Frecency bucket cutoff weight #2
 	localStorage.option_weight3 = 50;						// Frecency bucket cutoff weight #3
@@ -237,6 +234,33 @@ function fileErrorHandler(e) {
   }
   console.log(msg);
 }
+
+
+// canvas.toBlob is not implemented in Chrome yet! So we have to build the blob ourselves.
+// http://mustachified.com/master.js
+// via http://lists.whatwg.org/pipermail/whatwg-whatwg.org/2011-April/031243.html
+// via https://bugs.webkit.org/show_bug.cgi?id=51652
+// via http://code.google.com/p/chromium/issues/detail?id=67587
+function dataURItoBlob(dataURI, callback) {
+	// convert base64 to raw binary data held in a string
+	// doesn't handle URLEncoded DataURIs
+	var byteString = atob(dataURI.split(',')[1]);
+
+	// separate out the mime component
+	var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
+
+	// write the bytes of the string to an ArrayBuffer
+	var ab = new ArrayBuffer(byteString.length);
+	var ia = new Uint8Array(ab);
+	for (var i = 0; i < byteString.length; i++) {
+	    ia[i] = byteString.charCodeAt(i);
+	}
+
+	// write the ArrayBuffer to a blob, and you're done
+	var bb = new window.WebKitBlobBuilder();
+	bb.append(ab);
+	return bb.getBlob(mimeString);
+};
 
 
 // http://phpjs.org/functions/urlencode:573

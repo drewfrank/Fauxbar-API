@@ -45,20 +45,20 @@
 						<!-- Address Box -->
 						<td style="width:60%;" id="leftcell">
 							<div id="addresswrapper" class="inputwrapper">
-								<table cellpadding="0" cellspacing="0">
+								<table cellpadding="0" cellspacing="0" style="border-collapse:collapse">
 									<tr>
 										<td style="width:1px; padding:2px">
 											<div id="awesomeInsetButton" class="noInsetButton">
 												<table style="width:1px; border-collapse:collapse; margin:0;" cellpadding="0" cellspacing="0" title="Search..." origtitle="Search...">
 													<tr>
-														<td class="superselect" style="width:1px; padding:1px 1px 0 2px;">
-															<img id="addressbaricon" src="chrome://favicon/null" style="opacity:.75; height:16px; width:16px" />
+														<td class="superselect" style="width:1px; vertical-align:middle; padding-left:2px; padding-right:1px">
+															<img id="addressbaricon" src="chrome://favicon/null" style="opacity:.75;" />
 														</td>
-														<td class="switchtext superselect">
+														<td class="switchtext superselect" style="vertical-align:middle">
 															Switch to tab:
 														</td>
-														<td class="superselect" id="super_triangle" style="width:1px; padding-right:0px;">
-															<span class="triangle static" style="margin-top:2px">&#9660;</span>
+														<td class="superselect" id="super_triangle" style="width:1px; padding-right:0px; vertical-align:middle">
+															<span class="triangle static" style="margin-top:1px">&#9660;</span>
 														</td>
 													</tr>
 												</table>
@@ -67,17 +67,16 @@
 										<td class="inputwrapper2" id="awesomeinputwrapper2">
 											<table style="width:100%; border-collapse:collapse; padding:0; margin:0;" cellpadding="0" cellspacing="0">
 												<tr>
-													<td id="awesomeinput_cell"></td>
-													<td style="width:1px; padding:1px 7px 0 7px;" id="address_goarrow" title="Go to the entered address">
-														<img src="goarrow.png" class="filter-tint" data-pb-tint-opacity="0" data-pb-tint-colour="#ff0000" />
+													<td id="awesomeinput_cell" style="vertical-align:middle"></td>
+													<td style="width:1px; vertical-align:middle; padding-right:4px; padding-left:5px;" id="address_goarrow" title="Go to the entered address">
+														<img src="goarrow.png" class="filter-tint" data-pb-tint-opacity="0" data-pb-tint-colour="#ff0000" style="" />
 													</td>
-													<td id="addressbox_triangle" style="width:1px; padding-right:3px" title="Display your most frequented webpages" origtitle="Display your most frequented webpages">
+													<td id="addressbox_triangle" style="width:1px; vertical-align:middle; padding-right:3px; padding-left:2px" title="Display your most frequented webpages" origtitle="Display your most frequented webpages">
 														<span class="triangle static" style="margin-top:1px">&#9660;</span>
 													</td>
 												</tr>
 											</table>
 										</td>
-
 									</tr>
 								</table>
 							</div>
@@ -91,26 +90,32 @@
 							<div id="searchwrapper" class="inputwrapper">
 								<table cellpadding="0" cellspacing="0">
 									<tr>
-										<td style="width:1px; padding:2px 0px 2px 3px">
+										<td style="width:1px;">
 											<table style="width:1px; border-collapse:collapse; margin:0;" cellpadding="0" cellspacing="0">
 												<tr>
-													<td style="width:1px; padding-top:1px; padding-right:0; padding-left:3px" id="opensearch_triangle">
-														<span title="Search using..." style="white-space:nowrap;"><script type="text/javascript">
-															if (localStorage.osiconsrc) {
-																$("#opensearch_triangle span").html('<img class="opensearch_selectedicon" src="'+localStorage.osiconsrc+'" style="position:relative;top:2px" /><span class="triangle" style="margin:0 0 1px 1px; position:relative; top:0px; left:-1px">&#9660;</span>');
-															} else {
-																$("#opensearch_triangle span").html('<img class="opensearch_selectedicon" src="chrome://favicon/null" style="position:relative;top:2px" /><span class="triangle" style="margin:0 0 1px 1px; position:relative; top:0px; left:-1px">&#9660;</span>');
-															}
-														</script></span>
+													<td id="opensearch_triangle" style="width:1px; margin:0; padding:0">
+														<div style="display:table-cell; vertical-align:text-top;  padding:1px 0px 0 5px; width:1px; ">
+															<span title="Search using..." style="white-space:nowrap;"><script type="text/javascript">
+																if (localStorage.osiconsrc) {
+																	$("#opensearch_triangle span").html('<img class="opensearch_selectedicon" src="'+localStorage.osiconsrc+'" style="height:16px; width:16px;" /><span class="triangle static" style="margin-top:1px"></span>');
+																} else {
+																	$("#opensearch_triangle span").html('<img class="opensearch_selectedicon" src="chrome://favicon/null" style="height:16px; width:16px;" /><span class="triangle static" style="margin-top:1px"></span>');
+																}
+															</script></span>
+														</div>
+														<div style="display:table-cell; width:1px; vertical-align:middle; padding-right:1px; padding-left:0px;">
+															<span class="triangle static" style="margin-top:1px">&#9660;</span>
+														</div>
 													</td>
+
 												</tr>
 											</table>
 										</td>
 										<td class="inputwrapper2" id="opensearchwrapper2">
 											<table style="width:100%; border-collapse:collapse; padding:0; margin:0;" cellpadding="0" cellspacing="0">
 												<tr>
-													<td id="opensearchinput_cell"></td>
-													<td style="width:1px; padding-left:5px; padding-right:2px;" id="searchicon_cell" title="Search">
+													<td id="opensearchinput_cell" style="vertical-align:middle"></td>
+													<td style="width:1px; vertical-align:middle; padding-right:3px; padding-left:4px" id="searchicon_cell" title="Search">
 														<img src="search.png" class="filter-tint" id="searchicon" />
 													</td>
 												</tr>
@@ -169,7 +174,7 @@
 	</div>
 
 	<!-- Hidden icon images that will get colored/tinted once the page loads -->
-	<img src="fauxstar.png" id="fauxstar" class="filter-tint" style="position:Relative; display:none; height:16px; width:16px;" />
+	<img src="fauxstar.png" id="fauxstar" style="position:Relative; display:none; height:16px; width:16px;" />
 	<img src="goarrow.png" id="goarrow_hovered" class="filter-tint" data-pb-tint-opacity=".3" data-pb-tint-colour="#000" style="display:none; height:14px; width:14px" />
 	<img src="search.png" id="searchicon_hovered" class="filter-tint" data-pb-tint-opacity=".3" data-pb-tint-colour="#000" style="display:none; height:16px; width:16px;" />
 

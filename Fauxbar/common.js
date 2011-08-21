@@ -91,25 +91,6 @@ function reindex() {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Below are mostly borrowed functions from other sources.
 // If you see your function below, thank you!
 
@@ -152,9 +133,6 @@ function explode (delimiter, string, limit) {
 		return partA;
 	}
 }
-
-
-
 
 
 // http://phpjs.org/functions/str_replace:527

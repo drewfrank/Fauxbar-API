@@ -86,7 +86,7 @@ if (localStorage.indexComplete == 1 && !getHashVar("options")) {
 		$("#customstyle").append("#topthumbs a, #apps a { background-color:"+localStorage.option_resultbgcolor+"; color:"+localStorage.option_titlecolor+"; }");
 		$("#customstyle").append("#topthumbs a:hover, #apps a:hover, #apps a.rightClickedApp { background-color:"+localStorage.option_selectedresultbgcolor+"; color:"+localStorage.option_selectedtitlecolor+"; }");
 
-		if (localStorage.option_pagetilearrangement == "manual" && localStorage.siteTiles) {
+		if (localStorage.option_pagetilearrangement == "manual") {
 			window.tiles = jQuery.parseJSON(localStorage.siteTiles);
 			var thumbs = '';
 			for (var t in window.tiles) {
@@ -94,10 +94,9 @@ if (localStorage.indexComplete == 1 && !getHashVar("options")) {
 			}
 			renderSiteTiles(thumbs);
 			if (getHashVar("edittiles") == 1) {
-				setTimeout(enterTileEditMode, 10);
+				jQuery.getScript("tilemode.js");
 			}
 		} else {
-
 			chrome.tabs.getAllInWindow(null, function(tabs) {
 				window.currentTabs = tabs;
 				if (openDb()) {
@@ -322,7 +321,7 @@ $(document).ready(function(){
 	}
 
 	if (localStorage.showintro != 0 && localStorage.indexedbefore == 1) {
-		$("#background").after('<div id="optionsintro" style="display:block">Welcome to Fauxbar. To open the options, right-click anywhere on the page.</div>');
+		$("#background").after('<div id="optionsintro" style="display:block">Welcome to Fauxbar.&nbsp; To open the options, right-click anywhere on the page.</div>');
 	}
 
 	chrome.management.onInstalled.addListener(function(app) {

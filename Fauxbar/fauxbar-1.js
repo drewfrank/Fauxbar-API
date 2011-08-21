@@ -124,6 +124,7 @@ function goToUrl(url, fromClickedResult) {
 			selected = false;
 			delete window.middleMouse;
 		}
+		recordInputUrl(url);
 		chrome.tabs.create({url:url, selected:selected});
 		if (window.keywordEngine) {
 			setTimeout(function(){
@@ -132,6 +133,7 @@ function goToUrl(url, fromClickedResult) {
 		}
 	} else {
 		chrome.tabs.getCurrent(function(tab){
+			recordInputUrl(url);
 			chrome.tabs.update(tab.id, {url:url});
 		});
 	}
@@ -141,15 +143,21 @@ function goToUrl(url, fromClickedResult) {
 	}
 }
 
+function recordInputUrl(url) {
+	if (window.actualUserInput && window.actualUserInput.length) {
+		chrome.extension.sendRequest({action:"record input url", input:window.actualUserInput, url:url});
+	}
+}
+
 function deleteHistoryUrl(url, bookmarkId) {
 	if (openDb() && localStorage.option_quickdelete_confirm == 0 || confirm("Delete \""+url+"\" from your Chrome browsing history?"
 	 + (bookmarkId > 0 ? "\n\nYour bookmark(s) for this URL will remain intact, though they may seem to disappear from Fauxbar for a moment." : ""))) {
 		window.db.transaction(function(tx){
 			tx.executeSql('DELETE FROM urls WHERE url = ? AND type = 1', [url]);
 			tx.executeSql('UPDATE urls SET frecency = ? WHERE url = ?', [localStorage.option_frecency_unvisitedbookmark, url]);
-			//tx.executeSql('DELETE FROM thumbs WHERE url = ? AND manual != 1', [url]);
 			tx.executeSql('UPDATE thumbs SET frecency = -1 WHERE url = ?', [url]);
 			tx.executeSql('UPDATE thumbs SET frecency = -2 WHERE url = ? AND manual != 1', [url]);
+			tx.executeSql('DELETE FROM inputurls WHERE url = ?', [url]);
 			chrome.history.deleteUrl({url:url});
 			var nextNumber = $(".arrowed").next(".result").attr("number");
 			$(".arrowed").remove();
@@ -161,7 +169,7 @@ function deleteHistoryUrl(url, bookmarkId) {
 	}
 }
 
-// Record that the user is dragging the Boxes' handle
+// Record that the user is dragging the Boxes' handle separator
 $("#handle").bind("mousedown", function(){
 	window.handleStatus = "down";
 	if (localStorage.indexComplete == 1) {
@@ -599,18 +607,14 @@ function showContextMenu(e) {
 
 	if (usingSuperTriangle || $("#awesomeinput:focus").length) {
 		$("#super_triangle .triangle").addClass("glow");
-		html += '	<div class="menuOption" style="background-image:url(chrome://favicon/null); background-repeat:no-repeat; background-position:4px 2px">History &amp; Bookmarks</div>';
-		// To do: implement these later on.
-		//html += '	<div class="menuOption" style="background-image:url(omnibox_star_dark.png); background-repeat:no-repeat; background-position:3px 1px; background-size:18px 18px">Bookmarks</div>';
-		//html += '	<div class="menuOption" style="background-image:url(omnibox_history_dark.png); background-repeat:no-repeat; background-position:2px 0px; background-size:20px 20px">History</div>';
-		//html += '	<div class="menuOption" style="background-image:url(large_history_favicon.png); background-repeat:no-repeat; background-position:2px 0px; background-size:20px 20px">"Full" History</div>';
+		html += '	<div class="menuOption" style="background-image:url(chrome://favicon/null); background-repeat:no-repeat; background-position:'+(window.OS == "Mac" ? "4px 1px" : "4px 2px")+';">History &amp; Bookmarks</div>';
 		html += '	<div class="menuHr"></div>';
 	}
 
 	if (($("#opensearchinput:focus, #awesomeinput:focus").length || usingSuperTriangle || $("#opensearch_triangle .glow").length) && !window.tileEditMode) {
 		$(".menuitem").each(function(){
 			if ($(this).attr("shortname")) {
-				html += '	<div class="menuOption engine" shortname="'+$(this).attr("shortname")+'" keyword="'+$(this).attr("keyword")+'" style="background-image:url('+$(this).attr("iconsrc")+'); background-repeat:no-repeat; background-position:4px 2px">'+
+				html += '	<div class="menuOption engine" shortname="'+$(this).attr("shortname")+'" keyword="'+$(this).attr("keyword")+'" style="background-image:url('+$(this).attr("iconsrc")+'); background-repeat:no-repeat; background-position:'+(window.OS == "Mac" ? "4px 1px" : "4px 2px")+';">'+
 				$(this).attr("shortname")+
 				($(this).attr("keyword") && !strstr($(this).attr("keyword"),"fakekeyword_") ? ' <span style="display:inline-block; opacity:.5; float:right; margin-right:-20px">&nbsp;'+$(this).attr("keyword")+'</span>' : '') +
 				'</div>';
@@ -673,7 +677,7 @@ function showContextMenu(e) {
 		$("#contextMenu").css("top",window.innerHeight - $("#contextMenu").outerHeight() + "px");
 	}
 
-	$(".menuOption.fauxbar16").first().css("background-image","url(fauxbar16.png)").css("background-repeat","no-repeat").css("background-position","4px 2px");
+	$(".menuOption.fauxbar16").first().css("background-image","url(fauxbar16.png)").css("background-repeat","no-repeat").css("background-position",window.OS == "Mac" ? "4px 1px" : "4px 2px");
 	$("#contextMenu").animate({opacity:1},100);
 }
 
@@ -1009,7 +1013,7 @@ $("#contextMenu .menuOption").live("mousedown", function(){
 						}
 					} else if ($("#opensearchinput:focus").length || $("#opensearch_triangle .glow").length) {
 						$("#opensearch_results").css("display","none").html("");
-						selectOpenSearchType($('.menuitem[shortname="'+str_replace('"','&quot;',$(this).attr("shortname"))+'"]'), false);
+						selectOpenSearchType($('.menuitem[shortname="'+str_replace('"','&quot;',$(this).attr("shortname"))+'"]'), true);
 						if ($("#opensearch_triangle .glow").length) {
 							$("#opensearchinput").focus();
 						}
@@ -1061,11 +1065,12 @@ if (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0) {
 		} else {
 			$("#editmodeContainer").remove();
 		}
+		$(window).resize();
 	}
 
 	$(document).ready(function(){
 		$("#maindiv").before('<div id="editmodeContainer" style="box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="fauxbar48.png" /> Fauxbar has been updated to version '+localStorage.currentVersion + localStorage.updateBlurb+'</div></div>');
-		$("#editmodeContainer").prepend('<div id="editModeButtons"><button onclick="dismissUpdateMessage(true)" style="font-family:'+localStorage.option_font+', Lucida Grande, Segoe UI, Arial, sans-serif;">View Full Changelog</button>&nbsp;<button onclick="dismissUpdateMessage()" style="font-family:'+localStorage.option_font+', Lucida Grande, Segoe UI, Arial, sans-serif;">Dismiss</button></div>');
+		$("#editmodeContainer").prepend('<div id="editModeButtons"><button onclick="dismissUpdateMessage(true)" style="font-family:'+localStorage.option_font+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">View Full Changelog</button>&nbsp;<button onclick="dismissUpdateMessage()" style="font-family:'+localStorage.option_font+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">Dismiss</button></div>');
 	});
 }
 
@@ -1192,12 +1197,6 @@ $("#opensearchinput").live("focus", function(e){
 		delete window.justPasted;
 		delete window.justDeleted;
 	},1);
-});
-
-// When user clicks to select a new search engine to user, make it so.
-$("#opensearchmenu .menuitem").live("mousedown", function(){
-	selectOpenSearchType(this, true);
-	return false;
 });
 
 // When the Search Box is focused, hide Address Box results and make the Search Box look good
@@ -1437,7 +1436,7 @@ $("#awesomeinput").bind("keydown",function(e){
 					window.db.transaction(function(tx){
 						var tempNum = microtime(true);
 						$(".arrowed").next(".result").attr("tempnum",tempNum);
-						tx.executeSql('DELETE FROM searchqueries WHERE query = ?', [html_entity_decode($(".arrowed .suggestion").text())]);
+						tx.executeSql('DELETE FROM searchqueries WHERE query = ?', [html_entity_decode($(".arrowed").attr("sug"))]);
 						$(".arrowed").remove();
 						$('.result[tempnum="'+tempNum+'"]').addClass("arrowed");
 					}, function(t){
@@ -1565,12 +1564,16 @@ $('.jsonresult, .historyresult').live("mousedown", function(e){
 	if (event.button == 1 || e.ctrlKey == true) {
 		window.middleMouse = true;
 		window.altReturn = true;
-		query = $(".suggestion",this).text();
+		query = $(this).attr("sug");
 	}
 
 	// If user hasn't Middle-clicked or Ctrl+Clicked, hide the queries/suggestions from view
 	if (!window.middleMouse) {
-		$("#opensearchinput").val($(".suggestion",this).text());
+		if (window.keywordEngine && $("#awesomeinput:focus").length) {
+			$("#awesomeinput").val($(this).attr("sug"));
+		} else {
+			$("#opensearchinput").val($(this).attr("sug"));
+		}
 		$("#opensearch_results").css("display","none").html("");
 	}
 
@@ -1729,7 +1732,7 @@ function resizeSearchSuggestions() {
 			window.resultsAreScrollable = true;
 		}
 	}
-	if (window.keywordEngine && $("#awesomeinput:focus").length) {
+	if ((window.keywordEngine && $("#awesomeinput:focus").length) || (!window.keywordEngine && $("#awesomeinput:focus").length)) {
 		$("#opensearch_results").css("display","block")
 			.css("margin-left","0px")
 			.css("margin-top","0px")
@@ -1773,7 +1776,7 @@ function getSearchSuggestions(dontActuallyGet) {
 	}
 
 	// If user has opted to show queries or suggestions...
-	if (($("#opensearchinput:focus").length && (localStorage.option_showqueryhistorysuggestions == 1 || localStorage.option_showjsonsuggestions == 1)) || (window.keywordEngine)) {
+	if (($("#opensearchinput:focus").length && (localStorage.option_showqueryhistorysuggestions == 1 || localStorage.option_showjsonsuggestions == 1)) || (window.keywordEngine) || (!window.keywordEngine && $("#awesomeinput:focus").length)) {
 
 		// Set up the SQL select statement for Fauxbar's `searchqueries` database table
 		window.actualSearchInput = window.keywordEngine && $("#awesomeinput:focus").length ? $("#awesomeinput").val() : $("#opensearchinput").val();
@@ -1824,7 +1827,8 @@ function getSearchSuggestions(dontActuallyGet) {
 								for (var i = 0; i < len; i++) {
 									entQuery = str_replace('<', '&lt;', results.rows.item(i).query);
 									entQuery = str_replace('>', '&gt;', entQuery);
-									historyResults += '<div class="result historyresult" queryid="'+results.rows.item(i).id+'"><span class="suggestion">'+entQuery+'</span></div>\n';
+									entQuery = str_replace('"', '&quot;', entQuery);
+									historyResults += '<div class="result historyresult" queryid="'+results.rows.item(i).id+'" sug="'+entQuery+'"><span class="suggestion">'+entQuery+'</span></div>\n';
 								}
 							}
 						}
@@ -1836,10 +1840,10 @@ function getSearchSuggestions(dontActuallyGet) {
 							for (var r in response[1]) {
 								html = '<span class="suggestion">'+response[1][r]+'</span>';
 								if (suggestionsText == false) {
-									html = '<span style="float:right; font-size:10px;opacity:.5">Suggestions&nbsp;</span>' + html;
+									html = '<span class="sugText" style="float:right; font-size:10px;opacity:.5">Suggestions&nbsp;</span>' + html;
 									suggestionsText = true;
 								}
-								jsonResults += '<div class="result jsonresult">'+html+'</div>\n';
+								jsonResults += '<div class="result jsonresult" sug="'+str_replace('"','&quot;',response[1][r])+'">'+html+'</div>\n';
 							}
 						}
 
@@ -1852,11 +1856,23 @@ function getSearchSuggestions(dontActuallyGet) {
 						// Display the queries and suggestions, if any
 						if (osVal == (window.keywordEngine && $("#awesomeinput:focus").length ? $("#awesomeinput").val() : $("#opensearchinput").val())) {
 							if (historyResults.length > 0 || jsonResults.length > 0) {
-								$("#opensearch_results").html(historyResults+jsonResults).css("display","block");
+
+								$("#opensearch_results").html(historyResults+jsonResults).css("opacity",1).css("display","block");
 								if (historyResults.length > 0) {
 									$(".jsonresult").first().css("border-top","1px solid "+localStorage.option_separatorcolor);
 								}
 								resizeSearchSuggestions();
+
+								// Truncate suggestions if needed
+								var w = $("#opensearch_results").outerWidth()-20;
+								var s = 0;
+								$(".suggestion").each(function(){
+									s = $(this).prev(".sugText").length ? $(this).prev(".sugText").outerWidth()+5 : 0;
+									while ($(this).outerWidth()+s > w) {
+										$(this).parent().attr("title",$(this).parent().attr("sug"));
+										$(this).text($(this).text().substr(0,$(this).text().length-4)+"...");
+									}
+								});
 							} else {
 								$("#opensearch_results").css("display","none").html("");
 							}
@@ -1877,11 +1893,11 @@ function toggleSwitchText() {
 	}
 	var switchUrl = $(".switch").parent('.result_url').parent('.result').attr("url");
 	if ($('.switch').length > 0 && $("#awesomeinput").val() == switchUrl) {
-		$(".switchtext").css("font-size",$("#awesomeinput").css("font-size")).css("display","table-cell");
+		$(".switchtext").css("font-size",localStorage.option_inputfontsize+"px").css("display","table-cell");
 		$("#super_triangle").css("display","none");
 	}
 	else if (window.tileEditMode && window.tileEditMode == true && $("#awesomeinput").val().length > 0 && $(".result[url='"+$("#awesomeinput").val()+"']").length > 0) {
-		$(".switchtext").text("Add tile:").css("font-size",$("#awesomeinput").css("font-size")).css("display","table-cell");
+		$(".switchtext").text("Add tile:").css("font-size",localStorage.option_inputfontsize+"px").css("display","table-cell");
 		$("#super_triangle").css("display","none");
 	}
 	else {
@@ -1950,12 +1966,12 @@ function navigateResults(e) {
 						}
 					}
 					else {
-						if ($("#awesomeinput:focus").length && !window.keywordEngine) {
+						if ($("#awesomeinput:focus").length && !window.keywordEngine && $("#results .result").length) {
 							var resultBottomPadding = 4; // taken from css file (.result)
 							while ( ($("#results").position().top+$(".arrowed .result_bottom").position().top+resultBottomPadding) > ($("#results").position().top+$("#results").height()) ) {
 								$("#results").scrollTop($("#results").scrollTop()+1);
 							}
-						} else if ($("#opensearchinput:focus").length || window.keywordEngine) {
+						} else if ($("#opensearchinput:focus").length || window.keywordEngine || (!window.keywordEngine && $("#awesomeinput:focus").length)) {
 							var resultBottomPadding = 4; // taken from css file (.result)
 							while ( ($("#opensearch_results").position().top+$(".arrowed").next(".result").position().top) > ($("#opensearch_results").position().top+$("#opensearch_results").height()) ) {
 								$("#opensearch_results").scrollTop($("#opensearch_results").scrollTop()+1);
@@ -1972,7 +1988,7 @@ function navigateResults(e) {
 						$("#awesomeinput").val($(".arrowed").attr("url"));
 					}
 				} else if ($("#opensearchinput:focus").length) {
-					$("#opensearchinput").val(html_entity_decode($(".arrowed .suggestion").text()));
+					$("#opensearchinput").val(html_entity_decode($(".arrowed").attr("sug")));
 				}
 				if (window.keywordEngine) {
 					setTimeout(function(){
@@ -2178,6 +2194,17 @@ function getResults(noQuery) {
 	window.actualUserInput = getAiSansSelected();
 
 	var thisQuery = window.actualUserInput;
+
+	if (thisQuery.length == 1 && !window.oneChar) {
+		window.oneChar = true;
+		setTimeout(function(){
+			if (window.actualUserInput == thisQuery) {
+				getResults();
+			}
+		},200);
+		return;
+	}
+	delete window.oneChar;
 
 	if ($(".glow").length) {
 		delete window.keywordEngine;
@@ -2679,10 +2706,11 @@ function getResults(noQuery) {
 							}
 
 							// Display results.
-							$("#results").css("display","block").css("opacity",0).
-								css("width", $("#addresswrapper").outerWidth()-2+"px").css("position","fixed")
+							$("#results").css("display","block").css("opacity",0)
+								.css("position","fixed")
 								.css("top",$("#awesomeinput").offset().top+$("#awesomeinput").outerHeight()+4+"px")
 								.css("left",$("#addresswrapper").offset().left-2+"px")
+								.css("width", $("#addresswrapper").outerWidth()-2+"px")
 							;
 
 							// "Truncate" result titles and urls with "..." if they're too long.
@@ -2763,16 +2791,17 @@ function getResults(noQuery) {
 								$("#results").attr("noquery",(noQuery?1:0)).css("opacity",1);
 							}
 
-							// Tell Chrome to pre-render the first result for the user
-							if (!noQuery && localStorage.option_prerender == 1 && $(".switch").length == 0 && !window.tileEditMode) {
-								setTimeout(function(){
-									if (thisQuery == window.actualUserInput) {
-										var theUrl = $(".result").first().attr("url");
-										$("body").append('<link rel="prerender" href="'+theUrl+'">');
-										console.log('Asking Chrome to pre-render '+theUrl);
-										window.prerenderedUrl = theUrl;
-									}
-								}, parseFloat(localStorage.option_prerenderMs));
+							// Tell Chrome to possibly pre-render a best-guess result for the user, based on the user's Address Box habits
+							if (!noQuery && localStorage.option_prerender == 1 && $(".switch").length == 0 && !window.tileEditMode && thisQuery == window.actualUserInput) {
+								window.db.transaction(function(tx){
+									tx.executeSql('SELECT url FROM inputurls WHERE input = ? LIMIT 1', [thisQuery.toLowerCase()], function(tx, results){
+										if (results.rows.length == 1 && thisQuery == window.actualUserInput) {
+											console.log("Requesting pre-render for "+results.rows.item(0).url);
+											$("body").append('<link rel="prerender" href="'+results.rows.item(0).url+'">');
+											window.prerenderedUrl = results.rows.item(0).url;
+										}
+									});
+								});
 							}
 
 							// Auto append Address Box input with a best-guess URL.
@@ -3052,3 +3081,16 @@ function autofillInput(thisQuery) {
 	}
 }
 
+var reindexingBookmarksMessage = '<div id="editmodeContainer" class="reindexingBookmarksMessage" style="box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="fauxbar48.png" /> Since a bookmark folder was recently deleted, Fauxbar is currently reindexing your bookmarks. Address Box results may seem delayed during this time. Once complete, this message will disappear.</div></div>';
+if (localStorage.reindexingBookmarks) {
+	$("#maindiv").before(reindexingBookmarksMessage);
+}
+
+chrome.extension.onRequest.addListener(function(request){
+	if (request == "reindexing bookmarks") {
+		$("#maindiv").before(reindexingBookmarksMessage);
+	}
+	else if (request == "done reindexing bookmarks") {
+		$(".reindexingBookmarksMessage").remove();
+	}
+});

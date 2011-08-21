@@ -19,19 +19,19 @@ function saveSiteTiles(justChecking) {
 						}
 					});
 				});
-				//var bg = chrome.extension.getBackgroundPage();
-				//tx.executeSql('DELETE FROM thumbs WHERE frecency < ? AND frecency > -1 AND manual != 1', [bg.frecencyThreshold]);
-
 			}, function(t){
 				errorHandler(t, getLineInfo());
 			}, function(){
 				// success
-				chrome.extension.sendRequest("loadThumbsIntoMemory");
 				localStorage.option_topsitecols = $("select").val();
 				localStorage.siteTiles = JSON.stringify(tiles);
-				chrome.tabs.getCurrent(function(tab){
-					chrome.tabs.update(tab.id, {url:"fauxbar.html"});
-				});
+				if (getHashVar("edittiles")) {
+					window.close();
+				} else {
+					chrome.tabs.getCurrent(function(tab){
+						chrome.tabs.update(tab.id, {url:"fauxbar.html"});
+					});
+				}
 			});
 		}
 	}
@@ -41,9 +41,13 @@ function saveSiteTiles(justChecking) {
 function cancelTiles() {
 	$("button").prop("disabled",true);
 	window.onbeforeunload = '';
-	chrome.tabs.getCurrent(function(tab){
-		chrome.tabs.update(tab.id, {url:"fauxbar.html"});
-	});
+	if (getHashVar("edittiles")) {
+		window.close();
+	} else {
+		chrome.tabs.getCurrent(function(tab){
+			chrome.tabs.update(tab.id, {url:"fauxbar.html"});
+		});
+	}
 }
 
 // Initialise page tile editing mode
@@ -159,7 +163,7 @@ $('option[value="'+localStorage.option_topsitecols+'"]').prop("selected",true);
 $("select").bind("change", function(){
 	setMaxTilesPerRow($(this).val());
 });
-$("#editmodeContainer").prepend('<div id="editModeButtons"><button onclick="saveSiteTiles()" style="font-family:'+localStorage.option_font+', Lucida Grande, Segoe UI, Arial, sans-serif;">Save</button>&nbsp;<button onclick="cancelTiles()" style="font-family:'+localStorage.option_font+', Lucida Grande, Segoe UI, Arial, sans-serif;">Cancel</button></div>');
+$("#editmodeContainer").prepend('<div id="editModeButtons"><button onclick="saveSiteTiles()" style="font-family:'+localStorage.option_font+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">Save</button>&nbsp;<button onclick="cancelTiles()" style="font-family:'+localStorage.option_font+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">Cancel</button></div>');
 $("#editmodeContainer").animate({opacity:1}, 325);
 chrome.tabs.getCurrent(function(tab){
 	chrome.tabs.update(tab.id, {selected:true}, function(){
@@ -172,9 +176,6 @@ $("#apps").remove();
 setTimeout(function(){
 	$("#topthumbs").css("display","block").css("opacity",1);
 	setTileOnLoads();
-	/*$("#topthumbs a .toptitle").each(function(){
-		truncatePageTileTitle(this);
-	});*/
 }, 1);
 
 // Render the user's existing site tiles
@@ -196,27 +197,8 @@ function addTile(el) {
 	}, 10);
 	toggleSwitchText();
 	$("#awesomeinput").focus();
-
-	// Load thumbnail img if it exists, then add tile regardless
-	/*if (openDb()) {
-		window.db.transaction(function(tx){
-			tx.executeSql('SELECT data FROM thumbs WHERE url = ? LIMIT 1', [$(el).attr("url")], function(tx, results){
-				if (results.rows.length == 1) {
-					window.bgPage.md5thumbs[hex_md5($(el).attr("url"))] = results.rows.item(0).data;
-				}
-			});
-		}, function(t){
-			errorHandler(t, getLineInfo());
-		}, function(){
-			$("#topthumbs").append(renderPageTile($(el).attr("url"), $(el).attr("origtitle"), true));
-			truncatePageTileTitle($("#topthumbs a .toptitle").last());
-			$("#topthumbs a").last().animate({opacity:1}, 500);
-			$("#topthumbs a").attr("title","Click and drag to move.\nRight-click to rename.");
-		});
-	}*/
 	$("#topthumbs").append(renderPageTile($(el).attr("url"), $(el).attr("origtitle"), true));
 	setTileOnLoads();
-	//truncatePageTileTitle($("#topthumbs a .toptitle").last());
 	$("#topthumbs a").last().animate({opacity:1}, 500);
 	$("#topthumbs a").attr("title","Click and drag to move.\nRight-click to rename.");
 }
