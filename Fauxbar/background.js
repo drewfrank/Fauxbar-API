@@ -60,8 +60,8 @@ chrome.extension.onRequestExternal.addListener(function(request){
 $(document).ready(function(){
 
 	// New version info
-	var currentVersion = "0.5.4";
-	localStorage.updateBlurb = " (release candidate). &nbsp;Several improvements and fixes have been added.";
+	var currentVersion = "1.0.0";
+	localStorage.updateBlurb = " and is now available to the public. Thank you for your support throughout the beta test!";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
 		localStorage.readUpdateMessage = 0;
 	}
