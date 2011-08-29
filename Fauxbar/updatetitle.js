@@ -2,8 +2,8 @@ window.titleModified = function() {
 	chrome.extension.sendRequest({action:"updateUrlTitles", urltitle:window.document.title, url:window.document.location.href});
 }
 
-window.onload = function() {
-    var titleEl = document.getElementsByTagName("title")[0];
+$(document).ready(function(){
+	var titleEl = document.getElementsByTagName("title")[0];
     var docEl = document.documentElement;
 
     if (docEl && docEl.addEventListener) {
@@ -21,4 +21,4 @@ window.onload = function() {
         };
     }
     window.titleModified();
-};
+});

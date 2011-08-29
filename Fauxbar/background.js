@@ -60,8 +60,8 @@ chrome.extension.onRequestExternal.addListener(function(request){
 $(document).ready(function(){
 
 	// New version info
-	var currentVersion = "1.0.0";
-	localStorage.updateBlurb = " and is now available to the public. Thank you for your support throughout the beta test!";
+	var currentVersion = "1.0.1";
+	localStorage.updateBlurb = ".&nbsp; Redirection pages should no longer stall, and URLs with unencoded spaces are now recognized as valid&nbsp;URLs.";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
 		localStorage.readUpdateMessage = 0;
 	}
@@ -1267,7 +1267,7 @@ function assignFrecencies() {
 	}
 }
 
-// Current number of seconds since the epoch
+// Current number of milliseconds since the epoch
 function getMs() {
 	var currentTime = new Date();
 	return currentTime.getTime();

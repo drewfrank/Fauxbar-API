@@ -40,7 +40,6 @@ function strip_tags (input, allowed) {
 // Tell the tab to go to a URL.
 function goToUrl(url, fromClickedResult) {
 	if (window.keywordEngine && !window.executingKeywordSearch) {
-		//$("#opensearch_results").css("display","none").html("");
 		submitOpenSearch(url);
 		return;
 	}
@@ -84,7 +83,18 @@ function goToUrl(url, fromClickedResult) {
 	var urlIsValid = false;
 	if (substr_count(url, " ") == 0) {
 		var testUrl = url.toLowerCase();
-		if (testUrl.substr(0,7) != 'http://' && testUrl.substr(0,8) != 'https://' && testUrl.substr(0,6) != 'ftp://' && testUrl.substr(0,8) != 'file:///' && testUrl.substr(0,9) != 'chrome://' && testUrl.substr(0,6) != 'about:' && testUrl.substr(0,12) != 'view-source:' && testUrl.substr(0,17) != 'chrome-extension:' && testUrl.substr(0,5) != 'data:') {
+		if (
+			testUrl.substr(0,7) != 'http://' &&
+			testUrl.substr(0,8) != 'https://' &&
+			testUrl.substr(0,6) != 'ftp://' &&
+			testUrl.substr(0,8) != 'file:///' &&
+			testUrl.substr(0,9) != 'chrome://' &&
+			testUrl.substr(0,6) != 'about:' &&
+			testUrl.substr(0,12) != 'view-source:' &&
+			testUrl.substr(0,17) != 'chrome-extension:' &&
+			testUrl.substr(0,5) != 'data:' &&
+			testUrl.substr(0,11) != 'filesystem:'
+		) {
 			if (substr_count(url, ".") == 0) {
 				// it's a search!
 			}
@@ -98,6 +108,11 @@ function goToUrl(url, fromClickedResult) {
 				urlIsValid = true;
 			}
 		} else {
+			urlIsValid = true;
+		}
+	} else {
+		var firstPart = explode(" ", url)[0];
+		if (strstr(firstPart, "://") && substr_count(firstPart, "/") >= 3) {
 			urlIsValid = true;
 		}
 	}
