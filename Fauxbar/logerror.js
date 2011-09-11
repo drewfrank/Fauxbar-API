@@ -204,7 +204,7 @@ function logError(msg, file, line) {
 		file = file.substring(base.length);
 	}
 	console.log(msg+'\n'+file+', line '+line);
-	if (file != "jquery-1.6.2.min.js" && openDb()) {
+	if (file != "jquery-1.6.3.min.js" && openDb()) {
 		if (!localStorage.unreadErrors) {
 			localStorage.unreadErrors = 0;
 		}

@@ -1,6 +1,6 @@
 <html> <!-- Main Fauxbar page -->
 <head>
-<script type="text/javascript" src="jquery-1.6.2.min.js"></script>
+<script type="text/javascript" src="jquery-1.6.3.min.js"></script>
 	<script type="text/javascript">
 		chrome.tabs.getCurrent(function(tab){
 			chrome.tabs.update(tab.id, {selected:localStorage.option_openfauxbarfocus == "chrome" ? false : true}, function(){

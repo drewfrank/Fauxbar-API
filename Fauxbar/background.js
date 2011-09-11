@@ -60,10 +60,19 @@ chrome.extension.onRequestExternal.addListener(function(request){
 $(document).ready(function(){
 
 	// New version info
-	var currentVersion = "1.0.1";
-	localStorage.updateBlurb = ".&nbsp; Redirection pages should no longer stall, and URLs with unencoded spaces are now recognized as valid&nbsp;URLs.";
+	var currentVersion = "1.0.2";
+	localStorage.updateBlurb = ".&nbsp; Fixed some frecency algorithm calculation issues.";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
 		localStorage.readUpdateMessage = 0;
+	}
+
+	// Apply new custom frecency scores changed in 1.0.2, if user isn't using custom scoring
+	if (localStorage.currentVersion == "1.0.1" && localStorage.option_customscoring != 1) {
+		localStorage.option_frecency_form_submit = 0;
+		localStorage.option_frecency_generated = 0;
+		localStorage.option_frecency_keyword = 0;
+		localStorage.option_frecency_reload = 0;
+		localStorage.option_frecency_start_page = 0;
 	}
 
 	// Switch to tab toggleable functionality. Added in 0.5.2
@@ -972,6 +981,13 @@ chrome.history.onVisited.addListener(function(historyItem) {
 
 	// Otherwise, we want to add the visit to Fauxbar's database...
 	else if (openDb()) {
+
+		// DEV: While browsing, inspect Fauxbar's background.html console to view visit objects.
+		// Useful for determining what visit transition types Chrome uses.
+		/*chrome.history.getVisits({url:historyItem.url}, function(visits){
+			console.log(visits[visits.length-1]);
+		});*/
+
 		window.db.readTransaction(function (tx) {
 
 			// See if it exists...
@@ -1328,7 +1344,7 @@ function calculateFrecency(visitItems) {
 			}
 
 			// Determine the weight of the score, based on the age of the visit
-			days = Math.floor(Math.round(getMs() - vi.visitTime) / 86400);
+			days = (date("U") - (vi.visitTime/1000)) / 86400;
 			if (days < localStorage.option_cutoff1) {
 				bucketWeight = localStorage.option_weight1;
 			} else if (days < localStorage.option_cutoff2) {
@@ -1367,27 +1383,23 @@ function calculateFrecency(visitItems) {
 				case "auto_bookmark":
 					bonus = 75;
 					break;
-				case "reload":
-					bonus = 100;
+				// Uncomment if needed
+				/*case "reload":
 					break;
 				case "start_page":
-					bonus = 100;
 					break;
 				case "form_submit":
-					bonus = 100;
 					break;
 				case "keyword":
-					bonus = 100;
 					break;
 				case "generated":
-					bonus = 100;
-					break;
+					break;*/
 				default:
 					break;
 			}
 
 			// Assign weight based on visit's age
-			days = Math.floor(Math.round(getMs() - vi.visitTime) / 86400);
+			days = (date("U") - (vi.visitTime/1000)) / 86400;
 			if (days < 4) {
 				bucketWeight = 100;
 			} else if (days < 14) {

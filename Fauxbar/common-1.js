@@ -134,12 +134,12 @@ function resetOptions() {
 	localStorage.option_favopacity = "0";					// Bookmark icon tint opacity.
 
 	localStorage.option_frecency_auto_bookmark = 75;		// Frecency bonus scores
-	localStorage.option_frecency_form_submit = 100;
-	localStorage.option_frecency_generated = 100;
-	localStorage.option_frecency_keyword = 100;
+	localStorage.option_frecency_form_submit = 0;
+	localStorage.option_frecency_generated = 0;
+	localStorage.option_frecency_keyword = 0;
 	localStorage.option_frecency_link = 100;
-	localStorage.option_frecency_reload = 100;
-	localStorage.option_frecency_start_page = 100;
+	localStorage.option_frecency_reload = 0;
+	localStorage.option_frecency_start_page = 0;
 	localStorage.option_frecency_typed = 100;
 	localStorage.option_frecency_unvisitedbookmark = 1;
 
