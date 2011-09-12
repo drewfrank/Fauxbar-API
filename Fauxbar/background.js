@@ -60,8 +60,8 @@ chrome.extension.onRequestExternal.addListener(function(request){
 $(document).ready(function(){
 
 	// New version info
-	var currentVersion = "1.0.2";
-	localStorage.updateBlurb = ".&nbsp; Fixed some frecency algorithm calculation issues.";
+	var currentVersion = "1.0.3";
+	localStorage.updateBlurb = ".&nbsp; Fixed an issue regarding language-specific keyboard shortcuts.";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
 		localStorage.readUpdateMessage = 0;
 	}
@@ -148,9 +148,10 @@ $(document).ready(function(){
 	if (openDb()) {
 
 		// Vacuum the DB upon start, to help keep it speedy. Added in 0.5.0
-		window.db.transaction(function(tx){
+		// Disabled in 1.0.3. Possibly the cause of dropping tables (issue #47).
+		/*window.db.transaction(function(tx){
 			tx.executeSql('VACUUM');
-		});
+		});*/
 
 		// Add `inputurls` table, added in 0.5.4
 		window.db.transaction(function(tx){

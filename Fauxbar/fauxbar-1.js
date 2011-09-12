@@ -1164,11 +1164,11 @@ function microtime (get_as_float) {
 
 // Focus Address Box or Search Box if allowed, stealing from Chrome's Omnibox (shortcut keys)
 $("*").live("keydown", function(e){
-	if ((e.keyCode == 68 && e.altKey == true && localStorage.option_altd == 1) || (e.keyCode == 76 && e.ctrlKey == true && localStorage.option_ctrll == 1)) {
+	if ((e.keyCode == 68 && e.altKey == true && !e.ctrlKey && localStorage.option_altd == 1) || (e.keyCode == 76 && e.ctrlKey == true && !e.altKey && localStorage.option_ctrll == 1)) {
 		$("#awesomeinput").focus().select();
 		return false;
 	}
-	else if (e.keyCode == 75 && e.ctrlKey == true && localStorage.option_ctrlk == 1) {
+	else if (e.keyCode == 75 && e.ctrlKey == true && !e.altKey && localStorage.option_ctrlk == 1) {
 		$("#opensearchinput").focus().select();
 		return false;
 	}
@@ -1355,13 +1355,13 @@ $("#awesomeinput").bind("keydown", function(e){
 	}
 
 	// Ctrl+K
-	else if (e.keyCode == 75 && e.ctrlKey == true) {
+	else if (e.keyCode == 75 && e.ctrlKey == true && !e.altKey) {
 		$("#opensearchinput").focus();
 		return false;
 	}
 
 	//  Ctrl+L, Alt+D
-	else if ((e.keyCode == 76 && e.ctrlKey == true) || (e.keyCode == 68 && e.altKey == true)) {
+	else if ((e.keyCode == 76 && e.ctrlKey == true && !e.altKey) || (e.keyCode == 68 && e.altKey == true && !e.ctrlKey)) {
 		return false;
 	}
 
@@ -1394,12 +1394,12 @@ $("#awesomeinput").bind("keydown", function(e){
 
 $("#opensearchinput").bind("keydown", function(e){
 	// Ctrl+K
-	if (e.keyCode == 75 && e.ctrlKey == true) {
+	if (e.keyCode == 75 && e.ctrlKey == true && !e.altKey) {
 		return false;
 	}
 
 	// Ctrl+L, Alt+D
-	else if ((e.keyCode == 76 && e.ctrlKey == true) || (e.keyCode == 68 && e.altKey == true)) {
+	else if ((e.keyCode == 76 && e.ctrlKey == true && !e.altKey) || (e.keyCode == 68 && e.altKey == true && !e.ctrlKey)) {
 		$("#awesomeinput").focus();
 		return false;
 	}

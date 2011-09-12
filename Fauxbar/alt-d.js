@@ -1,5 +1,5 @@
 $("*").live('keydown', function(e){
-	if (e.altKey == true && e.keyCode == 68) {
+	if (e.altKey == true && !e.ctrlKey && e.keyCode == 68) {
 		window.location = chrome.extension.getURL("fauxbar.html#sel=ai&ai="+window.urlencode(window.location.href));
 		return false;
 	}
