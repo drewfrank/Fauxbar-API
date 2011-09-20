@@ -1,5 +1,30 @@
 // This file contains functions that don't need to be loaded ASAP
 
+// Check to see if issue 47 is present and needs to be taken care of
+if (localStorage.issue47 == 1) {
+	var bgPage = chrome.extension.getBackgroundPage();
+	if (!bgPage.reindexing) {
+		var tabId = false;
+		chrome.tabs.getAllInWindow(null, function(tabs){
+			for (var t in tabs) {
+				if (tabs[t].url == chrome.extension.getURL("issue47.html")) {
+					tabId = tabs[t].id;
+					break;
+				}
+			}
+			if (tabId) {
+				chrome.tabs.update(tabId, {selected:true}, function(){
+					chrome.tabs.getCurrent(function(tab){
+						chrome.tabs.remove(tab.id);
+					});
+				});
+			} else {
+				window.location = "issue47.html";
+			}
+		});
+	}
+}
+
 // http://stackoverflow.com/questions/986937/javascript-get-the-browsers-scrollbar-sizes
 function getScrollBarWidth () {
   var inner = document.createElement('p');
@@ -242,6 +267,8 @@ $("*").live("mouseup", function(){
 					});
 				}, function(t){
 					errorHandler(t, getLineInfo());
+				}, function(){
+					chrome.extension.sendRequest("backup search engines");
 				});
 				populateOpenSearchMenu();
 			}
@@ -796,6 +823,7 @@ $("#contextMenu .menuOption").live("mousedown", function(){
 								$("#awesomeinput").focus();
 								getResults(true);
 							}
+							chrome.extension.sendRequest("backup keywords");
 						});
 					}
 				}
@@ -819,6 +847,7 @@ $("#contextMenu .menuOption").live("mousedown", function(){
 								$("#awesomeinput").focus();
 								getResults(true);
 							}
+							chrome.extension.sendRequest("backup keywords");
 						});
 					}
 					else if (openDb()) {
@@ -834,6 +863,7 @@ $("#contextMenu .menuOption").live("mousedown", function(){
 								$("#awesomeinput").focus();
 								getResults(true);
 							}
+							chrome.extension.sendRequest("backup keywords");
 						});
 					}
 				}
@@ -1698,10 +1728,15 @@ if (localStorage.indexComplete != 1) {
 	$.get("indexinginfo.html", function(response){
 		$("#maindiv").after(response);
 		$("#addresswrapper").css("cursor","wait");
+		$("#apps").remove();
 		if (localStorage.indexedbefore == 1) {
 			$("#indexinginfo b").html("Fauxbar is Reindexing");
 			$("#indexinginfo span").html("Fauxbar is reindexing your history items and bookmarks.");
-			$("button").prop('disabled',true).html('Please Wait...');
+			$("button").prop('disabled',true).html('Please Wait...').blur();
+		} else if (localStorage.issue47 == 1) {
+			$("#indexinginfo b").html("Fauxbar is Rebuilding");
+			$("#indexinginfo span").html("Fauxbar is rebuilding its database, and reindexing your history items and bookmarks. Any custom keywords and search engines you had will also be restored shortly after.");
+			$("button").prop('disabled',true).html('Please Wait...').blur();
 		}
 		$("#indexinginfo").css("display","block");
 		$("#awesomeinput").css("cursor","wait");

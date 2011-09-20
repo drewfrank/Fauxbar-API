@@ -228,7 +228,7 @@ function fileErrorHandler(e) {
     default:
       msg = 'Fauxbar has encountered an unknown thumbnail file error.';
       break;
-  };
+  }
   if (localStorage.option_alert == 1) {
   	alert(msg);
   }
@@ -247,7 +247,7 @@ function dataURItoBlob(dataURI, callback) {
 	var byteString = atob(dataURI.split(',')[1]);
 
 	// separate out the mime component
-	var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
+	var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
 
 	// write the bytes of the string to an ArrayBuffer
 	var ab = new ArrayBuffer(byteString.length);
@@ -260,7 +260,7 @@ function dataURItoBlob(dataURI, callback) {
 	var bb = new window.WebKitBlobBuilder();
 	bb.append(ab);
 	return bb.getBlob(mimeString);
-};
+}
 
 
 // http://phpjs.org/functions/urlencode:573

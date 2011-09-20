@@ -64,6 +64,8 @@
 						broadcastClosure();
 					}, function(t){
 						errorHandler(t, getLineInfo());
+					}, function(){
+						chrome.extension.sendRequest("backup search engines");
 					});
 				}
 			}
@@ -123,6 +125,8 @@
 									broadcastClosure();
 								}, function(t){
 									errorHandler(t, getLineInfo());
+								}, function(){
+									chrome.extension.sendRequest("backup search engines");
 								});
 							});
 						}

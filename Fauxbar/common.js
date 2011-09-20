@@ -70,6 +70,8 @@ function selectOpenSearchType(el, focusToo) {
 				localStorage.osiconsrc = $(".vertline2 img", el).attr("src");
 			}, function(t){
 				errorHandler(t, getLineInfo());
+			}, function(){
+				chrome.extension.sendRequest("backup search engines");
 			});
 		}
 	}

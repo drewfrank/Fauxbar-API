@@ -35,13 +35,13 @@
 					var len = results.rows.length, i;
 					var row = '';
 					var url = '';
-					var class = 'odd';
+					var class1 = 'odd'; // used to be `var class`, but it seems that "class" is now a reserved var name
 					if (len > 0) {
 						for (i = 0; i < len; i++) {
 							row = results.rows.item(i);
 							url = str_replace(chrome.extension.getURL(""), "", row.url);
-							class = class == "odd" ? "even" : "odd";
-							$("tr").last().after('<tr class="'+class+'"><td style="text-align:right">'+(i+1)+'.</td><td>'+row.date+'</td><td>'+row.version+'</td><td>'+url+'</td><td>'+row.file+'</td><td>'+row.line+'</td><td>'+row.message+'</td><td style="text-align:right">'+row.count+'</td></tr>');
+							class1 = class1 == "odd" ? "even" : "odd";
+							$("tr").last().after('<tr class="'+class1+'"><td style="text-align:right">'+(i+1)+'.</td><td>'+row.date+'</td><td>'+row.version+'</td><td>'+url+'</td><td>'+row.file+'</td><td>'+row.line+'</td><td>'+row.message+'</td><td style="text-align:right">'+row.count+'</td></tr>');
 							if (!strstr((i+1)/20, ".")) {
 								$("tr").last().after('<tr>'+$("tr").first().html()+'</tr>');
 							}

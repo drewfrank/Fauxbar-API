@@ -60,8 +60,8 @@ chrome.extension.onRequestExternal.addListener(function(request){
 $(document).ready(function(){
 
 	// New version info
-	var currentVersion = "1.0.3";
-	localStorage.updateBlurb = ".&nbsp; Fixed an issue regarding language-specific keyboard shortcuts.";
+	var currentVersion = "1.0.4";
+	localStorage.updateBlurb = ".&nbsp; Added a fix to hopefully prevent database corruption...";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
 		localStorage.readUpdateMessage = 0;
 	}
@@ -149,9 +149,10 @@ $(document).ready(function(){
 
 		// Vacuum the DB upon start, to help keep it speedy. Added in 0.5.0
 		// Disabled in 1.0.3. Possibly the cause of dropping tables (issue #47).
-		/*window.db.transaction(function(tx){
+		// Reinstated in 1.0.4, as it's not the cause.
+		window.db.transaction(function(tx){
 			tx.executeSql('VACUUM');
-		});*/
+		});
 
 		// Add `inputurls` table, added in 0.5.4
 		window.db.transaction(function(tx){
@@ -330,8 +331,8 @@ chrome.omnibox.setDefaultSuggestion({description:"Open Fauxbar"});
 chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 	var origText = text;
 	window.currentOmniboxText = text;
-	if (text.length > 0 ) {
-		chrome.omnibox.setDefaultSuggestion({description:"<dim>Fauxbar: %s</dim>"});
+	if (text.length) {
+		chrome.omnibox.setDefaultSuggestion({description:"<dim>%s</dim>"});
 	} else {
 		chrome.omnibox.setDefaultSuggestion({description:"Open Fauxbar"});
 	}
@@ -770,12 +771,79 @@ function captureScreenshot(sender) {
 	}
 }
 
+// Backup URL keywords from SQLite to Local Storage
+function backupKeywords() {
+	if (localStorage.issue47 != 1 && openDb()) {
+		window.db.readTransaction(function(tx){
+			tx.executeSql('SELECT * FROM tags', [], function(tx, results){
+				if (results.rows.length > 0) {
+					var tags = [];
+					for (var x = 0; x < results.rows.length; x++) {
+						tags[tags.length] = {
+							url:results.rows.item(x).url,
+							tag:results.rows.item(x).tag
+						};
+					}
+					localStorage.backup_tags = JSON.stringify(tags);
+				} else {
+					delete localStorage.backup_tags;
+				}
+			});
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
+	}
+}
+
+// Backup search engines from SQLite to Local Storage
+function backupSearchEngines() {
+	if (localStorage.issue47 != 1 && openDb()) {
+		window.db.readTransaction(function(tx){
+			tx.executeSql('SELECT * FROM opensearches', [], function(tx, results){
+				if (results.rows.length > 0) {
+					var engines = [];
+					for (var x = 0; x < results.rows.length; x++) {
+						var item = results.rows.item(x);
+						engines[engines.length] = {
+							shortname:	item.shortname,
+							iconurl:	item.iconurl,
+							searchurl:	item.searchurl,
+							xmlurl:		item.xmlurl,
+							xml:		item.xml,
+							isdefault:	item.isdefault,
+							method:		item.method,
+							position:	item.position,
+							suggestUrl:	item.suggestUrl,
+							keyword:	item.keyword
+						};
+					}
+					localStorage.backup_searchEngines = JSON.stringify(engines);
+				} else {
+					delete localStorage.backup_searchEngines;
+				}
+			});
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
+	}
+}
+
 // Background page listens for requests...
 chrome.extension.onRequest.addListener(function(request, sender){
 
 	// Generate top site tile thumbnail for page if page reports page has not been scrolled at all
 	if (request == "scrolltop is 0") {
 		captureScreenshot(sender);
+	}
+
+	// Backup keywords to localStorage in case Fauxbar's database becomes corrupted
+	else if (request == "backup keywords") {
+		backupKeywords();
+	}
+
+	// Backup search engines to localStorage in case Fauxbar's database becomes corrupted
+	else if (request == "backup search engines") {
+		backupSearchEngines();
 	}
 
 	// Record what the user typed to go to a URL, to help out the pre-rendering guesswork
@@ -1198,13 +1266,48 @@ function isIndexingFinished() {
 		window.reindexing = false;
 		localStorage.indexComplete = 1;
 		localStorage.indexedbefore = 1;
+		localStorage.issue47 = 0;
 		console.log("Indexing complete.");
 		chrome.extension.sendRequest({message:"currentStatus",status:"Indexing complete.", step:8}); // Step 8
 		localStorage.almostdone = 1;
 		setTimeout(function(){
 			alert("Success!\n\nFauxbar has finished indexing your history items and bookmarks, and is now ready for use.\n\nFrom here on, Fauxbar's index will be silently updated on-the-fly for you.");
+
+			// Restore search engines
+			if (localStorage.backup_searchEngines && localStorage.backup_searchEngines.length && openDb()) {
+				window.db.transaction(function(tx){
+					tx.executeSql('DELETE FROM opensearches');
+					var engines = jQuery.parseJSON(localStorage.backup_searchEngines);
+					for (var en in engines) {
+						var e = engines[en];
+						tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, position, suggestUrl, keyword) '+
+									' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+									[e.shortname, e.iconurl, e.searchurl, e.xmlurl, e.xml, e.isdefault, e.method, e.position, e.suggestUrl, e.keyword]);
+					}
+				}, function(t){
+					errorHandler(t, getLineInfo());
+				});
+			}
+
+			// Restore URL keywords/tags
+			if (localStorage.backup_tags && localStorage.backup_tags.length) {
+				var tags = jQuery.parseJSON(localStorage.backup_tags);
+				if (openDb()) {
+					window.db.transaction(function(tx){
+						tx.executeSql('DELETE FROM tags');
+						for (var t in tags) {
+							tx.executeSql('INSERT INTO tags (url, tag) VALUES (?, ?)', [tags[t].url, tags[t].tag]);
+						}
+					}, function(t){
+						errorHandler(t, getLineInfo());
+					}, reapplyKeywords);
+				}
+			} else {
+				reapplyKeywords();
+			}
+
 			updateTopSites();
-			reapplyKeywords();
+
 			chrome.extension.sendRequest("DONE INDEXING");
 		},1200);
 		return true;
@@ -1459,14 +1562,23 @@ function clearIndex(reindexing) {
 			tx.executeSql('CREATE INDEX IF NOT EXISTS tagindex ON urls (tag)');
 
 			// Error log table
+			if (localStorage.indexedbefore == 0) {
+				tx.executeSql('DROP TABLE IF EXISTS errors');
+			}
 			tx.executeSql('CREATE TABLE IF NOT EXISTS errors (id INTEGER PRIMARY KEY, date NUMERIC, version TEXT, url TEXT, file TEXT, line NUMERIC, message TEXT, count NUMERIC)');
 
 			// URL tag table
+			if (localStorage.indexedbefore == 0) {
+				tx.executeSql('DROP TABLE IF EXISTS tags');
+			}
 			tx.executeSql('CREATE TABLE IF NOT EXISTS tags (url TEXT DEFAULT "", tag TEXT DEFAULT "")');
 			tx.executeSql('CREATE INDEX IF NOT EXISTS tagurlindex ON tags (url)');
 			tx.executeSql('CREATE INDEX IF NOT EXISTS tagtagindex ON tags (tag)');
 
 			// User input > url table, for helping out with the pre-rendering guesswork
+			if (localStorage.indexedbefore == 0) {
+				tx.executeSql('DROP TABLE IF EXISTS inputurls');
+			}
 			tx.executeSql('CREATE TABLE IF NOT EXISTS inputurls (input TEXT, url TEXT)');
 			tx.executeSql('CREATE INDEX IF NOT EXISTS inputindex ON inputurls (input)');
 			tx.executeSql('CREATE INDEX IF NOT EXISTS urlindex ON inputurls (url)');
@@ -1526,3 +1638,46 @@ function reapplyKeywords() {
 		});
 	}
 }
+
+// Check to see if database has become corrupted (issue #47) and display an error page if so
+setTimeout(function(){
+	if (localStorage.issue47 == 1) {
+		chrome.tabs.create({url:"issue47.html", selected:true});
+		return;
+	}
+	if (localStorage.indexedbefore == 1 && openDb()) {
+		window.db.readTransaction(function(tx){
+			tx.executeSql('SELECT * FROM opensearches LIMIT 1', [], function(tx, engines){
+				// There should always be at least one search engine, so if there's none, DB is corrupt
+				if (!engines.rows.length) {
+					localStorage.issue47 = 1;
+					chrome.tabs.create({url:"issue47.html", selected:true});
+					return true;
+				}
+				tx.executeSql('SELECT * FROM urls LIMIT 1', [], function(tx, urls){
+					tx.executeSql('SELECT * FROM inputurls LIMIT 1', [], function(tx, inputurls){
+						tx.executeSql('SELECT * FROM tags LIMIT 1', [], function(tx, tags){
+							tx.executeSql('SELECT * FROM errors LIMIT 1', [], function(tx, errors){
+								tx.executeSql('SELECT * FROM thumbs LIMIT 1', [], function(tx, thumbs){
+									tx.executeSql('SELECT * FROM searchqueries LIMIT 1', [], function(tx, queries){
+
+									});
+								});
+							});
+						});
+					});
+				});
+			});
+		}, function(){
+			// If one of the tables above doesn't exist, DB is corrupt
+			localStorage.issue47 = 1;
+			chrome.tabs.create({url:"issue47.html", selected:true});
+		}, function(){
+			// But if DB seems fine, backup keywords and search engines to local storage
+			if (localStorage.issue47 != 1) {
+				backupKeywords();
+				backupSearchEngines();
+			}
+		});
+	}
+}, 100);

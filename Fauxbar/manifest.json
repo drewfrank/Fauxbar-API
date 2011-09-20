@@ -1,9 +1,9 @@
 {
 	"name": "Fauxbar",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"description": "An alternative to Chrome's Omnibox.",
 
-	"minimum_chrome_version": "13",
+	"minimum_chrome_version": "14",
 
 	"background_page": "fauxbar.background.html",
 

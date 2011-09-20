@@ -53,7 +53,7 @@
 									Choose tiles:
 									<select id="option_pagetilearrangement" name="option_pagetilearrangement">
 										<!--<option value="bookmarkbar">Based on Chrome's Bookmark Bar</option>-->
-										<option value="frecency">Automatically by frecency score</option>
+										<option value="frecency">Automatically</option>
 										<!--<option value="visitcount">By visit count</option>-->
 										<option value="manual">Manually</option>
 									</select>
@@ -712,7 +712,7 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px;" />
 					Fauxbar Management
 				</h1>
-				Fauxbar version 1.0.3 &nbsp;<span style="opacity:.5">(13 Sep 2011)</span>
+				Fauxbar version 1.0.4 &nbsp;<span style="opacity:.5">(20 Sep 2011)</span>
 				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
@@ -732,6 +732,7 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 							<button onclick="confirm('Reindex Fauxbar\'s history items and bookmarks?\n\nIf Fauxbar\'s Address Box results seem stale, or if you\'ve just altered the Frecency options, click OK - reindexing will ensure Fauxbar\'s database is up to date.\n\nOtherwise, click Cancel - reindexing probably won\'t accomplish much.\n') ? tellBgToReindex() : ''" style="font-size:95%">Reindex...</button>
 							<button id="button_clearsearchhistory" style="font-size:95%; position:relative;" onclick="confirm('Clear Fauxbar\'s Search Box queries?') ? clearSearchHistory() : null">Clear Search Queries...</button>
 							<button id="button_clearinputurls" style="font-size:95%; position:relative;" onclick="confirm('Clear Fauxbar\'s list of pre-renderable URLs?') ? clearUsageHabits() : null">Clear Usage Habits...</button>
+							<button id="button_rebuild" style="font-size:95%; position:relative;" onclick="confirm('Rebuild Fauxbar\'s database?\n\nThis should only be used if Fauxbar feels like it\'s become completely broken.') ? rebuildDatabase() : null">Rebuild...</button>
 						</td>
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
@@ -745,7 +746,7 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 								<button style="font-size:12px;" onclick="showRestoreInfo()">
 									Restore...
 								</button>
-								<button style="font-size:12px;" onclick="$('#restoreinfo').css('display','none'); $('#backupinfo').css('display','none'); confirm('Reset Fauxbar\'s options back to their default values?\n\nYour history items, bookmarks, search engines and search queries will remain intact.\n') ? resetOptions() + window.location.reload() : null">
+								<button style="font-size:12px;" onclick="$('#restoreinfo').css('display','none'); $('#backupinfo').css('display','none'); confirm('Reset Fauxbar\'s options back to their default values?\n\nYour history items, bookmarks, search engines, search queries and keywords will remain intact.\n') ? resetOptions() + window.location.reload() : null">
 									Reset...
 								</button>
 							</div>
@@ -843,7 +844,7 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 								Use custom frecency scoring...
 							</label>
 							<div class="optionstip">
-								If you want to use the default settings, leave this unchecked for best performance.
+								If you just want to use the default scoring settings, leave this unchecked for best performance.
 							</div>
 						</td>
 					</tr>
@@ -993,9 +994,9 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 							Facebook
 						</th>
 						<td>
-							<a href="http://www.facebook.com/pages/Fauxbar/147907341953576?sk=wall" target="_blank" style="color:#06c">Fauxbar's Wall</a><br />
-							<a href="http://www.facebook.com/pages/Fauxbar/147907341953576?sk=app_2373072738" target="_blank" style="color:#06c">Discussions</a><br />
-							<a href="http://www.facebook.com/pages/Fauxbar/147907341953576?sk=notes" target="_blank" style="color:#06c">Notes (Blog)</a><br />
+							<a href="http://www.facebook.com/Fauxbar?sk=wall" target="_blank" style="color:#06c">Fauxbar's Wall</a><br />
+							<a href="http://www.facebook.com/Fauxbar?sk=app_2373072738" target="_blank" style="color:#06c">Discussions</a><br />
+							<a href="http://www.facebook.com/Fauxbar?sk=notes" target="_blank" style="color:#06c">Notes (Blog)</a><br />
 						</td>
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>

@@ -141,6 +141,7 @@ $.get("options.html", function(response){
 					$(this).attr("origvalue",$(this).val());
 				});
 				populateOpenSearchMenu();
+				chrome.extension.sendRequest("backup search engines");
 			});
 		}
 	});
@@ -153,6 +154,8 @@ $.get("options.html", function(response){
 				tx.executeSql('DELETE FROM opensearches WHERE shortname = ?', [$(theCell).prevAll('td.shortname').children('input').first().val()]);
 			}, function(t){
 				errorHandler(t, getLineInfo());
+			}, function(){
+				chrome.extension.sendRequest("backup search engines");
 			});
 			$(theCell).parent().animate({opacity:0}, 0, function() {
 				$(this).remove();
@@ -200,6 +203,8 @@ $.get("options.html", function(response){
 				$(button).css("display","none");
 			}, function(t){
 				errorHandler(t, getLineInfo());
+			}, function(){
+				chrome.extension.sendRequest("backup search engines");
 			});
 			getSearchEngines();
 			populateOpenSearchMenu();
@@ -510,6 +515,8 @@ function restoreOptions() {
 			}, function(t){
 				errorHandler(t, getLineInfo());
 			}, function(){
+				chrome.extension.sendRequest("backup keywords");
+				chrome.extension.sendRequest("backup search engines");
 				alert("The import was successful.\n\nFauxbar will now restore your options.");
 				window.location.reload();
 			});
@@ -585,6 +592,8 @@ function sortSearchEnginesAlphabetically() {
 			populateOpenSearchMenu();
 		}, function(t){
 			errorHandler(t, getLineInfo());
+		}, function(){
+			chrome.extension.sendRequest("backup search engines");
 		});
 	}
 }
@@ -775,9 +784,9 @@ function loadOptionsJS() {
 // Initialize the reindexing process
 function tellBgToReindex() {
 	chrome.extension.sendRequest({action:"reindex"});
-	setTimeout(function(){
+	//setTimeout(function(){
 		window.location.reload();
-	}, 500);
+	//}, 500);
 }
 
 // Hide the Options container/page
@@ -864,7 +873,10 @@ function addEngineManually() {
 			tx.executeSql('INSERT INTO opensearches (shortname, searchurl, keyword) VALUES (?, ?, ?)', ['Untitled', '', '']);
 		}, function(t){
 			errorHandler(t, getLineInfo());
-		}, getSearchEngines);
+		}, function(){
+			getSearchEngines();
+			chrome.extension.sendRequest("backup search engines");
+		});
 	}
 }
 
@@ -913,4 +925,19 @@ function clearUsageHabits() {
 			window.location.reload();
 		});
 	}
+}
+
+function rebuildDatabase() {
+	$("button").prop("disabled",true);
+	localStorage.indexedbefore = 0;
+	localStorage.unreadErrors = 0;
+	localStorage.issue47 = 1;
+	chrome.extension.sendRequest({action:"reindex"});
+	setTimeout(function(){
+		chrome.tabs.create({selected:true}, function(){
+			chrome.tabs.getCurrent(function(tab){
+				chrome.tabs.remove(tab.id);
+			});
+		});
+	}, 1);
 }
