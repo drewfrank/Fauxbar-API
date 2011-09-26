@@ -332,7 +332,7 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 								<input name="option_osimproper" id="option_osimproper" type="checkbox" /> when an undeclared engine has <i>possibly</i> been detected <i>(experimental)</i>
 							</label>
 							<div class="optionstip" style="margin-bottom:7px">
-								Left-clicking the icon lets you add a new search engine to Fauxbar.
+								If you see this icon when visiting a webpage, left-click the icon to add the site's search engine to Fauxbar.
 							</div>
 							Or: <button style="font-size:12px;font-family:inherit" onclick="addEngineManually()">Add Manually...</button>
 						</td>
@@ -668,12 +668,12 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 								Maximum width: <input name="option_maxwidth" id="option_maxwidth" type="number" min="700" max="9999" step="100" spellcheck="false" maxlength="4" size="6" spellcheck="false" style="text-align:center" /> pixels
 							</label>
 							<div style="margin-top:-4px">
-								Top background gradient:
+								Top gradient:
 								<input title="Default: #000000" name="option_topgradient" id="option_topgradient" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
 								<input title="Default: 12%" name="option_topopacity" id="option_topopacity" class="opacity" type="number" min="0" max="100" step="5" maxlength="3" size="4" spellcheck="false" style="text-align:center" />%
 							</div>
 							<div style="margin-top:3px">
-								Bottom background gradient:
+								Bottom gradient:
 								<input title="Default: #000000" name="option_bottomgradient" id="option_bottomgradient" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
 								<input title="Default: 50%" name="option_bottomopacity" id="option_bottomopacity" class="opacity" type="number" min="0" max="100" step="5" maxlength="3" size="4" spellcheck="false" style="text-align:center" />%
 							</div>
@@ -685,21 +685,35 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
 						<th>Omnibox</th>
-						<td style="padding-top:2px">
-							<label class="legend" style="margin-bottom:10px">
-								<input name="option_forceoptionsicon" id="option_forceoptionsicon" type="checkbox" /> Always show the clickable <img src="fauxbar16options.png" style="vertical-align:middle; position:relative; top:-3px; height:19px;width:19px" /> icon when possible
-							</label>
+						<td>
 							When using Fauxbar from Chrome's Omnibox...<br />
-							<label class="legend" style="margin-top:2px">
-								&nbsp;&bull; sometimes shorten result URLs to
-								<input title="Default: 55" name="option_omniboxurltruncate" id="option_omniboxurltruncate" class="upto inputoption" type="number" min="0" max="999" step="5" spellcheck="false" maxlength="3" size="4" spellcheck="false" style="text-align:center" /> characters
+							<label class="legend" style="margin-top:8px">
+								<input name="option_showStarInOmnibox" id="option_showStarInOmnibox" type="checkbox" style="vertical-align:middle; margin-top:0"/>
+								attempt to show a &#9733; character for bookmark results
+								<span style="opacity:.5; cursor:help"
+									  title="If enabled, Fauxbar+Omnibox bookmark results will attempt to display a star character between the result's URL and title. If Chrome is unable to display a star, a white box will be displayed instead.
+
+If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 							</label>
-							<div class="optionstip">
+							<label class="legend">
+								<input type="checkbox" checked disabled style="vertical-align:middle; margin-top:-1px" />
+								truncate result URLs exceeding:
+								<input title="Default: 55" name="option_omniboxurltruncate" id="option_omniboxurltruncate" class="upto inputoption" type="number" min="0" max="999" step="5" spellcheck="false" maxlength="3" size="4" spellcheck="false" style="text-align:center" />
+								characters
+								<span style="opacity:.5; cursor:help"
+									  title="To help ensure result titles are shown, long URLs that exceed the specified character limit will be shortened.">(?)</span>
+							</label>
+							<div class="optionstip" style="margin-top:-4px">
 								To use Fauxbar from Chrome's Omnibox, focus the Omnibox and press <b>F</b>+<b>Spacebar</b>
 							</div>
 							<div class="optionstip">
 								Certain <span style="text-decoration:underline; cursor:pointer; font-size:12px" class="fakelink" onmouseup='$("#option_menu div").removeClass("section_selected"); $("#option_section_addressbox").addClass("section_selected"); $("div.optionbox").css("display","none"); $("#addressoptions").css("display","block"); localStorage.option_optionpage = "option_section_addressbox";'>Address Box options</span> also apply to Fauxbar's Omnibox results.
 							</div>
+							<label class="legend" style="margin-top:20px">
+								<input name="option_forceoptionsicon" id="option_forceoptionsicon" type="checkbox" /> Always show the clickable <img src="fauxbar16options.png" style="vertical-align:middle; position:relative; top:-3px; height:19px;width:19px" /> icon when possible
+								<span style="opacity:.5; cursor:help"
+									  title="This icon acts a quick shortcut to open Fauxbar's options.">(?)</span>
+							</label>
 						</td>
 					</tr>
 				</table>
@@ -712,7 +726,7 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px;" />
 					Fauxbar Management
 				</h1>
-				Fauxbar version 1.0.4 &nbsp;<span style="opacity:.5">(20 Sep 2011)</span>
+				Fauxbar version 1.0.5 &nbsp;<span style="opacity:.5">(26 Sep 2011)</span>
 				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
@@ -724,7 +738,8 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 								&nbsp;&bull; <span id="stats_bookmarks">?</span> <span id="bookmarksplural">bookmarks</span><br />
 								&nbsp;&bull; <span id="stats_searchengines">?</span> search <span id="enginesplural">engines</span><br />
 								&nbsp;&bull; <span id="stats_searchqueries">?</span> search <span id="queriesplural">queries</span><br />
-								&nbsp;&bull; <span id="stats_thumbs">?</span> tile <span id="thumbsplural">thumbnails</span><br />
+								<!-- Removing the thumbnail count because the counting algorithm is usually incorrect; it's merely a "possible" max amount of thumbnails, and isn't necessarily true.
+								&nbsp;&bull; <span id="stats_thumbs">?</span> tile <span id="thumbsplural">thumbnails</span><br />-->
 								&nbsp;&bull; <span id="stats_tags">?</span> URL <span id="tagsplural">keywords</span><br />
 								&nbsp;&bull; <span id="stats_inputurls">?</span> pre-renderable <span id="inputurlsplural">URLs</span>
 							</label>
@@ -809,6 +824,7 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 							<label class="legend" style="margin-top:1px">
 								<input name="option_showErrorCount" id="option_showErrorCount" type="checkbox" /> Show an error count beside the Management menu
 							</label>
+							<div class="optionstip" style="margin-top:5px">If Fauxbar ever feels like it's broken yet no errors get logged, Fauxbar's background console may contain useful information.</div>
 						</td>
 					</tr>
 				</table>
@@ -832,20 +848,16 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 						<td colspan="2">
 						<label class="legend" style="margin-top:0px">
 								Unvisited bookmark score:
-								<input name="option_frecency_unvisitedbookmark" id="option_frecency_unvisitedbookmark" class="inputoption" type="number" min="0" max="9999" step="20" value="" maxlength="4" size="6" style="text-align:center; padding:0" />
+								<input name="option_frecency_unvisitedbookmark" id="option_frecency_unvisitedbookmark" title="Default: 1" class="inputoption" type="number" min="0" max="9999" step="20" value="" maxlength="4" size="6" style="text-align:center; padding:0" />
 							</label>
 						</td>
 					</tr>
-					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
 						<td colspan="2">
-							<label class="legend">
+							<label class="legend" style="margin-top:11px">
 								<input name="option_customscoring" id="option_customscoring" type="checkbox" />
 								Use custom frecency scoring...
 							</label>
-							<div class="optionstip">
-								If you just want to use the default scoring settings, leave this unchecked for best performance.
-							</div>
 						</td>
 					</tr>
 
@@ -856,7 +868,7 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 						<td>
 						<label class="legend" style="margin-top:-2px">
 								Sample each URL's
-								<input name="option_recentvisits" id="option_recentvisits" class="inputoption" type="number" min="0" max="9999" step="10" value="" maxlength="3" size="4" style="text-align:center; padding:0" />
+								<input name="option_recentvisits" id="option_recentvisits" title="Default: 10" class="inputoption" type="number" min="0" max="9999" step="10" value="" maxlength="3" size="4" style="text-align:center; padding:0" />
 								most recent visits
 							</label>
 						</td>
@@ -867,35 +879,35 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 						<td>
 							<label class="legend" style="margin-top:-2px">
 								Link bonus:
-								<input name="option_frecency_link" id="option_frecency_link" class="inputoption" type="number" min="0" max="9999" step="25" value="" maxlength="4" size="6" style="text-align:center; padding:0" />
+								<input name="option_frecency_link" id="option_frecency_link" title="Default: 100" class="inputoption" type="number" min="0" max="9999" step="25" value="" maxlength="4" size="6" style="text-align:center; padding:0" />
 							</label>
 							<label class="legend">
 								Typed bonus:
-								<input name="option_frecency_typed" id="option_frecency_typed" class="inputoption" type="number" min="0" max="9999" step="25" value="" maxlength="4" size="6" style="text-align:center; padding:0" />
+								<input name="option_frecency_typed" id="option_frecency_typed" title="Default: 2000" class="inputoption" type="number" min="0" max="9999" step="25" value="" maxlength="4" size="6" style="text-align:center; padding:0" />
 							</label>
 							<label class="legend">
 								Auto_Bookmark bonus:
-								<input name="option_frecency_auto_bookmark" id="option_frecency_auto_bookmark" class="inputoption" type="number" min="0" max="9999" step="25" value="" maxlength="4" size="6" style="text-align:center; padding:0" />
+								<input name="option_frecency_auto_bookmark" id="option_frecency_auto_bookmark" title="Default: 75" class="inputoption" type="number" min="0" max="9999" step="25" value="" maxlength="4" size="6" style="text-align:center; padding:0" />
 							</label>
 							<label class="legend">
 								Reload bonus:
-								<input name="option_frecency_reload" id="option_frecency_reload" class="inputoption" type="number" min="0" max="9999" step="25" value="" maxlength="4" size="6" style="text-align:center; padding:0" />
+								<input name="option_frecency_reload" id="option_frecency_reload" class="inputoption" title="Default: 0" type="number" min="0" max="9999" step="25" value="" maxlength="4" size="6" style="text-align:center; padding:0" />
 							</label>
 							<label class="legend">
 								Start_Page bonus:
-								<input name="option_frecency_start_page" id="option_frecency_start_page" class="inputoption" type="number" min="0" max="9999" step="25" value="" maxlength="4" size="6" style="text-align:center; padding:0" />
+								<input name="option_frecency_start_page" id="option_frecency_start_page" class="inputoption" title="Default: 0" type="number" min="0" max="9999" step="25" value="" maxlength="4" size="6" style="text-align:center; padding:0" />
 							</label>
 							<label class="legend">
 								Form_Submit bonus:
-								<input name="option_frecency_form_submit" id="option_frecency_form_submit" class="inputoption" type="number" min="0" max="9999" step="25" value="" maxlength="4" size="6" style="text-align:center; padding:0" />
+								<input name="option_frecency_form_submit" id="option_frecency_form_submit" title="Default: 0" class="inputoption" ttle="Default: 0" type="number" min="0" max="9999" step="25" value="" maxlength="4" size="6" style="text-align:center; padding:0" />
 							</label>
 							<label class="legend">
 								Keyword bonus:
-								<input name="option_frecency_keyword" id="option_frecency_keyword" class="inputoption" type="number" min="0" max="9999" step="25" value="" maxlength="4" size="6" style="text-align:center; padding:0" />
+								<input name="option_frecency_keyword" id="option_frecency_keyword" class="inputoption" title="Default: 0" type="number" min="0" max="9999" step="25" value="" maxlength="4" size="6" style="text-align:center; padding:0" />
 							</label>
 							<label class="legend">
 								Generated bonus:
-								<input name="option_frecency_generated" id="option_frecency_generated" class="inputoption" type="number" min="0" max="9999" step="25" value="" maxlength="4" size="6" style="text-align:center; padding:0" />
+								<input name="option_frecency_generated" id="option_frecency_generated" class="inputoption" title="Default: 0" type="number" min="0" max="9999" step="25" value="" maxlength="4" size="6" style="text-align:center; padding:0" />
 							</label>
 							<div class="optionstip" style="margin-top:2px; margin-left:0px">
 								<a href="http://code.google.com/chrome/extensions/history.html#transition_types" target="_blank">Learn about these transition types</a>
@@ -908,23 +920,23 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 						<td>
 							<label class="legend" style="margin-top:-1px">
 								First bucket weight:
-								<input name="option_weight1" id="option_weight1" class="inputoption" type="number" min="0" max="999" step="10" value="" maxlength="3" size="5" style="text-align:center; padding:0" />
+								<input name="option_weight1" id="option_weight1" class="inputoption" title="Default: 100" type="number" min="0" max="999" step="10" value="" maxlength="3" size="5" style="text-align:center; padding:0" />
 							</label>
 							<label class="legend">
 								Second bucket weight:
-								<input name="option_weight2" id="option_weight2" class="inputoption" type="number" min="0" max="999" step="10" value="" maxlength="3" size="5" style="text-align:center; padding:0" />
+								<input name="option_weight2" id="option_weight2" class="inputoption" title="Default: 70" type="number" min="0" max="999" step="10" value="" maxlength="3" size="5" style="text-align:center; padding:0" />
 							</label>
 							<label class="legend">
 								Third bucket weight:
-								<input name="option_weight3" id="option_weight3" class="inputoption" type="number" min="0" max="999" step="10" value="" maxlength="3" size="5" style="text-align:center; padding:0" />
+								<input name="option_weight3" id="option_weight3" class="inputoption" title="Default: 50" type="number" min="0" max="999" step="10" value="" maxlength="3" size="5" style="text-align:center; padding:0" />
 							</label>
 							<label class="legend">
 								Fourth bucket weight:
-								<input name="option_weight4" id="option_weight4" class="inputoption" type="number" min="0" max="999" step="10" value="" maxlength="3" size="5" style="text-align:center; padding:0" />
+								<input name="option_weight4" id="option_weight4" class="inputoption" title="Default: 30" type="number" min="0" max="999" step="10" value="" maxlength="3" size="5" style="text-align:center; padding:0" />
 							</label>
 							<label class="legend">
 								Default bucket weight:
-								<input name="option_weight5" id="option_weight5" class="inputoption" type="number" min="0" max="999" step="10" value="" maxlength="3" size="5" style="text-align:center; padding:0" />
+								<input name="option_weight5" id="option_weight5" class="inputoption" title="Default: 10" type="number" min="0" max="999" step="10" value="" maxlength="3" size="5" style="text-align:center; padding:0" />
 							</label>
 						</td>
 					</tr>
@@ -934,22 +946,22 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 						<td>
 							<label class="legend" style="margin-top:-1px">
 								First bucket cutoff:
-								<input name="option_cutoff1" id="option_cutoff1" class="inputoption" type="number" min="0" max="999" step="10" value="" maxlength="3" size="4" style="text-align:center; padding:0" />
+								<input name="option_cutoff1" id="option_cutoff1" class="inputoption" title="Default: 4" type="number" min="0" max="999" step="10" value="" maxlength="3" size="4" style="text-align:center; padding:0" />
 								days
 							</label>
 							<label class="legend">
 								Second bucket cutoff:
-								<input name="option_cutoff2" id="option_cutoff2" class="inputoption" type="number" min="0" max="999" step="10" value="" maxlength="3" size="4" style="text-align:center; padding:0" />
+								<input name="option_cutoff2" id="option_cutoff2" class="inputoption" title="Default: 14" type="number" min="0" max="999" step="10" value="" maxlength="3" size="4" style="text-align:center; padding:0" />
 								days
 							</label>
 							<label class="legend">
 								Third bucket cutoff:
-								<input name="option_cutoff3" id="option_cutoff3" class="inputoption" type="number" min="0" max="999" step="10" value="" maxlength="3" size="4" style="text-align:center; padding:0" />
+								<input name="option_cutoff3" id="option_cutoff3" class="inputoption" title="Default: 31" type="number" min="0" max="999" step="10" value="" maxlength="3" size="4" style="text-align:center; padding:0" />
 								days
 							</label>
 							<label class="legend">
 								Fourth bucket cutoff:
-								<input name="option_cutoff4" id="option_cutoff4" class="inputoption" type="number" min="0" max="999" step="10" value="" maxlength="3" size="4" style="text-align:center; padding:0" />
+								<input name="option_cutoff4" id="option_cutoff4" class="inputoption" title="Default: 90" type="number" min="0" max="999" step="10" value="" maxlength="3" size="4" style="text-align:center; padding:0" />
 								days
 							</label>
 							<div class="optionstip" style="margin-top:4px; margin-left:-1px">

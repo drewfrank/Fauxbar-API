@@ -1,3 +1,16 @@
+// Tell Fauxbar to record the next visit to a URL as a "typed" transition instead of "link"
+function addTypedVisitId(url) {
+	var len = localStorage.option_fallbacksearchurl ? localStorage.option_fallbacksearchurl.length : 0;
+	if (url.substr(0,len) != len) {
+		if (document.title == "fauxbar.background") {
+			addTypedUrl(url);
+		} else {
+			chrome.extension.sendRequest({action:"add typed visit id", url:url});
+		}
+	}
+	return true;
+}
+
 // Define characters that RegExp can't handle.
 specialChars = "%_^$|&*.()+[\\?><";
 
@@ -108,7 +121,7 @@ function compareStringLengths (a, b) {
 // Set localStorage vars with default Fauxbar values.
 // Used when first loading Fauxbar, or when user chooses to reset all the values.
 function resetOptions() {
-	localStorage.option_alert = 0; 							// Show a message when there's a database error.
+	localStorage.option_alert = 1; 							// Show a message when there's a database error.
 	localStorage.option_altd = 1; 							// Use Alt+D functionality.
 	localStorage.option_autofillurl = 1; 					// Auto-fill the Address Box's input with a matching URL when typing.
 	localStorage.option_bgcolor = "#F0F0F0"; 				// Page background color.
@@ -140,7 +153,7 @@ function resetOptions() {
 	localStorage.option_frecency_link = 100;
 	localStorage.option_frecency_reload = 0;
 	localStorage.option_frecency_start_page = 0;
-	localStorage.option_frecency_typed = 100;
+	localStorage.option_frecency_typed = 2000;
 	localStorage.option_frecency_unvisitedbookmark = 1;
 
 	localStorage.option_font = window.OS == "Mac" ? "Lucida Grande" : window.OS == "Linux" ? "Ubuntu" : "Segoe UI";	// Global font name(s).
@@ -179,12 +192,13 @@ function resetOptions() {
 	localStorage.option_separatorcolor = "#E3E3E3";			// Color of the 1px separator line between results.
 	localStorage.option_shadow = 1;							// Drop shadow for the Fauxbar.
 	localStorage.option_showapps = 1;						// Display app tiles.
-	localStorage.option_showErrorCount = 0;					// Show an error count on the Options' side menu.
+	localStorage.option_showErrorCount = 1;					// Show an error count on the Options' side menu.
 	localStorage.option_showjsonsuggestions = 1;			// Show Search Box suggestions from the selected search engine when user is typing a query.
 	localStorage.option_showmatchingfavs = 1;				// Search for and display matching bookmarks from the Address Box.
 	localStorage.option_showmatchinghistoryitems = 1;		// Search for and display matching history items from the Address Box.
 	localStorage.option_showQueriesViaKeyword = 1;			// Show previous search queries when seaching via keyword in the Address Box.
 	localStorage.option_showqueryhistorysuggestions = 1;	// Show Search Box past queries when user is typing a query into the Search Box.
+	localStorage.option_showStarInOmnibox = window.OS == "Mac" ? 1 : 0;		// Show a star in Omnibox bookmark results if possible.
 	localStorage.option_showSuggestionsViaKeyword = 1;		// Show suggestions from search engine when using keywords in the Address Box.
 	localStorage.option_showtopsites = 1;					// Show top site tiles.
 	localStorage.option_speech = "0";						// Show speech input icons in the Address Box and Search Box.

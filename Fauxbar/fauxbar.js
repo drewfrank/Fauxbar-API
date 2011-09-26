@@ -48,16 +48,8 @@ else {
 		});
 }
 
-
-
-
-
-
-
-
 // Create the HTML for a page tile
 function renderPageTile(url, title, startHidden) {
-	var urlMd5 = hex_md5(url);
 	var thumbs = '';
 
 	// Handle file:/// link if needed
@@ -67,7 +59,9 @@ function renderPageTile(url, title, startHidden) {
 		var newHref = url;
 	}
 
-	thumbs += '<a class="sitetile" href="'+newHref+'" style="opacity:0" url="'+url+'" origtitle="'+title+'">';
+	var onClick = !window.tileEditMode && localStorage.option_pagetilearrangement == "frecency" ? 'onclick="return addTypedVisitId($(this).attr(\'href\'));"' : '';
+
+	thumbs += '<a class="sitetile" href="'+newHref+'" style="opacity:0" url="'+url+'" origtitle="'+title+'" '+onClick+'>';
 
 	if (startHidden == true) {
 		thumbs += '<span class="tileCross" title="Remove tile" onclick="removeTile(this); return false"><img src="cross.png" /></span>';
@@ -293,12 +287,12 @@ $(document).ready(function(){
 
 		// Apply the user's specified font size for result titles
 		if (localStorage.option_titlesize && localStorage.option_titlesize.length) {
-			$("#customstyle").append(".result_title, #options .result_title { font-size:"+localStorage.option_titlesize+"px; }");
+			$("#customstyle").append(".result_title, #options .result_title, .result_title .dotdotdot { font-size:"+localStorage.option_titlesize+"px; }");
 		}
 
 		// Apply the user's specified font size for result URLs and queries/suggestions
 		if (localStorage.option_urlsize && localStorage.option_urlsize.length) {
-			$("#customstyle").append(".result_url, #options .result_url, .historyresult, .jsonresult, .resultTag { font-size:"+localStorage.option_urlsize+"px; }");
+			$("#customstyle").append(".result_url, #options .result_url, .historyresult, .jsonresult, .resultTag, .result_url .dotdotdot { font-size:"+localStorage.option_urlsize+"px; }");
 		}
 
 		// Apply the user's specified Address Box result separator color (and right-click context menu divider)

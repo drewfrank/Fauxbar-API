@@ -32,7 +32,7 @@
 
 		// Progress the progress bar
 		function increaseProgress() {
-			$("button").html("Please Wait...");
+			$("button").last().html("Please Wait...");
 			if (window.curProgress < window.newProgress) {
 				window.curProgress++;
 				$("progress").attr("value",window.curProgress);

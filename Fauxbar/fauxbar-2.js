@@ -103,7 +103,6 @@ if (localStorage.indexComplete == 1 && !getHashVar("options")) {
 					window.db.transaction(function(tx){
 
 						// Get top sites
-						var urlMd5 = '';
 						var thumbs = '';
 
 						// Choose which page tiles to display
@@ -123,7 +122,7 @@ if (localStorage.indexComplete == 1 && !getHashVar("options")) {
 									var hidePinned = '';
 									if (localStorage.option_hidepinnedtiles == 1) {
 										for (var t in window.currentTabs) {
-											if (window.currentTabs[t].pinned == true) {
+											if (window.currentTabs[t].pinned) {
 												hidePinned += ' url NOT LIKE "'+explode("#",window.currentTabs[t].url)[0]+'%" AND ';
 											}
 										}
@@ -141,7 +140,6 @@ if (localStorage.indexComplete == 1 && !getHashVar("options")) {
 									var statement = 'select url, title from thumbs WHERE '+hideFiles+hidePinned+hideOpened+' frecency > 0 order by frecency DESC limit ?';
 									tx.executeSql(statement, [localStorage.option_topsiterows*localStorage.option_topsitecols], function(tx, results){
 										var len = results.rows.length, i;
-										var newHref = '';
 										var thumbUrl = '';
 
 										// Create HTML for each site tile

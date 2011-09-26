@@ -86,9 +86,9 @@ function reindex() {
 	window.doneApplyingFrecencyScores = 0;
 	if (openDb(true)) {
 		$("#addresswrapper").css("cursor","wait");
-		window.indexStatus = "Initiating the indexing process..."; // Step 1
-		chrome.extension.sendRequest({message:"currentStatus",status:"Initiating the indexing process...", step:1}); // Step 1
-		clearIndex(true);
+		window.indexStatus = "Initiating..."; // Step 1
+		chrome.extension.sendRequest({message:"currentStatus",status:"Initiating...", step:1}); // Step 1
+		index();
 	}
 }
 

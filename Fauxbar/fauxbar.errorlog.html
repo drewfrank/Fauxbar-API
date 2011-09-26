@@ -107,19 +107,19 @@
 						}, 100);
 					});
 				} else {
-					alert('Unable to open Fauxbar\'s database.');
+					alert("Fauxbar has encountered a database error.\n\nPlease try disabling and re-enabling Fauxbar to resolve this.\n\nAdditionally, Fauxbar's error log and/or background console may contain useful information to report.");
 				}
 			}
-		}
+		};
 
 		window.sendReport = function() {
 			var data = '<table>'+$("table").html()+'</table>';
 			$("#errorFade, #errorReport").css("display","block");
 			$("textarea").val(data).select();
-		}
+		};
 		window.closeReport = function() {
 			$("#errorFade, #errorReport").css("display","none");
-		}
+		};
 
 		$("#text").live("mouseover", function(){
 			$("textarea").select();

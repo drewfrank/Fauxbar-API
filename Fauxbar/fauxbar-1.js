@@ -148,7 +148,10 @@ function goToUrl(url, fromClickedResult) {
 		} else {
 			url = 'http://www.google.com/search?btnI=&q='+urlencode(url);
 		}
+	} else if (!window.keywordEngine && !window.usedSearchBox) {
+		addTypedVisitId(url);
 	}
+	delete window.usedSearchBox;
 
 	if (!window.altReturn) {
 		$("#awesomeinput").change();
@@ -310,11 +313,12 @@ window.clickResult = function(resultEl) {
 		return false;
 	// But if it's a normal click, let it go through
 	} else {
+		addTypedVisitId($(resultEl).attr("url"));
 		window.goingToUrl = $(resultEl).attr("url");
 		updateHash();
 		return true;
 	}
-}
+};
 
 // Set the var saying that the user is not rearranging the order of the Search Box's search engines (this should probably go under / OPTIONS / below
 window.draggingOsRow = false;
@@ -382,6 +386,8 @@ function submitOpenSearch(query) {
 	if ($(selectedMenuItem).attr("method").toLowerCase() == 'get') {
 		if (window.keywordEngine) {
 			window.executingKeywordSearch = true;
+		} else {
+			window.usedSearchBox = true;
 		}
 		goToUrl(searchUrl);
 	}
@@ -456,14 +462,11 @@ chrome.extension.onRequest.addListener(function (request, sender) {
 
 	// Update the index progress meter bar and status message
 	else if (request.message && request.message == "currentStatus") {
-		$("button").prop("disabled",true);
+		$("button").last().prop("disabled",true);
 		$("body").css("cursor","progress");
 		$("#awesomeinput").blur();
 		$("#currentstatus").html(request.status);
 		if (request.step) {
-			if (request.step > 3) {
-				populateOpenSearchMenu(true);
-			}
 			window.newProgress = (request.step-1) * 100;
 			window.curProgress = $("progress").attr("value");
 			increaseProgress();
@@ -1729,14 +1732,20 @@ if (localStorage.indexComplete != 1) {
 		$("#maindiv").after(response);
 		$("#addresswrapper").css("cursor","wait");
 		$("#apps").remove();
-		if (localStorage.indexedbefore == 1) {
+		if (localStorage.needToReindex && localStorage.needToReindex == 1) {
+			$("#indexinginfo b").html("Fauxbar needs to reindex");
+			$("#indexinginfo span").html("Fauxbar's database structure has been modified, so Fauxbar needs to reindex your Chrome data. On the plus side, indexing is now approximately 70% faster than&nbsp;before.");
+			$("#currentstatus").html("Click <b>Start Indexing</b> to begin.");
+		} else if (localStorage.indexedbefore == 1) {
 			$("#indexinginfo b").html("Fauxbar is Reindexing");
 			$("#indexinginfo span").html("Fauxbar is reindexing your history items and bookmarks.");
-			$("button").prop('disabled',true).html('Please Wait...').blur();
+			$("#currentstatus").html("Reindexing...");
+			$("button").last().prop('disabled',true).html('Please Wait...').blur();
 		} else if (localStorage.issue47 == 1) {
 			$("#indexinginfo b").html("Fauxbar is Rebuilding");
 			$("#indexinginfo span").html("Fauxbar is rebuilding its database, and reindexing your history items and bookmarks. Any custom keywords and search engines you had will also be restored shortly after.");
-			$("button").prop('disabled',true).html('Please Wait...').blur();
+			$("#currentstatus").html("Rebuilding...");
+			$("button").last().prop('disabled',true).html('Please Wait...').blur();
 		}
 		$("#indexinginfo").css("display","block");
 		$("#awesomeinput").css("cursor","wait");
@@ -1946,7 +1955,7 @@ function toggleSwitchText() {
 		$(".switchtext").css("font-size",localStorage.option_inputfontsize+"px").css("display","table-cell");
 		$("#super_triangle").css("display","none");
 	}
-	else if (window.tileEditMode && window.tileEditMode == true && $("#awesomeinput").val().length > 0 && $(".result[url='"+$("#awesomeinput").val()+"']").length > 0) {
+	else if (window.tileEditMode && window.tileEditMode && $("#awesomeinput").val().length > 0 && $(".result[url='"+$("#awesomeinput").val()+"']").length > 0) {
 		$(".switchtext").text("Add tile:").css("font-size",localStorage.option_inputfontsize+"px").css("display","table-cell");
 		$("#super_triangle").css("display","none");
 	}
@@ -2278,7 +2287,7 @@ function getResults(noQuery) {
 					hideResults();
 				}
 			});
-			if (keywordMatch == false && !window.keywordEngine) {
+			if (!keywordMatch && !window.keywordEngine) {
 				$("#addressbaricon").attr("src","chrome://favicon/null").css("opacity",.75);
 				$(".switchtext").html("Switch to tab:").css("display","");
 			}
@@ -2331,7 +2340,6 @@ function getResults(noQuery) {
 					actualText = actualText.trim();
 					var words = explode(" ", actualText);
 					var urltitleWords = new Array();
-					var urltitleQMarks1 = new Array();
 					var urltitleQMarks2 = new Array();
 					var modifiers = '';
 
@@ -2389,7 +2397,7 @@ function getResults(noQuery) {
 					// And now to create the statement.
 					// If we're just getting the top sites...
 					if (noQuery) {
-						selectStatement = 'SELECT url, title, type, id, tag FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+ titleless + editModeUrls +' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
+						selectStatement = 'SELECT url, title, type, id, tag FROM urls WHERE url != "" AND ('+typeOptions+') AND queuedfordeletion = 0 '+ titleless + editModeUrls +' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
 					}
 
 					// If we're searching using the words from the Address Box's input...
@@ -2399,13 +2407,13 @@ function getResults(noQuery) {
 						+ ' FROM urls '
 						+ ' LEFT JOIN tags '
 						+ ' ON urls.url = tags.url AND tags.tag LIKE ? ' 																  //OR tags.tag LIKE ?
-						+ ' WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' '+(urltitleQMarks2.length ? ' AND '+implode(" AND ", urltitleQMarks2) : ' ')+' ' + titleless + editModeUrls
+						+ ' WHERE urls.url != "" AND ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' '+(urltitleQMarks2.length ? ' AND '+implode(" AND ", urltitleQMarks2) : ' ')+' ' + titleless + editModeUrls
 						+ ' ORDER BY tagscore DESC, frecency DESC, type DESC LIMIT '+resultLimit;
 					}
 
 					// Not sure if this actually ever gets used.
 					else {
-						selectStatement = 'SELECT url, title, type, id, tag FROM urls WHERE ('+typeOptions+') AND queuedfordeletion = 0 '+ modifiers + titleless + editModeUrls +' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
+						selectStatement = 'SELECT url, title, type, id, tag FROM urls WHERE url != "" AND ('+typeOptions+') AND queuedfordeletion = 0 '+ modifiers + titleless + editModeUrls +' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
 					}
 
 
@@ -2463,10 +2471,6 @@ function getResults(noQuery) {
 						var maxRows = resultLimit / 2;
 						var currentRows = 0;
 
-						if ($(".arrowed").length == 1) {
-							window.arrowedNumber = $(".arrowed").attr("number");
-						}
-
 						// If entered input has changed, or user is now longer looking for their top sites, cancel.
 						if (thisQuery != window.actualUserInput || !noQuery && $(".glow").length == 1) {
 							if (localStorage.option_timing == "delayed") {
@@ -2475,7 +2479,7 @@ function getResults(noQuery) {
 						}
 
 						// If user has navigated to a result, or scrolled #results, stop - don't display anything more.
-						if (window.userHasNewInput == false && (($(".arrowed").length == 1 && window.actualUserInput.length > 0) || $("#results").scrollTop() != 0) ) {
+						if (!window.userHasNewInput && (($(".arrowed").length == 1 && window.actualUserInput.length > 0) || $("#results").scrollTop() != 0) ) {
 							return false;
 						}
 
@@ -2503,7 +2507,7 @@ function getResults(noQuery) {
 						var urlExplode = '';
 						var newHref = '';
 
-						if (window.tileEditMode && window.tileEditMode == true) {
+						if (window.tileEditMode) {
 							var resultOnClick = 'addTile(this); return false';
 							var addTileText = 'Add tile: ';
 						} else {
@@ -2519,7 +2523,7 @@ function getResults(noQuery) {
 						}
 
 						// Process the blacklist
-						if (localStorage.option_blacklist.length) {
+						if (localStorage.option_blacklist && localStorage.option_blacklist.length) {
 							var blacksites = explode(",", localStorage.option_blacklist);
 						} else {
 							var blacksites = new Array;
@@ -2535,7 +2539,7 @@ function getResults(noQuery) {
 								resultIsOkay = true;
 
 								// Check to see if site is on the blacklist
-								if (resultIsOkay == true && blacksites.length) {
+								if (resultIsOkay && blacksites.length) {
 									for (var b in blacksites) {
 										var bs = blacksites[b].trim();
 										var blackparts = explode("*",bs);
@@ -2555,7 +2559,7 @@ function getResults(noQuery) {
 								// When searching the database, Fauxbar returns both history and bookmarks. <strike>History items</strike> Bookmarks come first.
 								// If this is a bookmark result, add a bookmark icon to the existing history result.
 								// Then, cancel continuing on with this result.
-								if (resultIsOkay == true && $('.result[url="'+hI.url+'"]').length > 0) {
+								if (resultIsOkay && $('.result[url="'+hI.url+'"]').length > 0) {
 									if ($('.result[url="'+hI.url+'"] img.favstar').length == 0) {
 										if (!strstr(getAiSansSelected().toLowerCase(), "is:fav")) {
 											if (hI.isBookmark && !noQuery) { // bookmark
@@ -2569,7 +2573,7 @@ function getResults(noQuery) {
 									}
 								}
 
-								if (resultIsOkay == true) {
+								if (resultIsOkay) {
 
 									// Get each word the user has entered
 									if (!noQuery) {
@@ -2687,7 +2691,7 @@ function getResults(noQuery) {
 									}
 
 									// Render the result's HTML
-									if (resultIsOkay == true) {
+									if (resultIsOkay) {
 										resultHtml = "";
 										arrowedClass = '';
 
@@ -2767,26 +2771,26 @@ function getResults(noQuery) {
 							// This is kind of dodgy because it's just creating a <span> containing "..." on top of the right side of the results.
 							// Might be better to actually truncate, though it would be slower.
 							window.cutoff = 70;
-							if (window.resultsAreScrollable == false) {
+							if (!window.resultsAreScrollable) {
 								window.cutoff = window.cutoff - getScrollBarWidth();
 							}
 
 							$("#results .result_url").each(function(){
-								if ($(this).innerWidth() > $("#results").innerWidth() - 52) {
-									$(this).css("width", ($("#results").innerWidth() - 52) + "px").prepend('<span class="dotdotdot">...</span>');
+								if ($(this).innerWidth() > $("#results").innerWidth() - 67) {
+									$(this).css("width", ($("#results").innerWidth() - 67) + "px").prepend('<span class="dotdotdot">...</span>');
 								}
 							});
 
 							var starWidth = 0;
 
 							$("#results .result_title").each(function(){
-								starWidth = 16;
+								starWidth = 32; //16*2
 								tagWidth = $(this).prev(".resultTag").innerWidth() + ($(this).prev(".resultTag").length * -6);
 
 								if ($(this).offset().left+$(this).outerWidth() > $("#results").offset().left+$("#results").innerWidth() - 10 - starWidth - tagWidth) {
 									$(this)
 										.css("width", ($("#results").outerWidth()-16-starWidth-tagWidth)+"px")
-										.prepend('<span class="dotdotdot" style="font-size:14px">...</span>')
+										.prepend('<span class="dotdotdot">...</span>')
 									;
 								}
 							});
@@ -2828,7 +2832,7 @@ function getResults(noQuery) {
 								$(this).css("left", $("#results").offset().left + $("#results").outerWidth() - $(this).outerWidth() - $(this).offset().left - ($(this).prev(".favstar").length*16) - scrollbarWidth);
 							});
 
-							if (keywordMatch == false && thisQuery == window.actualUserInput && !window.keywordEngine) {
+							if (!keywordMatch && thisQuery == window.actualUserInput && !window.keywordEngine) {
 								toggleSwitchText();
 							}
 							window.mouseHasMoved = false;
@@ -2841,8 +2845,8 @@ function getResults(noQuery) {
 								$("#results").attr("noquery",(noQuery?1:0)).css("opacity",1);
 							}
 
-							// Tell Chrome to possibly pre-render a best-guess result for the user, based on the user's Address Box habits
-							if (!noQuery && localStorage.option_prerender == 1 && $(".switch").length == 0 && !window.tileEditMode && thisQuery == window.actualUserInput) {
+							// Ask Chrome to possibly pre-render a best-guess result for the user, based on the user's Address Box habits
+							if (!noQuery && localStorage.option_prerender == 1 && /*$(".switch").length == 0 &&*/ !window.tileEditMode && thisQuery == window.actualUserInput) {
 								window.db.transaction(function(tx){
 									tx.executeSql('SELECT url FROM inputurls WHERE input = ? LIMIT 1', [thisQuery.toLowerCase()], function(tx, results){
 										if (results.rows.length == 1 && thisQuery == window.actualUserInput) {

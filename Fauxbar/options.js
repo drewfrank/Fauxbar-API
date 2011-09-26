@@ -171,7 +171,9 @@ $.get("options.html", function(response){
 		thisAttrId = $(this).attr("id");
 		switch ($(this).attr("type")) {
 			case "checkbox":
-				$(this).prop("checked", localStorage[thisAttrId] == 1 ? "checked" : "");
+				if (thisAttrId) {
+					$(this).prop("checked", localStorage[thisAttrId] == 1 ? "checked" : "");
+				}
 				break;
 			default: //"text", "number"
 				var defaultVal = '';
@@ -521,7 +523,7 @@ function restoreOptions() {
 				window.location.reload();
 			});
 		} else {
-			alert("Oops! Fauxbar is unable to open its database to restore your search engines, but your other options will be restored.");
+			alert("Uh-oh! Fauxbar is unable to open its database to restore your search engines, but your other options will be restored.");
 			window.location.reload();
 		}
 	} else {
@@ -784,9 +786,9 @@ function loadOptionsJS() {
 // Initialize the reindexing process
 function tellBgToReindex() {
 	chrome.extension.sendRequest({action:"reindex"});
-	//setTimeout(function(){
-		window.location.reload();
-	//}, 500);
+	$("button").prop("disabled",true);
+	$("body").css("cursor","progress");
+	window.location.reload();
 }
 
 // Hide the Options container/page
@@ -843,14 +845,15 @@ function loadDatabaseStats() {
 				}
 			});
 
-			tx.executeSql('SELECT count(distinct url) as thumbs FROM thumbs', [], function(tx, results){
+			// Turning off the thumbnail count because the counting algorithm is usually incorrect; it's merely a "possible" amount of thumbnails, and isn't necessarily true.
+			/*tx.executeSql('SELECT count(distinct url) as thumbs FROM thumbs', [], function(tx, results){
 				$("#stats_thumbs").html(number_format(results.rows.item(0).thumbs));
 				if (results.rows.item(0).thumbs == 1) {
 					$("#thumbsplural").html('thumbnail');
 				} else {
 					$("#thumbsplural").html('thumbnails');
 				}
-			});
+			});*/
 
 			tx.executeSql('SELECT count(distinct url) as urls FROM inputurls', [], function(tx, results){
 				$("#stats_inputurls").html(number_format(results.rows.item(0).urls));
@@ -929,6 +932,7 @@ function clearUsageHabits() {
 
 function rebuildDatabase() {
 	$("button").prop("disabled",true);
+	$("body").css("cursor","progress");
 	localStorage.indexedbefore = 0;
 	localStorage.unreadErrors = 0;
 	localStorage.issue47 = 1;
