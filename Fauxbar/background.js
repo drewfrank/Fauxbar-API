@@ -9,7 +9,7 @@ window.requestFileSystem(window.PERSISTENT, 50*1024*1024, function(fs){
 
 // Record if we should restart the Helper next time it's disabled
 chrome.management.onDisabled.addListener(function(extension) {
-	if (window.doEnable == true && extension.name == "Fauxbar Memory Helper") {
+	if (window.doEnable && extension.name == "Fauxbar Memory Helper") {
 		var eId = extension.id;
 		setTimeout(function(){
 			chrome.management.setEnabled(eId, true, function(){
@@ -21,7 +21,7 @@ chrome.management.onDisabled.addListener(function(extension) {
 // Reload Fauxbar Memory Helper if it's running
 chrome.management.getAll(function(extensions){
 	for (var e in extensions) {
-		if (extensions[e].name == "Fauxbar Memory Helper" && extensions[e].enabled == true) {
+		if (extensions[e].name == "Fauxbar Memory Helper" && extensions[e].enabled) {
 			window.doEnable = true;
 			var eId = extensions[e].id;
 			setTimeout(function(){
@@ -44,10 +44,10 @@ chrome.extension.onRequestExternal.addListener(function(request){
 					}
 				}
 			}
-			if (okayToRestart == true) {
+			if (okayToRestart) {
 				chrome.management.getAll(function(extensions){
 					for (var e in extensions) {
-						if (extensions[e].name == "Fauxbar Memory Helper" && extensions[e].enabled == true) {
+						if (extensions[e].name == "Fauxbar Memory Helper" && extensions[e].enabled) {
 							chrome.extension.sendRequest(extensions[e].id, "restart fauxbar");
 						}
 					}
@@ -60,7 +60,7 @@ chrome.extension.onRequestExternal.addListener(function(request){
 $(document).ready(function(){
 
 	// New version info
-	var currentVersion = "1.0.5";
+	var currentVersion = "1.0.6";
 	localStorage.updateBlurb = ".&nbsp; Indexing times and frecency scoring methods have been greatly improved.";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
 		localStorage.readUpdateMessage = 0;
@@ -514,7 +514,7 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 								}
 							}
 
-							if (resultIsOkay == true) {
+							if (resultIsOkay) {
 
 								// If result is titleless, make the title be the URL
 								if (hI.title == "") {
@@ -736,13 +736,13 @@ function captureScreenshot(sender) {
 						}
 					}
 				}
-				if (results.rows.length > 0 || urlIsManualTile == true) {
+				if (results.rows.length > 0 || urlIsManualTile) {
 					if (results.rows.length > 0) {
 						var frecency = results.rows.item(0).frecency;
 					} else {
 						var frecency = -1;
 					}
-					if (frecency >= window.frecencyThreshold || urlIsManualTile == true) {
+					if (frecency >= window.frecencyThreshold || urlIsManualTile) {
 						chrome.tabs.getSelected(null, function(selectedTab){
 							if (selectedTab.id == sender.tab.id) {
 
@@ -955,7 +955,7 @@ chrome.extension.onRequest.addListener(function(request, sender){
 				var myStatement = 'SELECT shortname FROM opensearches WHERE xmlurl = ?';
 				var myArray = [request.xmlurl];
 			}
-			else if (request.improper && request.improper == true && request.actionAttr && request.actionAttr != '') {
+			else if (request.improper && request.improper && request.actionAttr && request.actionAttr != '') {
 				var myStatement = 'SELECT shortname FROM opensearches WHERE searchurl LIKE ?';
 				var myArray = ['%'+request.hostname+'%'];
 			}
@@ -997,7 +997,7 @@ chrome.tabs.onCreated.addListener(function() {
 chrome.tabs.onSelectionChanged.addListener(function(tabId, selectInfo){
 	chrome.tabs.get(tabId, function(tab){
 		if (tab && tab.url && (tab.url.substr(0,7) == 'http://' || tab.url.substr(0,8) == 'https://')) {
-			if (tab.selected == true && tab.status == "complete") {
+			if (tab.selected && tab.status == "complete") {
 				chrome.tabs.executeScript(tab.id, {file:"getscrolltop.js"});
 			}
 		}
@@ -1165,7 +1165,7 @@ chrome.history.onVisitRemoved.addListener(function(removed) {
 	if (openDb()) {
 
 		// If user has chosen to remove their entire history from Chrome, do the same to Fauxbar's index
-		if (removed.allHistory == true) {
+		if (removed.allHistory) {
 			console.log("Removing all history URLs!");
 			window.db.transaction(function(tx){
 				tx.executeSql('DELETE FROM urls WHERE type = 1');
@@ -1213,7 +1213,7 @@ chrome.bookmarks.onChanged.addListener(function(id, changeInfo){
 			visits.reverse();
 			window.db.transaction(function(tx){
 				tx.executeSql('UPDATE urls SET url = ?, title = ? WHERE type = 2 AND id = ?', [changeInfo.url, changeInfo.title, id]);
-				tx.executeSql('SELECT typedVisitIds FROM urls WHERE url = ? LIMIT 1', [url], function(tx, results) {
+				tx.executeSql('SELECT typedVisitIds FROM urls WHERE url = ? LIMIT 1', [changeInfo.url], function(tx, results) {
 					var frec = visits.length ? calculateFrecency(visits, results.rows.length ? results.rows.item(0).typedVisitIds : "") : localStorage.option_frecency_unvisitedbookmark;
 					tx.executeSql('UPDATE urls SET frecency = ? WHERE url = ?', [frec, changeInfo.url]);
 					tx.executeSql('UPDATE thumbs SET frecency = ? WHERE url = ?', [frec, changeInfo.url]);

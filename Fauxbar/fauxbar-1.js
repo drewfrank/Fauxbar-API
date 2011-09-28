@@ -1077,28 +1077,6 @@ $("#contextMenu .menuOption").live("mousedown", function(){
 	} else {
 		return false;
 	}
-	if (window.justPasted) {
-		setTimeout(function(){
-			getResults();
-		},10);
-	}
-	setTimeout(function(){
-		window.justUsedContextMenu = true;
-		var newLen = $("#"+elId).val().length;
-		if (sel && sel.length) {
-
-			if (len == newLen) {
-				$("#"+elId).setSelection(sel.start, sel.end);
-			} else if (sel.length >= newLen) {
-				$("#"+elId).setSelection(sel.end, sel.end);
-			} else {
-				//$("#"+elId).setSelection(newLen);
-				//$("#"+elId).focus();
-			}
-		} else {
-			$("#"+elId).setSelection(sel.start+(newLen-len));
-		}
-	},100);
 });
 
 // Show update message if it hasn't been read yet
@@ -1106,7 +1084,7 @@ if (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0) {
 
 	function dismissUpdateMessage(viewChangelog) {
 		localStorage.readUpdateMessage = 1;
-		if (viewChangelog == true) {
+		if (viewChangelog) {
 			chrome.tabs.create({url:"http://code.google.com/p/fauxbar/wiki/Changelog", selected:true}, function(){
 				$("#editmodeContainer").remove();
 			});
@@ -1116,10 +1094,11 @@ if (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0) {
 		$(window).resize();
 	}
 
-	$(document).ready(function(){
+	// Disable update notification for v1.0.6
+	/*$(document).ready(function(){
 		$("#maindiv").before('<div id="editmodeContainer" style="box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="fauxbar48.png" /> Fauxbar has been updated to version '+localStorage.currentVersion + localStorage.updateBlurb+'</div></div>');
 		$("#editmodeContainer").prepend('<div id="editModeButtons"><button onclick="dismissUpdateMessage(true)" style="font-family:'+localStorage.option_font+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">View Full Changelog</button>&nbsp;<button onclick="dismissUpdateMessage()" style="font-family:'+localStorage.option_font+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">Dismiss</button></div>');
-	});
+	});*/
 }
 
 
@@ -2231,12 +2210,6 @@ function getAiSansSelected() {
 function getResults(noQuery) {
 	if (noQuery && $("#contextMenu").length) {
 		removeContextMenu();
-	}
-
-	// If the Search Box is focused and something is trying to get results from the Address Box's input text, don't let it happen, since the user is focusing the Search Box.
-	if (window.justUsedContextMenu){
-		delete window.justUsedContextMenu;
-		return false;
 	}
 
 	// Get an array of tabs in the current Chrome window, so we can examine them soon to see if we need to use the "Switch to tab" text/functionality anywhere

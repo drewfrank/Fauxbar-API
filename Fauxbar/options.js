@@ -699,7 +699,7 @@ function loadOptionsJS() {
 
 	var total = localStorage.unreadErrors;
 	if (total > 0) {
-		var words = total == 1 ? 'There is 1 error to report.' : 'There are '+total+' errors to report.';
+		var words = total == 1 ? 'There is ~1 error to report.' : 'There are ~'+total+' errors to report.';
 		$("#errorLabel").css("font-weight","bold").find("span").html(words);
 	} else {
 		$("#errorLabel span").html('There are no errors to report.');
