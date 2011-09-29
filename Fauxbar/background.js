@@ -60,7 +60,7 @@ chrome.extension.onRequestExternal.addListener(function(request){
 $(document).ready(function(){
 
 	// New version info
-	var currentVersion = "1.0.6";
+	var currentVersion = "1.0.7";
 	localStorage.updateBlurb = ".&nbsp; Indexing times and frecency scoring methods have been greatly improved.";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
 		localStorage.readUpdateMessage = 0;

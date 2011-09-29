@@ -199,63 +199,65 @@ function getLineInfo() {
 
 // Add an error to the database, to keep track of them
 function logError(msg, file, line) {
-	var base = chrome.extension.getURL("");
-	if (file.substring(0, base.length) == base) {
-		file = file.substring(base.length);
-	}
-	console.log(msg+'\n'+file+', line '+line);
-	if (openDb()) {
-		if (file != "jquery-1.6.3.min.js") {
-			if (!localStorage.unreadErrors) {
-				localStorage.unreadErrors = 0;
-			}
-			localStorage.unreadErrors++;
-			localStorage.latestError = JSON.stringify({version:localStorage.currentVersion, file:file, line:line, msg:msg, date:date("Y-m-d H:i:s"), count:1, url:window.location.href});
-
-			// Tell all Fauxbar pages to show an error message if user's opted for it
-			if (localStorage.option_alert && localStorage.option_alert == 1) {
-				$(document).ready(function(){
-					if ($("#errorBox").length == 1) {
-						$("#errorLine").html(file+", line "+line);
-						$("#errorMessage").html(msg);
-						$("#errorBox").css("display","inline-block");
-					} else {
-						chrome.extension.sendRequest({action:"displayError", errorLine:file+", line "+line, errorMessage:msg});
-					}
-				});
-			}
-
-			window.db.transaction(function(tx){
-				var today = date("Y-m-d H:i:s");
-				tx.executeSql('SELECT * FROM errors ORDER BY id DESC LIMIT 1', [], function(tx, results){
-					var action = 'insert';
-					if (results.rows.length == 1) {
-						var item = results.rows.item(0);
-						if (item.version == localStorage.currentVersion && item.file == file && item.line == line && item.message == msg && item.date == today && item.url == window.location.href) {
-							action = 'update';
-						}
-					}
-					if (action == 'insert') {
-						tx.executeSql('INSERT INTO errors (version, file, line, message, date, count, url) VALUES (?, ?, ?, ?, ?, ?, ?)', [localStorage.currentVersion, file, line, msg, today, 1, window.location.href]);
-					} else {
-						tx.executeSql('UPDATE errors SET count = count+1 WHERE id = ?', [item.id]);
-					}
-				});
-			}, function(t){
-
-				// Prevent recursion if the database operation fails
-				window.onerror = null;
-				setTimeout(function(){
-					window.onerror = logError;
-				}, 1000);
-				console.log('Fauxbar\'s error handler encountered an error:\n"'+t.message+'"');
-			}, function(){
-				delete localStorage.latestError;
-			});
+	if (!window.goingToUrl) {
+		var base = chrome.extension.getURL("");
+		if (file.substring(0, base.length) == base) {
+			file = file.substring(base.length);
 		}
-	} else {
-		console.log('Unable to open Fauxbar\'s database.');
-		alert("Unable to open Fauxbar's database.\n\nPlease try disabling and re-enabling Fauxbar to resolve this.\n\nAdditionally, Fauxbar's error log and/or background console may contain useful information to report.");
+		console.log(msg+'\n'+file+', line '+line);
+		if (openDb()) {
+			if (file != "jquery-1.6.3.min.js") {
+				if (!localStorage.unreadErrors) {
+					localStorage.unreadErrors = 0;
+				}
+				localStorage.unreadErrors++;
+				localStorage.latestError = JSON.stringify({version:localStorage.currentVersion, file:file, line:line, msg:msg, date:date("Y-m-d H:i:s"), count:1, url:window.location.href});
+
+				// Tell all Fauxbar pages to show an error message if user's opted for it
+				if (localStorage.option_alert && localStorage.option_alert == 1) {
+					$(document).ready(function(){
+						if ($("#errorBox").length == 1) {
+							$("#errorLine").html(file+", line "+line);
+							$("#errorMessage").html(msg);
+							$("#errorBox").css("display","inline-block");
+						} else {
+							chrome.extension.sendRequest({action:"displayError", errorLine:file+", line "+line, errorMessage:msg});
+						}
+					});
+				}
+
+				window.db.transaction(function(tx){
+					var today = date("Y-m-d H:i:s");
+					tx.executeSql('SELECT * FROM errors ORDER BY id DESC LIMIT 1', [], function(tx, results){
+						var action = 'insert';
+						if (results.rows.length == 1) {
+							var item = results.rows.item(0);
+							if (item.version == localStorage.currentVersion && item.file == file && item.line == line && item.message == msg && item.date == today && item.url == window.location.href) {
+								action = 'update';
+							}
+						}
+						if (action == 'insert') {
+							tx.executeSql('INSERT INTO errors (version, file, line, message, date, count, url) VALUES (?, ?, ?, ?, ?, ?, ?)', [localStorage.currentVersion, file, line, msg, today, 1, window.location.href]);
+						} else {
+							tx.executeSql('UPDATE errors SET count = count+1 WHERE id = ?', [item.id]);
+						}
+					});
+				}, function(t){
+
+					// Prevent recursion if the database operation fails
+					window.onerror = null;
+					setTimeout(function(){
+						window.onerror = logError;
+					}, 1000);
+					console.log('Fauxbar\'s error handler encountered an error:\n"'+t.message+'"');
+				}, function(){
+					delete localStorage.latestError;
+				});
+			}
+		} else {
+			console.log('Unable to open Fauxbar\'s database.');
+			alert("Unable to open Fauxbar's database.\n\nPlease try disabling and re-enabling Fauxbar to resolve this.\n\nAdditionally, Fauxbar's error log and/or background console may contain useful information to report.");
+		}
 	}
 }
 window.onerror = logError;

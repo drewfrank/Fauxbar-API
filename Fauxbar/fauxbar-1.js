@@ -2413,7 +2413,7 @@ function getResults(noQuery) {
 					window.selectStatement = selectStatement;
 					window.thisQuery = thisQuery;
 
-					tx.executeSql(selectStatement, urltitleWords, function (tx, results) {
+					!window.goingToUrl && tx.executeSql(selectStatement, urltitleWords, function (tx, results) {
 
 						window.waitingForResults = false;
 						var len = results.rows.length, i;
