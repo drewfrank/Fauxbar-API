@@ -207,6 +207,10 @@ function urldecode (str) {
 
 // Initialize/create the database
 function openDb(force) {
+	// Hopefully prevent issue #47 from happening... don't try to load the database if the page isn't ready
+	if (!$(document).ready()) {
+		return false;
+	}
 	if (!window.db) {
 		window.db = openDatabase('fauxbar', '1.0', 'Fauxbar data', 100 * 1024 * 1024);
 	}
