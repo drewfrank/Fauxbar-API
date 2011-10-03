@@ -1,15 +1,15 @@
 <html>
 <head>
-	<link href="fauxbar.css" media="screen" rel="stylesheet" type="text/css" />
+	<link href="/css/fauxbar.css" media="screen" rel="stylesheet" type="text/css" />
 	<style type="text/css">
 		a:link { color:#06c; font-size:13px; font-weight:bold; }
 		body { white-space:nowrap; padding:7px 10px 20px 10px; }
 		img { float:left; margin-right:12px; }
 	</style>
-	<script type="text/javascript" src="jquery-1.6.3.min.js"></script>
-	<script type="text/javascript" src="common.js"></script>
-	<script type="text/javascript" src="common-1.js"></script>
-	<script type="text/javascript" src="logerror.js"></script>
+	<script type="text/javascript" src="/js/jquery-1.6.3.min.js"></script>
+	<script type="text/javascript" src="/js/common.js"></script>
+	<script type="text/javascript" src="/js/common-1.js"></script>
+	<script type="text/javascript" src="/js/logerror.js"></script>
 	<script type="text/javascript">
 	<!--
 		// http://phpjs.org/functions/strstr:551
@@ -30,7 +30,7 @@
 
 		if (navigator.appVersion.indexOf("Mac")!=-1) {
 			$(document).ready(function(){
-				$("head").append('<link href="fauxbar-mac.css" media="screen" rel="stylesheet" type="text/css" />');
+				$("head").append('<link href="/css/fauxbar-mac.css" media="screen" rel="stylesheet" type="text/css" />');
 			});
 		}
 
@@ -44,14 +44,13 @@
 		function openOptions() {
 			chrome.tabs.getAllInWindow(null, function(tabs){
 				for (var t in tabs) {
-					if (tabs[t].title == "Fauxbar: Options" && strstr(tabs[t].url, "fauxbar.html")) {
+					if (tabs[t].title == "Fauxbar: Options" && strstr(tabs[t].url, "/html/fauxbar.html")) {
 						chrome.tabs.update(tabs[t].id, {selected:true});
 						return;
 					}
 				}
-				//chrome.tabs.create({url:"fauxbar.html#options=1"});
 				chrome.tabs.getSelected(null, function(tab){
-					chrome.tabs.update(tab.id, {url:"fauxbar.html#options=1"}, function(tab){
+					chrome.tabs.update(tab.id, {url:"/html/fauxbar.html#options=1"}, function(tab){
 						chrome.extension.sendRequest({action:"openOptions", tabId:tab.id});
 					});
 				});
@@ -61,7 +60,7 @@
 	</script>
 </head>
 <body>
-<img src="fauxbar48.png" />
+<img src="/img/fauxbar48.png" />
 <a href="#" onclick="openOptions(); return false" style="position:relative; top:3px;">Open Fauxbar's Options</a><br />
 <a href="#" onclick="editPageTiles(); return false" style="position:relative; top:7px;">Edit Site Tiles</a>
 </body>

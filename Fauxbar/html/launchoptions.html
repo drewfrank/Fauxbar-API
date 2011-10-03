@@ -7,10 +7,10 @@
 -->
 <head>
 <title>Loading...</title>
-<script type="text/javascript" src="jquery-1.6.3.min.js"></script>
-<script type="text/javascript" src="common.js"></script>
-<script type="text/javascript" src="common-1.js"></script>
-<script type="text/javascript" src="logerror.js"></script>
+<script type="text/javascript" src="/js/jquery-1.6.3.min.js"></script>
+<script type="text/javascript" src="/js/common.js"></script>
+<script type="text/javascript" src="/js/common-1.js"></script>
+<script type="text/javascript" src="/js/logerror.js"></script>
 <script type="text/javascript">
 
 	// http://phpjs.org/functions/strstr:551
@@ -34,7 +34,7 @@
 	setTimeout(function(){
 		chrome.tabs.getAllInWindow(null, function(tabs){
 			var found = false;
-			var fb = chrome.extension.getURL("fauxbar.html");
+			var fb = chrome.extension.getURL("/html/fauxbar.html");
 			for (var t in tabs) {
 				if (tabs[t].title == "Fauxbar: Options" && strstr(tabs[t].url, fb+'#')) {
 					found = true;
@@ -48,7 +48,7 @@
 				for (var tt in tabs) {
 					if (tabs[tt].title == "Fauxbar" && (strstr(tabs[tt].url, fb) || strstr(tabs[tt].url, "chrome://newtab"))) {
 						found = true;
-						chrome.tabs.update(tabs[tt].id, {selected:true, url:"fauxbar.html#options=1"}, function(tab){
+						chrome.tabs.update(tabs[tt].id, {selected:true, url:"/html/fauxbar.html#options=1"}, function(tab){
 							chrome.extension.sendRequest({action:"openOptions", tabId:tab.id});
 						});
 						chrome.tabs.getCurrent(function(tab){
@@ -57,7 +57,7 @@
 					}
 				}
 				if (found == false) {
-					chrome.tabs.create({url:chrome.extension.getURL("fauxbar.html#options=1"), selected:true});
+					chrome.tabs.create({url:chrome.extension.getURL("/html/fauxbar.html#options=1"), selected:true});
 					chrome.tabs.getCurrent(function(tab){
 						chrome.tabs.remove(tab.id);
 					});

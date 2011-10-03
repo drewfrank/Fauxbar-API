@@ -5,28 +5,28 @@
 
 	"minimum_chrome_version": "14",
 
-	"background_page": "fauxbar.background.html",
+	"background_page": "html/fauxbar.background.html",
 
-	"options_page": "launchoptions.html",
+	"options_page": "html/launchoptions.html",
 
 	"chrome_url_overrides" : {
-		"newtab": "fauxbar.html"
+		"newtab": "html/fauxbar.html"
 	},
 
 	"page_action": {
 		"default_title": "Add this site's search engine to Fauxbar",
-		"default_popup": "fauxbar.addsearchengine.html"
+		"default_popup": "html/fauxbar.addsearchengine.html"
 	},
 
 	"content_scripts": [
 		{
 			"matches": ["<all_urls>"],
-			"js": ["jquery-1.6.3.min.js"],
+			"js": ["js/jquery-1.6.3.min.js"],
 			"run_at": "document_start"
 		},
 		{
 			"matches": ["<all_urls>"],
-			"js": ["updatetitle.js"],
+			"js": ["js/updatetitle.js"],
 			"run_at": "document_end"
 		}
 	],
@@ -44,9 +44,9 @@
 	],
 
 	"icons": {
-		"16": "fauxbar16.png",
-		"48": "fauxbar48.png",
-		"128": "fauxbar128.png"
+		"16": "img/fauxbar16.png",
+		"48": "img/fauxbar48.png",
+		"128": "img/fauxbar128.png"
 	},
 
 	"omnibox": { "keyword" : "f" }

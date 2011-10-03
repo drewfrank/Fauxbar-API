@@ -94,7 +94,7 @@ if (localStorage.indexComplete == 1 && !getHashVar("options")) {
 			}
 			renderSiteTiles(thumbs);
 			if (getHashVar("edittiles") == 1) {
-				jQuery.getScript("tilemode.js");
+				jQuery.getScript("/js/tilemode.js");
 			}
 		} else {
 			chrome.tabs.getAllInWindow(null, function(tabs) {
@@ -245,7 +245,6 @@ $(document).ready(function(){
 			for (var a in apps) {
 				if (apps[a].isApp == true) {
 					appHtml += '<a class="app app'+apps[a].id+'" href="'+apps[a].appLaunchUrl+'" appname="'+str_replace('"','&quot;',apps[a].name)+'" appid="'+apps[a].id+'">';
-					//appHtml += '<img class="unin" src="cross.png" onmousedown="uninstall(\''+apps[a].id+'\')" title="Uninstall '+apps[a].name+'..." />';
 					appHtml += '<img src="'+apps[a].icons[apps[a].icons.length-1].url+'" style="height:128px;width:128px;" /><br />';
 					appHtml += '<span title="'+apps[a].description+'" style="display:inline-block">'+apps[a].name+'</span>';
 					appHtml += '</a>';
@@ -253,7 +252,7 @@ $(document).ready(function(){
 			}
 
 			// Get ready to display them
-			appHtml += '<a class="app" href="https://chrome.google.com/webstore"><img src="webstore.png" style="height:128px;width:128px;" /><br />Web Store</a>';
+			appHtml += '<a class="app" href="https://chrome.google.com/webstore"><img src="/img/webstore.png" style="height:128px;width:128px;" /><br />Web Store</a>';
 			$("#apps").css("max-width",localStorage.option_maxwidth+"px").append(appHtml);
 			$("#apps").css("position","relative").css("opacity",0).css("display","block");
 

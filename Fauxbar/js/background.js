@@ -654,7 +654,7 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 chrome.omnibox.onInputEntered.addListener(function(text){
 	var url = text.trim();
 	if (url.length == 0) {
-		url = chrome.extension.getURL("fauxbar.html");
+		url = chrome.extension.getURL("/html/fauxbar.html");
 	}
 
 	// Switch to tab if needed
@@ -933,11 +933,11 @@ chrome.extension.onRequest.addListener(function(request, sender){
 						if (strstr(tabs[t].url, request.hostname)) {
 							chrome.pageAction.hide(tabs[t].id);
 							if (localStorage.option_forceoptionsicon && localStorage.option_forceoptionsicon == 1) {
-								chrome.pageAction.setIcon({tabId:tabs[t].id, path:"fauxbar16options.png"});
+								chrome.pageAction.setIcon({tabId:tabs[t].id, path:"/img/fauxbar16options.png"});
 								chrome.pageAction.setTitle({tabId:tabs[t].id, title:"Customize Fauxbar"});
 								chrome.pageAction.setPopup({tabId:tabs[t].id, popup:""});
 								chrome.pageAction.onClicked.addListener(function(theTab) {
-									chrome.tabs.update(theTab.id, {url:"fauxbar.html#options=1"});
+									chrome.tabs.update(theTab.id, {url:"/html/fauxbar.html#options=1"});
 								});
 								chrome.pageAction.show(tabs[t].id);
 							}
@@ -970,9 +970,9 @@ chrome.extension.onRequest.addListener(function(request, sender){
 
 					// If this site's search engine hasn't already been added to Fauxbar...
 					if (len == 0) {
-						chrome.pageAction.setIcon({tabId:sender.tab.id, path:"fauxbar16plus.png"});
+						chrome.pageAction.setIcon({tabId:sender.tab.id, path:"/img/fauxbar16plus.png"});
 						chrome.pageAction.setTitle({tabId:sender.tab.id, title:"Add this site's search engine to Fauxbar"});
-						chrome.pageAction.setPopup({tabId:sender.tab.id, popup:"fauxbar.addsearchengine.html"});
+						chrome.pageAction.setPopup({tabId:sender.tab.id, popup:"/html/fauxbar.addsearchengine.html"});
 						chrome.pageAction.show(sender.tab.id);
 					}
 				});
@@ -998,7 +998,7 @@ chrome.tabs.onSelectionChanged.addListener(function(tabId, selectInfo){
 	chrome.tabs.get(tabId, function(tab){
 		if (tab && tab.url && (tab.url.substr(0,7) == 'http://' || tab.url.substr(0,8) == 'https://')) {
 			if (tab.selected && tab.status == "complete") {
-				chrome.tabs.executeScript(tab.id, {file:"getscrolltop.js"});
+				chrome.tabs.executeScript(tab.id, {file:"/js/getscrolltop.js"});
 			}
 		}
 	});
@@ -1016,38 +1016,38 @@ function processUpdatedTab(tabId, tab) {
 		// If user has opted to enable Alt+D, Ctrl+L or Ctrl+L functionality, make it so
 		if ((localStorage.option_altd && localStorage.option_altd == 1) || (localStorage.option_ctrll && localStorage.option_ctrll == 1) || (localStorage.option_ctrlk && localStorage.option_ctrlk == 1)) {
 			if (localStorage.option_altd && localStorage.option_altd == 1) {
-				chrome.tabs.executeScript(tabId, {file:"alt-d.js"});
+				chrome.tabs.executeScript(tabId, {file:"/js/alt-d.js"});
 			}
 			if (localStorage.option_ctrll && localStorage.option_ctrll == 1) {
-				chrome.tabs.executeScript(tabId, {file:"ctrl-l.js"});
+				chrome.tabs.executeScript(tabId, {file:"/js/ctrl-l.js"});
 			}
 			if (localStorage.option_ctrlk && localStorage.option_ctrlk == 1) {
-				chrome.tabs.executeScript(tabId, {file:"ctrl-k.js"});
+				chrome.tabs.executeScript(tabId, {file:"/js/ctrl-k.js"});
 			}
 		}
 
 		// If user's opted to always show the Options icon, make it so
 		if (localStorage.option_forceoptionsicon && localStorage.option_forceoptionsicon == 1) {
-			chrome.pageAction.setIcon({tabId:tabId, path:"fauxbar16options.png"});
+			chrome.pageAction.setIcon({tabId:tabId, path:"/img/fauxbar16options.png"});
 			chrome.pageAction.setTitle({tabId:tabId, title:"Customize Fauxbar"});
 			chrome.pageAction.setPopup({tabId:tabId, popup:""});
 			chrome.pageAction.onClicked.addListener(function(theTab) {
-				chrome.tabs.update(theTab.id, {url:"fauxbar.html#options=1"});
+				chrome.tabs.update(theTab.id, {url:"/html/fauxbar.html#options=1"});
 			});
 			chrome.pageAction.show(tabId);
 		}
 
 		// If user's opted to let Fauxbar look for new search engines to add, make it so
 		if (localStorage.option_osproper && localStorage.option_osproper == 1) {
-			chrome.tabs.executeScript(tabId, {file:"osproper.js"});
+			chrome.tabs.executeScript(tabId, {file:"/js/osproper.js"});
 		}
 		if (localStorage.option_osimproper && localStorage.option_osimproper == 1) {
-			chrome.tabs.executeScript(tabId, {file:"osimproper.js"});
+			chrome.tabs.executeScript(tabId, {file:"/js/osimproper.js"});
 		}
 
 		// Generate thumbnail if page is a top site
 		if (tab.selected && tab.status == "complete") {
-			chrome.tabs.executeScript(tab.id, {file:"getscrolltop.js"});
+			chrome.tabs.executeScript(tab.id, {file:"/js/getscrolltop.js"});
 		}
 	}
 }
@@ -1459,7 +1459,7 @@ function reapplyKeywords() {
 // Check to see if database has become corrupted (issue #47) and display an error page if so
 setTimeout(function(){
 	if (localStorage.issue47 == 1) {
-		chrome.tabs.create({url:"issue47.html", selected:true});
+		chrome.tabs.create({url:"/html/issue47.html", selected:true});
 		return;
 	}
 	if (localStorage.indexedbefore == 1 && openDb()) {
@@ -1468,7 +1468,7 @@ setTimeout(function(){
 				// There should always be at least one search engine, so if there's none, DB is corrupt
 				if (!engines.rows.length) {
 					localStorage.issue47 = 1;
-					chrome.tabs.create({url:"issue47.html", selected:true});
+					chrome.tabs.create({url:"/html/issue47.html", selected:true});
 					return true;
 				}
 				tx.executeSql('SELECT * FROM urls LIMIT 1', [], function(tx, urls){
@@ -1488,7 +1488,7 @@ setTimeout(function(){
 		}, function(){
 			// If one of the tables above doesn't exist, DB is corrupt
 			localStorage.issue47 = 1;
-			chrome.tabs.create({url:"issue47.html", selected:true});
+			chrome.tabs.create({url:"/html/issue47.html", selected:true});
 		}, function(){
 			// But if DB seems fine, backup keywords and search engines to local storage
 			if (localStorage.issue47 != 1) {

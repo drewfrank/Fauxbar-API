@@ -29,7 +29,7 @@ function saveSiteTiles(justChecking) {
 					window.close();
 				} else {
 					chrome.tabs.getCurrent(function(tab){
-						chrome.tabs.update(tab.id, {url:"fauxbar.html"});
+						chrome.tabs.update(tab.id, {url:"/html/fauxbar.html"});
 					});
 				}
 			});
@@ -45,7 +45,7 @@ function cancelTiles() {
 		window.close();
 	} else {
 		chrome.tabs.getCurrent(function(tab){
-			chrome.tabs.update(tab.id, {url:"fauxbar.html"});
+			chrome.tabs.update(tab.id, {url:"/html/fauxbar.html"});
 		});
 	}
 }
@@ -56,7 +56,7 @@ delete window.keywordEngine;
 $("#awesomeInsetButton").removeClass("insetButton").addClass("noInsetButton");
 $("#addressbaricon").attr("src","chrome://favicon/null").css("opacity",.75);
 $(".switchtext").html("Switch to tab:").css("display","");
-$("#address_goarrow img").attr("src","plus.png");
+$("#address_goarrow img").attr("src","/img/plus.png");
 $("#address_goarrow").attr("title","Add the entered address as a tile");
 $("#awesomeinput").focus();
 
@@ -152,7 +152,7 @@ $("#addresswrapper").parent().css("display","table-cell");
 $("#searchwrapper").parent().css("display","none");
 $(".wrapper").css("max-width",maxWidth+"px");
 $("#editmodeContainer").remove();
-$("#maindiv").before('<div id="editmodeContainer" style="opacity:0; box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="fauxbar48.png" /> <b>Tile editing enabled.</b> Add sites as tiles using the modified Address Box below. Drag tiles to rearrange. Right-click to rename.&nbsp;'
+$("#maindiv").before('<div id="editmodeContainer" style="opacity:0; box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="/img/fauxbar48.png" /> <b>Tile editing enabled.</b> Add sites as tiles using the modified Address Box below. Drag tiles to rearrange. Right-click to rename.&nbsp;'
 						+' <div style="display:inline; white-space:nowrap">Maximum tiles per row: <select style="position:relative; z-index:999; font-family:inherit; margin-bottom:-2px">'
 						+'<option value="1">1</option>'
 						+'<option value="2">2</option>'

@@ -1,7 +1,7 @@
 <!-- This is the options page that gets AJAX'd into fauxbar.html if #options=1 is present. -->
 
 <!-- Add in the CSS -->
-<link href="options.css" media="screen" rel="stylesheet" type="text/css" />
+<link href="/css/options.css" media="screen" rel="stylesheet" type="text/css" />
 
 <!-- Main options page -->
 <table id="options">
@@ -24,7 +24,7 @@
 			<!-- Donate button -->
 			<br /><br />
 			<span style="display:block; text-align:center">
-				<a href="loadpaypal.html" target="_blank" title="Donate to Fauxbar via PayPal"><img src="donate.gif" /></a>
+				<a href="/html/loadpaypal.html" target="_blank" title="Donate to Fauxbar via PayPal"><img src="/img/donate.gif" /></a>
 			</span>
 		</td>
 
@@ -33,9 +33,9 @@
 
 			<!-- Tile options -->
 			<div id="tilesoptions" class="optionbox">
-				<img src="cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
 				<h1>
-					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
+					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Fauxbar Options: Tiles
 				</h1>
 				Tiles let you quickly access your top websites and Chrome apps.
@@ -134,9 +134,9 @@
 
 			<!-- Address Box options -->
 			<div id="addressoptions" class="optionbox">
-				<img src="cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
 				<h1>
-					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
+					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Fauxbar Options: Address Box
 				</h1>
 				Find your history items, bookmarks and opened tabs by typing into the Address Box.<br />
@@ -245,15 +245,15 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 							</label>
 							Change to:
 							<button class="fallback google" url="http://www.google.com/search?btnI=&q={searchTerms}" style="font-size:12px; padding:2px 4px 2px 3px;" onclick="$('#option_fallbacksearchurl').val('http://www.google.com/search?btnI=&q={searchTerms}').change()">
-								<img src="google.ico" style="vertical-align:middle; margin-top:-3px;" />
+								<img src="/img/google.ico" style="vertical-align:middle; margin-top:-3px;" />
 								Google.com
 							</button>
 							<button class="fallback yahoo" url="http://search.yahoo.com/search?p={searchTerms}" style="font-size:12px; padding:2px 4px 2px 3px;" onclick="$('#option_fallbacksearchurl').val('http://search.yahoo.com/search?p={searchTerms}').change()">
-								<img src="yahoo.ico" style="vertical-align:middle; margin-top:-3px;" />
+								<img src="/img/yahoo.ico" style="vertical-align:middle; margin-top:-3px;" />
 								Yahoo.com
 							</button>
 							<button class="fallback bing" url="http://www.bing.com/search?q={searchTerms}" style="font-size:12px; padding:2px 4px 2px 3px;" onclick="$('#option_fallbacksearchurl').val('http://www.bing.com/search?q={searchTerms}').change()">
-								<img src="bing.ico" style="vertical-align:middle; margin-top:-3px;" />
+								<img src="/img/bing.ico" style="vertical-align:middle; margin-top:-3px;" />
 								Bing.com
 							</button>
 							<div class="optionstip">
@@ -283,9 +283,9 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 
 			<!-- Search Box options -->
 			<div id="searchoptions" class="optionbox">
-				<img src="cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
 				<h1>
-					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
+					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Fauxbar Options: Search Engines
 				</h1>
 				You can add search engines to Fauxbar when you visit certain websites.<br />
@@ -304,15 +304,15 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 							<div id="restorebig3" style="margin-top:10px">
 								Restore:
 								<button class="searchenginebutton google" shortname="Google" searchurl="http://www.google.com/search?q={searchTerms}" suggesturl="http://suggestqueries.google.com/complete/search?json&q={searchTerms}" keyword="g" style="font-size:12px; padding:2px 4px 2px 3px;">
-									<img src="google.ico" style="vertical-align:middle; margin-top:-3px;" />
+									<img src="/img/google.ico" style="vertical-align:middle; margin-top:-3px;" />
 									Google.com
 								</button>
 								<button class="searchenginebutton yahoo" shortname="Yahoo!" searchurl="http://search.yahoo.com/search?p={searchTerms}" suggesturl="http://ff.search.yahoo.com/gossip?output=fxjson&amp;command={searchTerms}" keyword="y" style="font-size:12px; padding:2px 4px 2px 3px;">
-									<img src="yahoo.ico" style="vertical-align:middle; margin-top:-3px;" />
+									<img src="/img/yahoo.ico" style="vertical-align:middle; margin-top:-3px;" />
 									Yahoo.com
 								</button>
 								<button class="searchenginebutton bing" shortname="Bing" searchurl="http://www.bing.com/search?q={searchTerms}" suggesturl="http://api.bing.com/osjson.aspx?query={searchTerms}" keyword="b" style="font-size:12px; padding:2px 4px 2px 3px;">
-									<img src="bing.ico" style="vertical-align:middle; margin-top:-3px;" />
+									<img src="/img/bing.ico" style="vertical-align:middle; margin-top:-3px;" />
 									Bing.com
 								</button>
 							</div>
@@ -323,7 +323,7 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 						<th>Adding Engines</th>
 						<td>
 							<label class="legend" style="margin-top:1px; margin-bottom:3px">
-								Show a clickable <img src="fauxbar16plus.png" style="vertical-align:middle; position:relative; top:-3px; height:19px;width:19px" /> icon in Chrome's Omnibox...
+								Show a clickable <img src="/img/fauxbar16plus.png" style="vertical-align:middle; position:relative; top:-3px; height:19px;width:19px" /> icon in Chrome's Omnibox...
 							</label>
 							<label class="legend">
 								<input name="option_osproper" id="option_osproper" type="checkbox" /> when a webpage declares a search engine is available
@@ -381,9 +381,9 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 
 			<!-- Results & Suggestions options -->
 			<div id="resultoptions" class="optionbox">
-				<img src="cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
 				<h1>
-					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
+					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Fauxbar Options: Results &amp; Suggestions
 				</h1>
 				Define how Fauxbar's Address Box results and search engine queries/suggestions should look.<br />
@@ -468,13 +468,13 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 
 								<span style="white-space:nowrap; display:inline-block">
 									<button style="font-size:12px; padding:2px 4px 2px 3px;" onclick="applyColors('chrome')">
-										<img src="chrome.png" style="vertical-align:middle; margin-top:-3px; height:16px; width:16px;" />
+										<img src="/img/chrome.png" style="vertical-align:middle; margin-top:-3px; height:16px; width:16px;" />
 										"Chrome"
 									</button>&nbsp;<button style="font-size:12px; padding:2px 4px 2px 3px;" onclick="applyColors('firefox')">
-										<img src="firefox.png" style="vertical-align:middle; margin-top:-3px; height:16px; width:16px;" />
+										<img src="/img/firefox.png" style="vertical-align:middle; margin-top:-3px; height:16px; width:16px;" />
 										"Firefox"
 									</button>&nbsp;<button style="font-size:12px; padding:2px 4px 2px 3px;" onclick="applyColors('fauxbar')">
-										<img src="fauxbar16.png" style="vertical-align:middle; margin-top:-3px; height:16px; width:16px;" />
+										<img src="/img/fauxbar16.png" style="vertical-align:middle; margin-top:-3px; height:16px; width:16px;" />
 										"Fauxbar"
 									</button>
 								</span>
@@ -510,9 +510,9 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 
 			<!-- Page Background options -->
 			<div id="backgroundoptions" class="optionbox">
-				<img src="cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
 				<h1>
-					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
+					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Fauxbar Options: Page Background
 				</h1>
 				Define how Fauxbar's page background should look.
@@ -596,9 +596,9 @@ Then, if you type the same query in the future, Fauxbar will guess that you want
 
 			<!-- General options -->
 			<div id="generaloptions" class="optionbox">
-				<img src="cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
 				<h1>
-					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
+					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Fauxbar Options: General
 				</h1>
 				Define how Fauxbar should look and behave when opened.
@@ -710,7 +710,7 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 								Certain <span style="text-decoration:underline; cursor:pointer; font-size:12px" class="fakelink" onmouseup='$("#option_menu div").removeClass("section_selected"); $("#option_section_addressbox").addClass("section_selected"); $("div.optionbox").css("display","none"); $("#addressoptions").css("display","block"); localStorage.option_optionpage = "option_section_addressbox";'>Address Box options</span> also apply to Fauxbar's Omnibox results.
 							</div>
 							<label class="legend" style="margin-top:20px">
-								<input name="option_forceoptionsicon" id="option_forceoptionsicon" type="checkbox" /> Always show the clickable <img src="fauxbar16options.png" style="vertical-align:middle; position:relative; top:-3px; height:19px;width:19px" /> icon when possible
+								<input name="option_forceoptionsicon" id="option_forceoptionsicon" type="checkbox" /> Always show the clickable <img src="/img/fauxbar16options.png" style="vertical-align:middle; position:relative; top:-3px; height:19px;width:19px" /> icon when possible
 								<span style="opacity:.5; cursor:help"
 									  title="This icon acts a quick shortcut to open Fauxbar's options.">(?)</span>
 							</label>
@@ -721,9 +721,9 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 
 			<!-- Management options -->
 			<div id="managementoptions" class="optionbox">
-				<img src="cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
 				<h1>
-					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px;" />
+					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px;" />
 					Fauxbar Management
 				</h1>
 				Fauxbar version 1.0.8 &nbsp;<span style="opacity:.5">(30 Sep 2011)</span>
@@ -798,7 +798,7 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 					<tr>
 						<th>Memory Helper</th>
 						<td>
-							<img src="fauxbarhelper48.png" style="height:48px; width:48px; float:left; padding-right:15px; padding-bottom:25px;" />
+							<img src="/img/fauxbarhelper48.png" style="height:48px; width:48px; float:left; padding-right:15px; padding-bottom:25px;" />
 							<label class="legend" style="margin-top:1px">
 								Fauxbar Memory Helper</a> is <span id="helperstatus">???</span>
 							</label>
@@ -816,7 +816,7 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 						<td>
 							<label class="legend" style="margin-top:1px" id="errorLabel">
 								<span>Checking the error log...</span>
-								<a style="color:#06c;" href="fauxbar.errorlog.html" target="_blank">Open the error log</a>
+								<a style="color:#06c;" href="/html/fauxbar.errorlog.html" target="_blank">Open the error log</a>
 							</label>
 							<label class="legend" style="margin-top:1px">
 								<input name="option_alert" id="option_alert" type="checkbox" /> Show a message if an error occurs
@@ -832,9 +832,9 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 
 			<!-- Frecency Scoring options -->
 			<div id="frecencyoptions" class="optionbox">
-				<img src="cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
 				<h1>
-					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
+					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Fauxbar Options: Frecency Scoring
 				</h1>
 				Fauxbar uses the
@@ -974,9 +974,9 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 
 			<!-- Support links -->
 			<div id="supportoptions" class="optionbox">
-				<img src="cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
 				<h1>
-					<img src="fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
+					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Fauxbar Support
 				</h1>
 				Questions? Feedback? Wanting to donate? Found a bug?<br />Engage with Fauxbar using the links below.
@@ -987,7 +987,7 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
 						<th>
-							<img src="fauxbar16.png" />
+							<img src="/img/fauxbar16.png" />
 							Fauxbar
 						</th>
 						<td>
@@ -1002,7 +1002,7 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
 						<th>
-							<img src="icon-facebook.png" />
+							<img src="/img/icon-facebook.png" />
 							Facebook
 						</th>
 						<td>
@@ -1014,7 +1014,7 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
 						<th>
-							<img src="icon-twitter.png" />
+							<img src="/img/icon-twitter.png" />
 							Twitter
 						</th>
 						<td>
@@ -1024,7 +1024,7 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
 						<th>
-							<img src="icon-reddit.png" />
+							<img src="/img/icon-reddit.png" />
 							Reddit
 						</th>
 						<td>
@@ -1034,7 +1034,7 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
 						<th>
-							<img src="icon-webstore.png" />
+							<img src="/img/icon-webstore.png" />
 							Chrome Store
 						</th>
 						<td>
@@ -1045,7 +1045,7 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
 						<th>
-							<img src="icon-mail.png" />
+							<img src="/img/icon-mail.png" />
 							Email
 						</th>
 						<td>
@@ -1055,11 +1055,11 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
 						<th>
-							<img src="icon-paypal.png" />
+							<img src="/img/icon-paypal.png" />
 							PayPal
 						</th>
 						<td>
-							<a href="loadpaypal.html" target="_blank" style="color:#06c">Donate</a><br />
+							<a href="/html/loadpaypal.html" target="_blank" style="color:#06c">Donate</a><br />
 						</td>
 					</tr>
 				</table>
@@ -1072,8 +1072,8 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 </table>
 
 <!-- Initialize the color pickers and input box validators -->
-<script type="text/javascript" src="jscolor/jscolor.js"></script>
-<script type="text/javascript" src="jquery.maskedinput-1.3.min.js"></script>
+<script type="text/javascript" src="/js/jscolor/jscolor.js"></script>
+<script type="text/javascript" src="/js/jquery.maskedinput-1.3.min.js"></script>
 <script type="text/javascript">
 	setTimeout(jscolor.init, 1);
 </script>

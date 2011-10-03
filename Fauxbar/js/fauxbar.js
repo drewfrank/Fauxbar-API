@@ -13,12 +13,10 @@ if (localStorage.option_iconcolor.toLowerCase() != "#3374ab" || localStorage.opt
 	if (localStorage.option_favopacity != 0) {
 		$("#fauxstar").addClass("filter-tint");
 	}
-	//setTimeout(function(){
-		delete processFilters;
-		jQuery.getScript("mezzoblue-PaintbrushJS-098389a/common.js");
-		jQuery.getScript("mezzoblue-PaintbrushJS-098389a/paintbrush.js");
-		processFilters();
-	//}, 1);
+	delete processFilters;
+	jQuery.getScript("/js/mezzoblue-PaintbrushJS-098389a/common.js");
+	jQuery.getScript("/js/mezzoblue-PaintbrushJS-098389a/paintbrush.js");
+	processFilters();
 }
 // If user has default colors set, load darkened icons
 else {
@@ -27,16 +25,16 @@ else {
 	$("#address_goarrow")
 		.live("mouseenter", function(){
 			if (window.tileEditMode) {
-				$("img",this).attr("src","plus_dark.png");
+				$("img",this).attr("src","/img/plus_dark.png");
 			} else {
 				$("img",this).attr("src","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAAAi0lEQVQoU2NkwAGsYmtngqSOLW5Ox6aEEZugbXyt9T8GxiMguf///s/CphmrRpAGy/i6SCYGhmW4NOPUSEgzXo34NDPaxNca4wogmPi/fwzGf///m8nEyMQAtAnsZ0aruNozQAUENf/8/Zfh////YLM4WFkekq+RbKcS8h+uaKF+dJCVAChKcoQSOQCI22/3L6cKGwAAAABJRU5ErkJggg==");
 			}
 		})
 		.live("mouseleave", function(){
 			if (window.tileEditMode) {
-				$("img",this).attr("src","plus.png");
+				$("img",this).attr("src","/img/plus.png");
 			} else {
-				$("img",this).attr("src","goarrow.png");
+				$("img",this).attr("src","/img/goarrow.png");
 			}
 		});
 	$("#searchicon_cell")
@@ -44,7 +42,7 @@ else {
 			$("#searchicon").attr("src","data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABdUlEQVQ4T5WTIUzDUBCG7zqWgBpqAgNBYtgWZrAEhSJZQpssm8DjIG0wGCgJDoFDQAitICEBiZ9ZslVNIVAkJAjAzECPu0fbdN1bw6rWvvd/7//vf0P4x1M1nQYhlYtUCLr+cSctwTx91XLOeUMbCGbifQTwxr8P+r57J98mAmo79gMgbighwicQffB7mWFz/P5NBLsC0QLq5uH6D4RPoiWEy77n7sUOapbTZciKOGHAshZQsZwbg2CbTxr0PLeejcmQd3FSAGNTC0jsG3jWuz05GgOY9oBzLYZI+7mAEOE+8NymxsErOyhxjLYWILXxwpUMKyRaDfzTlxiimuEByhrHK01uIcqpIACPBuIzN7ElA0wPdwwQdd8QiyweqtoyTzraCCCxF3XPFhdUHKKWfAoN/CqScZG+jQlgRKzpf9KNVYBkaNGu7OXJu+74J6ZrrmQWAYfTiFXSimkv8YQ7POF5AmzFf5K8U9NrKoJA+PS1acWi/QVHr6EUsRkP6wAAAABJRU5ErkJggg==");
 		})
 		.live("mouseleave", function(){
-			$("#searchicon").attr("src","search.png");
+			$("#searchicon").attr("src","/img/search.png");
 		});
 }
 
@@ -54,7 +52,7 @@ function renderPageTile(url, title, startHidden) {
 
 	// Handle file:/// link if needed
 	if (url.length > 8 && url.substring(0, 8) == "file:///") {
-		var newHref = "loadfile.html#"+url;
+		var newHref = "/html/loadfile.html#"+url;
 	} else {
 		var newHref = url;
 	}
@@ -64,7 +62,7 @@ function renderPageTile(url, title, startHidden) {
 	thumbs += '<a class="sitetile" href="'+newHref+'" style="opacity:0" url="'+url+'" origtitle="'+title+'" '+onClick+'>';
 
 	if (startHidden == true) {
-		thumbs += '<span class="tileCross" title="Remove tile" onclick="removeTile(this); return false"><img src="cross.png" /></span>';
+		thumbs += '<span class="tileCross" title="Remove tile" onclick="removeTile(this); return false"><img src="/img/cross.png" /></span>';
 	}
 
 	var height = window.tileEditMode && $("div.thumb").length ? ' style="height:'+$("div.thumb").first().innerHeight()+'px"' : '';

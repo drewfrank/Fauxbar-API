@@ -9,7 +9,7 @@ if (navigator.appVersion.indexOf("Linux")!=-1) window.OS="Linux";
 
 if (window.OS == "Mac") {
 	$(document).ready(function(){
-		$("head").append('<link href="fauxbar-mac.css" media="screen" rel="stylesheet" type="text/css" />');
+		$("head").append('<link href="/css/fauxbar-mac.css" media="screen" rel="stylesheet" type="text/css" />');
 	});
 }
 

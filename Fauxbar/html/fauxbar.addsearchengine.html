@@ -1,7 +1,7 @@
 <html>
 <head>
 	<title>fauxbar.popup</title>
-	<link href="fauxbar.css" media="screen" rel="stylesheet" type="text/css" />
+	<link href="/css/fauxbar.css" media="screen" rel="stylesheet" type="text/css" />
 	<style type="text/css">
 		* { font-family: Ubuntu, Segoe UI, Arial, sans-serif; font-size:12px; }
 		img { height:16px; width:16px; position:relative; top:2px; padding-right:2px; }
@@ -9,13 +9,13 @@
 		button { margin-right:0; margin-left:4px; }
 		#note { color:rgba(0,0,0,.73); position:relative; top:12px; }
 	</style>
-	<script type="text/javascript" src="jquery-1.6.3.min.js"></script>
-	<script type="text/javascript" src="common.js"></script>
-	<script type="text/javascript" src="common-1.js"></script>
-	<script type="text/javascript" src="logerror.js"></script>
+	<script type="text/javascript" src="/js/jquery-1.6.3.min.js"></script>
+	<script type="text/javascript" src="/js/common.js"></script>
+	<script type="text/javascript" src="/js/common-1.js"></script>
+	<script type="text/javascript" src="/js/logerror.js"></script>
 	<script type="text/javascript">
 		chrome.tabs.getSelected(null, function(tab){
-			chrome.tabs.executeScript(tab.id, {file:"addos.js"});
+			chrome.tabs.executeScript(tab.id, {file:"/js/addos.js"});
 		});
 
 		chrome.extension.onRequest.addListener(function(message, sender){

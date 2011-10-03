@@ -7,7 +7,7 @@ if (localStorage.issue47 == 1) {
 		var tabId = false;
 		chrome.tabs.getAllInWindow(null, function(tabs){
 			for (var t in tabs) {
-				if (tabs[t].url == chrome.extension.getURL("issue47.html")) {
+				if (tabs[t].url == chrome.extension.getURL("/html/issue47.html")) {
 					tabId = tabs[t].id;
 					break;
 				}
@@ -19,7 +19,7 @@ if (localStorage.issue47 == 1) {
 					});
 				});
 			} else {
-				window.location = "issue47.html";
+				window.location = "/html/issue47.html";
 			}
 		});
 	}
@@ -483,9 +483,9 @@ chrome.extension.onRequest.addListener(function (request, sender) {
 			$(".result").each(function(){
 				if (theTabs[$(this).attr("url")]) {
 					if (localStorage.option_switchToTab == "replace") {
-						$(this).children(".result_url").html('<img src="tabicon.png" style="opacity:.6" /> <span class="switch">Switch to tab</span>');
+						$(this).children(".result_url").html('<img src="/img/tabicon.png" style="opacity:.6" /> <span class="switch">Switch to tab</span>');
 					} else {
-						$(this).children(".result_url").html('<img src="tabicon.png" style="opacity:.6" /> <span class="switch">Switch to tab:</span> '+$(this).children(".result_url").html());
+						$(this).children(".result_url").html('<img src="/img/tabicon.png" style="opacity:.6" /> <span class="switch">Switch to tab:</span> '+$(this).children(".result_url").html());
 					}
 				} else {
 					$(this).children(".result_url").html($(this).children(".result_url_hidden").html());
@@ -497,7 +497,7 @@ chrome.extension.onRequest.addListener(function (request, sender) {
 });
 
 function enterTileEditMode() {
-	jQuery.getScript("tilemode.js");
+	jQuery.getScript("/js/tilemode.js");
 }
 
 $("body").live("mousedown", function(e){
@@ -611,7 +611,7 @@ function showContextMenu(e) {
 	}
 
 	if (window.contextHref && !window.tileEditMode) {
-		var loadFile = "loadfile.html#";
+		var loadFile = "/html/loadfile.html#";
 		if (window.contextHref.substr(0,loadFile.length) == loadFile) {
 			window.contextHref = window.contextHref.substr(loadFile.length);
 		}
@@ -722,7 +722,7 @@ function showContextMenu(e) {
 		$("#contextMenu").css("top",window.innerHeight - $("#contextMenu").outerHeight() + "px");
 	}
 
-	$(".menuOption.fauxbar16").first().css("background-image","url(fauxbar16.png)").css("background-repeat","no-repeat").css("background-position",window.OS == "Mac" ? "4px 1px" : "4px 2px");
+	$(".menuOption.fauxbar16").first().css("background-image","url(/img/fauxbar16.png)").css("background-repeat","no-repeat").css("background-position",window.OS == "Mac" ? "4px 1px" : "4px 2px");
 	$("#contextMenu").animate({opacity:1},100);
 }
 
@@ -1029,7 +1029,7 @@ $("#contextMenu .menuOption").live("mousedown", function(){
 				if (window.tileEditMode) {
 					localStorage.option_optionpage = "option_section_tiles";
 				}
-				window.location = "fauxbar.html#options=1";
+				window.location = "/html/fauxbar.html#options=1";
 				window.location.reload();
 				break;
 
@@ -1038,7 +1038,7 @@ $("#contextMenu .menuOption").live("mousedown", function(){
 					enterTileEditMode();
 				} else {
 					localStorage.option_optionpage = "option_section_tiles";
-					window.location = "fauxbar.html#options=1";
+					window.location = "/html/fauxbar.html#options=1";
 					window.location.reload();
 				}
 				break;
@@ -1096,7 +1096,7 @@ if (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0) {
 
 	// Disable update notification for v1.0.6
 	/*$(document).ready(function(){
-		$("#maindiv").before('<div id="editmodeContainer" style="box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="fauxbar48.png" /> Fauxbar has been updated to version '+localStorage.currentVersion + localStorage.updateBlurb+'</div></div>');
+		$("#maindiv").before('<div id="editmodeContainer" style="box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="/img/fauxbar48.png" /> Fauxbar has been updated to version '+localStorage.currentVersion + localStorage.updateBlurb+'</div></div>');
 		$("#editmodeContainer").prepend('<div id="editModeButtons"><button onclick="dismissUpdateMessage(true)" style="font-family:'+localStorage.option_font+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">View Full Changelog</button>&nbsp;<button onclick="dismissUpdateMessage()" style="font-family:'+localStorage.option_font+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">Dismiss</button></div>');
 	});*/
 }
@@ -1127,6 +1127,8 @@ function populateOpenSearchMenu(force) {
 					iconUrl = result.iconurl;
 					if (iconUrl != "google.ico" && iconUrl != "yahoo.ico" && iconUrl != "bing.ico") {
 						iconUrl = "chrome://favicon/"+iconUrl;
+					} else {
+						iconUrl = "/img/"+iconUrl;
 					}
 
 					keyword = result.keyword.length ? result.keyword : "fakekeyword_"+date("U")+"_"+fakecount++;
@@ -1146,7 +1148,7 @@ function populateOpenSearchMenu(force) {
 				menuItems += '<div class="osMenuLine" style="border-bottom:1px solid #fff; border-top:1px solid #e2e3e3; display:block; height:0px; line-height:0px; font-size:0px; width:100%; margin-left:27px; margin-top:-3px; position:absolute; "></div>';
 
 				menuItems += '<div class="menuitem edit"><div class="vertline2">';
-				menuItems += '	<img src="fauxbar16.png" style="height:16px; width:16px" /> ';
+				menuItems += '	<img src="/img/fauxbar16.png" style="height:16px; width:16px" /> ';
 				menuItems += '	<div class="vertline">Edit search engines...</div>';
 				menuItems += '</div></div>';
 				var osm = $("#opensearchmenu");
@@ -1319,7 +1321,7 @@ $("#address_goarrow").bind("mousedown", function(){
 // When user hovers over the Address Box's go arrow, make it change color slightly
 $("#address_goarrow").bind("mouseenter", function(){
 	if (window.tileEditMode) {
-		$("#address_goarrow img").attr("src","plus_dark.png");
+		$("#address_goarrow img").attr("src","/img/plus_dark.png");
 	} else {
 		$("#address_goarrow img").attr("tintedsrc",$("#address_goarrow img").attr("src")).attr("src",$("#goarrow_hovered").attr("src"));
 	}
@@ -1328,7 +1330,7 @@ $("#address_goarrow").bind("mouseenter", function(){
 // When user stops hovering over the Address Box's go arrow, change the color back
 $("#address_goarrow").bind("mouseleave", function(){
 	if (window.tileEditMode) {
-		$("#address_goarrow img").attr("src","plus.png");
+		$("#address_goarrow img").attr("src","/img/plus.png");
 	} else {
 		$("#address_goarrow img").attr("src",$("#address_goarrow img").attr("tintedsrc"));
 	}
@@ -1707,7 +1709,7 @@ $("#awesomeinput").live("blur", function(){
 
 // If we're reindexing the database, display the progress box
 if (localStorage.indexComplete != 1) {
-	$.get("indexinginfo.html", function(response){
+	$.get("/html/indexinginfo.html", function(response){
 		$("#maindiv").after(response);
 		$("#addresswrapper").css("cursor","wait");
 		$("#apps").remove();
@@ -2137,7 +2139,7 @@ if (localStorage.option_iconcolor && localStorage.option_iconcolor.length) {
 // rather than making a whole new options page by itself.
 if (getHashVar("options") == 1 && localStorage.indexComplete == 1) {
 
-	jQuery.getScript("options.js");
+	jQuery.getScript("/js/options.js");
 
 	////// END LOADING OPTIONS ////////
 
@@ -2148,9 +2150,9 @@ if (getHashVar("options") == 1 && localStorage.indexComplete == 1) {
 
 	// Setup and show the Fauxbar[...] icon in the Omnibox
 	chrome.tabs.getCurrent(function(tab){
-		chrome.pageAction.setIcon({tabId:tab.id, path:"fauxbar16options.png"});
+		chrome.pageAction.setIcon({tabId:tab.id, path:"/img/fauxbar16options.png"});
 		chrome.pageAction.setTitle({tabId:tab.id, title:"Customize Fauxbar"});
-		chrome.pageAction.setPopup({tabId:tab.id, popup:(localStorage.option_pagetilearrangement && localStorage.option_pagetilearrangement == "manual" && localStorage.option_showtopsites == 1 ? "popup.options.html" : "")});
+		chrome.pageAction.setPopup({tabId:tab.id, popup:(localStorage.option_pagetilearrangement && localStorage.option_pagetilearrangement == "manual" && localStorage.option_showtopsites == 1 ? "/html/popup.options.html" : "")});
 		chrome.pageAction.onClicked.addListener(function(theTab) {
 			chrome.tabs.getCurrent(function(currentTab){
 				if (currentTab.id == theTab.id) {
@@ -2655,9 +2657,9 @@ function getResults(noQuery) {
 										for (var ct in window.currentTabs) {
 											if (currentTabs[ct].url == hI.url) {
 												if (localStorage.option_switchToTab == "replace") {
-													urlText = '<img src="tabicon.png" style="opacity:.6" /> <span class="switch">Switch to tab</span>';
+													urlText = '<img src="/img/tabicon.png" style="opacity:.6" /> <span class="switch">Switch to tab</span>';
 												} else {
-													urlText = '<img src="tabicon.png" style="opacity:.6" /> <span class="switch">Switch to tab</span>: '+urlText;
+													urlText = '<img src="/img/tabicon.png" style="opacity:.6" /> <span class="switch">Switch to tab</span>: '+urlText;
 												}
 											}
 										}
@@ -2670,7 +2672,7 @@ function getResults(noQuery) {
 
 										// If URL starts with file:/// handle the URL with Fauxbar, since Chrome doesn't interpret it as a link.
 										if (hI.url.length >= 8 && hI.url.substring(0, 8) == "file:///") {
-											newHref = "loadfile.html#"+hI.url;
+											newHref = "/html/loadfile.html#"+hI.url;
 										} else {
 											newHref = hI.url;
 										}
@@ -3108,7 +3110,7 @@ function autofillInput(thisQuery) {
 	}
 }
 
-var reindexingBookmarksMessage = '<div id="editmodeContainer" class="reindexingBookmarksMessage" style="box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="fauxbar48.png" /> Since a bookmark folder was recently deleted, Fauxbar is currently reindexing your bookmarks. Address Box results may seem delayed during this time. Once complete, this message will disappear.</div></div>';
+var reindexingBookmarksMessage = '<div id="editmodeContainer" class="reindexingBookmarksMessage" style="box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="/img/fauxbar48.png" /> Since a bookmark folder was recently deleted, Fauxbar is currently reindexing your bookmarks. Address Box results may seem delayed during this time. Once complete, this message will disappear.</div></div>';
 if (localStorage.reindexingBookmarks) {
 	$("#maindiv").before(reindexingBookmarksMessage);
 }

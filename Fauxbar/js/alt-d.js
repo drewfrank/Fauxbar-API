@@ -1,6 +1,6 @@
 $("*").live('keydown', function(e){
-	if (e.ctrlKey == true && e.keyCode == 76 && !e.altKey) {
-		window.location = chrome.extension.getURL("fauxbar.html#sel=ai&ai="+window.urlencode(window.location.href));
+	if (e.altKey == true && !e.ctrlKey && e.keyCode == 68) {
+		window.location = chrome.extension.getURL("/html/fauxbar.html#sel=ai&ai="+window.urlencode(window.location.href));
 		return false;
 	}
 });

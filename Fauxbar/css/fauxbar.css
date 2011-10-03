@@ -153,7 +153,7 @@ progress { width:100%; margin-top:6px; }
 }
 
 /* Top site tiles */
-#topthumbs div.thumb { display:inline-block; overflow:hidden; height:132px; width:212px; margin-bottom:4px; background-image:url(nopic.png); background-position:center center; }
+#topthumbs div.thumb { display:inline-block; overflow:hidden; height:132px; width:212px; margin-bottom:4px; background-image:url(/img/nopic.png); background-position:center center; }
 #topthumbs div.thumb img { width:215px; border:0px solid rgba(0,0,0,.12); padding-bottom:200px; background-color:#fff; }
 #topthumbs .toptitle { white-space:nowrap; overflow:hidden; display:inline-block; }
 #topthumbs .toptitle img { height:16px; width:16px; vertical-align:middle; margin-top:-4px; }
@@ -185,7 +185,6 @@ progress { width:100%; margin-top:6px; }
 /* Manual site tile edit mode */
 #manualmode { font-size:14px; padding:6px 7px 7px 7px;  background-color:#fcef80; color:#000; padding-left:38px; }
 #manualmode img { position:absolute; top:3px; left:7px; height:25px; }
-.editstripes { background:url(editstripes.png) #FFE100 -5px 0 repeat-x; height:2px; border:1px solid #000; border-width:1px 0 1px 0; box-shadow:0 2px 2px rgba(0,0,0,.3); }
 #topthumbs a.draggingTile { position:absolute; margin:0; z-index:1000; }
 #topthumbs span.tileCross { background-color:#fff; position:absolute; z-index:2000; margin-left:196px; margin-top:-3px; border-radius:3px; cursor:default; display:none; }
 #topthumbs span.tileCross img { opacity:.5; padding:2px; float:right;}

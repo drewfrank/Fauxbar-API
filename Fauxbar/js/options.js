@@ -27,7 +27,7 @@ $("#apps").remove();
 $("#sapps").remove();
 
 // Load the Options page HTML
-$.get("options.html", function(response){
+$.get("/html/options.html", function(response){
 	$("body").append(response);
 	$(window).bind("resize", function(){
 		$("#options").css("position","absolute").css("top",$(".wrapper").offset().top+$(".wrapper").outerHeight()+30+"px").css("margin","0");
@@ -201,7 +201,7 @@ $.get("options.html", function(response){
 			var button = this;
 			window.db.transaction(function(tx) {
 				tx.executeSql('DELETE FROM opensearches WHERE searchurl = ?', [$(button).attr("searchurl")]);
-				tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, suggestUrl, keyword) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [$(button).attr("shortname"), $("img",button).attr("src"), $(button).attr("searchurl"), "", "", "0", "get", $(button).attr("suggesturl"), $(button).attr("keyword")]);
+				tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, suggestUrl, keyword) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [$(button).attr("shortname"), $("img",button).attr("src").substr(5), $(button).attr("searchurl"), "", "", "0", "get", $(button).attr("suggesturl"), $(button).attr("keyword")]);
 				$(button).css("display","none");
 			}, function(t){
 				errorHandler(t, getLineInfo());
@@ -311,12 +311,12 @@ $.get("options.html", function(response){
 
 	// Update favorite/bookmark icon if user changes it
 	$("#option_favopacity").live("change", function(){
-		$("#fauxstar").addClass("filter-tint").attr("src","fauxstar.png").attr("data-pb-tint-opacity", $(this).val() / 100);
+		$("#fauxstar").addClass("filter-tint").attr("src","/img/fauxstar.png").attr("data-pb-tint-opacity", $(this).val() / 100);
 		processFilters();
 		$(".favstar").attr("src",$("#fauxstar").attr("src"));
 	});
 	$("#option_favcolor").live("change", function(){
-		$("#fauxstar").addClass("filter-tint").attr("src","fauxstar.png").attr("data-pb-tint-colour",$(this).val());
+		$("#fauxstar").addClass("filter-tint").attr("src","/img/fauxstar.png").attr("data-pb-tint-colour",$(this).val());
 		processFilters();
 		$(".favstar").attr("src",$("#fauxstar").attr("src"));
 	});
@@ -614,6 +614,8 @@ function getSearchEngines() {
 						iconUrl = results.rows.item(i).iconurl;
 						if (iconUrl != "google.ico" && iconUrl != "yahoo.ico" && iconUrl != "bing.ico") {
 							iconUrl = "chrome://favicon/"+iconUrl;
+						} else {
+							iconUrl = "/img/"+iconUrl;
 						}
 						openEngines += '<tr class="opensearch_optionrow">';
 						openEngines += '<td class="osicon" style="width:1px; padding:0px 0px 0 5px"><img src="'+iconUrl+'" /></td>';
@@ -621,7 +623,7 @@ function getSearchEngines() {
 						openEngines += '<td style="width:13%" class="keyword"><input class="inputoption" type="text" value="'+results.rows.item(i).keyword+'" origvalue="'+results.rows.item(i).keyword+'" /></td>';
 						openEngines += '<td style="width:75%" class="searchurl"><input class="inputoption" type="text" value="'+results.rows.item(i).searchurl+'" origvalue="'+results.rows.item(i).searchurl+'" style="color:rgba(0,0,0,.52)" spellcheck="false" autocomplete="off" /></td>';
 						if (len > 1) {
-							openEngines += '<td style="width:1px; padding:0 5px 0 4px" class="opensearchcross" title="Remove &quot;'+str_replace('"','&quot;',results.rows.item(i).shortname)+'&quot; from Fauxbar"><img class="crossicon" src="cross.png" /></td>';
+							openEngines += '<td style="width:1px; padding:0 5px 0 4px" class="opensearchcross" title="Remove &quot;'+str_replace('"','&quot;',results.rows.item(i).shortname)+'&quot; from Fauxbar"><img class="crossicon" src="/img/cross.png" /></td>';
 						} else {
 							openEngines += '<td></td>';
 						}
@@ -657,12 +659,12 @@ function getSearchEngines() {
 function editSiteTiles() {
 	chrome.tabs.getAllInWindow(null, function(tabs){
 		for (var t in tabs) {
-			if (tabs[t].title == "Fauxbar: Edit Tiles" && (strstr(tabs[t].url, chrome.extension.getURL("fauxbar.html")) || strstr(tabs[t].url, "chrome://newtab"))) {
+			if (tabs[t].title == "Fauxbar: Edit Tiles" && (strstr(tabs[t].url, chrome.extension.getURL("/html/fauxbar.html")) || strstr(tabs[t].url, "chrome://newtab"))) {
 				chrome.tabs.update(tabs[t].id, {selected:true});
 				return;
 			}
 		}
-		chrome.tabs.create({url:"fauxbar.html#edittiles=1"});
+		chrome.tabs.create({url:"/html/fauxbar.html#edittiles=1"});
 	});
 }
 
