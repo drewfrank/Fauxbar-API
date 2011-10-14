@@ -124,6 +124,11 @@
 		$("#text").live("mouseover", function(){
 			$("textarea").select();
 		});
+
+		if (localStorage.extensionName) {
+			$(".extensionName").text(localStorage.extensionName);
+			window.document.title = (localStorage.extensionName ? localStorage.extensionName : "Fauxbar")+": Error Log";
+		}
 	});
 	-->
 	</script>
@@ -133,7 +138,7 @@
 	<button onclick="clearErrors()">Clear...</button>
 	<button onclick="sendReport()">Send Report...</button>
 	<img src="/img/fauxbar48sad.png" id="sadlogo" style="width:34px; vertical-align:text-bottom;" />
-	Fauxbar Error Log
+	<span class="extensionName">Fauxbar</span> Error Log
 </div>
 <table>
 	<tr>

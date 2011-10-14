@@ -19,7 +19,7 @@ if (localStorage.issue47 == 1) {
 					});
 				});
 			} else {
-				window.location = "/html/issue47.html";
+				window.location = chrome.extension.getURL("/html/issue47.html");
 			}
 		});
 	}
@@ -698,7 +698,7 @@ function showContextMenu(e) {
 	if (localStorage.indexComplete == 1) {
 		if (!getHashVar("options").length) {
 			if (!window.tileThumb && !window.linkIsApp) {
-				html += '	<div class="menuOption fauxbar16">Customize Fauxbar...</div>';
+				html += '	<div class="menuOption fauxbar16">Customize '+(localStorage.extensionName ? localStorage.extensionName : "Fauxbar")+'...</div>';
 				html += '	<div class="menuHr"></div>';
 			}
 		} else {
@@ -708,7 +708,7 @@ function showContextMenu(e) {
 	}
 
 	if (!window.linkIsApp) {
-		html += '	<div class="menuOption disabled" style="">Fauxbar v'+localStorage.currentVersion+'</div>';
+		html += '	<div class="menuOption disabled" style="">'+(localStorage.extensionName ? localStorage.extensionName : "Fauxbar")+' v'+localStorage.currentVersion+'</div>';
 	}
 
 	html += '</div>';
@@ -1025,11 +1025,11 @@ $("#contextMenu .menuOption").live("mousedown", function(){
 				}
 				break;
 
-			case "Customize Fauxbar...":
+			case "Customize "+(localStorage.extensionName ? localStorage.extensionName : "Fauxbar")+"...":
 				if (window.tileEditMode) {
 					localStorage.option_optionpage = "option_section_tiles";
 				}
-				window.location = "/html/fauxbar.html#options=1";
+				window.location = chrome.extension.getURL("/html/fauxbar.html#options=1");
 				window.location.reload();
 				break;
 
@@ -1038,7 +1038,7 @@ $("#contextMenu .menuOption").live("mousedown", function(){
 					enterTileEditMode();
 				} else {
 					localStorage.option_optionpage = "option_section_tiles";
-					window.location = "/html/fauxbar.html#options=1";
+					window.location = chrome.extension.getURL("/html/fauxbar.html#options=1");
 					window.location.reload();
 				}
 				break;
@@ -1094,15 +1094,15 @@ if (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0) {
 		$(window).resize();
 	}
 
-	// Disable update notification for v1.0.6
-	/*$(document).ready(function(){
-		$("#maindiv").before('<div id="editmodeContainer" style="box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="/img/fauxbar48.png" /> Fauxbar has been updated to version '+localStorage.currentVersion + localStorage.updateBlurb+'</div></div>');
-		$("#editmodeContainer").prepend('<div id="editModeButtons"><button onclick="dismissUpdateMessage(true)" style="font-family:'+localStorage.option_font+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">View Full Changelog</button>&nbsp;<button onclick="dismissUpdateMessage()" style="font-family:'+localStorage.option_font+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">Dismiss</button></div>');
-	});*/
+	// Update notification
+	$(document).ready(function(){
+		$("#maindiv").before('<div id="editmodeContainer" style="box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="/img/fauxbar48.png" /> '
+				+(localStorage.extensionName ? localStorage.extensionName : 'Fauxbar')+' has updated itself to version '+localStorage.currentVersion + localStorage.updateBlurb+'</div></div>');
+		$("#editmodeContainer").prepend('<div id="editModeButtons"><button onclick="dismissUpdateMessage(true)" style="font-family:'+localStorage.option_font
+				+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">View Changelog</button>&nbsp;<button onclick="dismissUpdateMessage()" style="font-family:'+localStorage.option_font+
+				', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">Dismiss</button></div>');
+	});
 }
-
-
-
 
 // Fill the search engine menu with the engines that have been added to Fauxbar
 function populateOpenSearchMenu(force) {
@@ -2138,36 +2138,9 @@ if (localStorage.option_iconcolor && localStorage.option_iconcolor.length) {
 // And I decided to show the Options page inline with the normal Fauxbar page, because a lot of the options alter the Fauxbar on the fly, so wanted to have both visible at once,
 // rather than making a whole new options page by itself.
 if (getHashVar("options") == 1 && localStorage.indexComplete == 1) {
-
 	jQuery.getScript("/js/options.js");
-
-	////// END LOADING OPTIONS ////////
-
-// If we're not loading the options page...
-
-// If we're not reindexing the database...
-} else if (localStorage.indexComplete == 1) {
-
-	// Setup and show the Fauxbar[...] icon in the Omnibox
-	chrome.tabs.getCurrent(function(tab){
-		chrome.pageAction.setIcon({tabId:tab.id, path:"/img/fauxbar16options.png"});
-		chrome.pageAction.setTitle({tabId:tab.id, title:"Customize Fauxbar"});
-		chrome.pageAction.setPopup({tabId:tab.id, popup:(localStorage.option_pagetilearrangement && localStorage.option_pagetilearrangement == "manual" && localStorage.option_showtopsites == 1 ? "/html/popup.options.html" : "")});
-		chrome.pageAction.onClicked.addListener(function(theTab) {
-			chrome.tabs.getCurrent(function(currentTab){
-				if (currentTab.id == theTab.id) {
-					if (window.location.hash) {
-						window.location.hash += '&options=1';
-					} else {
-						window.location.hash = '#options=1';
-					}
-					window.location.reload();
-				}
-			});
-		});
-		chrome.pageAction.show(tab.id);
-	});
 }
+
 //////// END OPTIONS ////////
 
 

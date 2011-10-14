@@ -122,7 +122,7 @@ function compareStringLengths (a, b) {
 // Used when first loading Fauxbar, or when user chooses to reset all the values.
 function resetOptions() {
 	localStorage.option_alert = 1; 							// Show a message when there's a database error.
-	localStorage.option_altd = 1; 							// Use Alt+D functionality.
+	localStorage.option_altd = localStorage.extensionName == "Fauxbar Lite" ? 0 : 1; // Use Alt+D functionality.
 	localStorage.option_autofillurl = 1; 					// Auto-fill the Address Box's input with a matching URL when typing.
 	localStorage.option_bgcolor = "#F0F0F0"; 				// Page background color.
 	localStorage.option_bgimg = ""; 						// Page background image.
@@ -134,13 +134,14 @@ function resetOptions() {
 	localStorage.option_bottomgradient = "#000000"; 		// Fauxbar wraper bottom gradient color.
 	localStorage.option_bottomopacity = "50"; 				// Fauxbar wrapper bottom gradient opacity.
 	localStorage.option_consolidateBookmarks = 1; 			// Consolidate bookmarks in Address Box results. Means extra duplicate bookmarks won't be shown.
-	localStorage.option_ctrlk = 1; 							// Use Ctrl+K functionality.
-	localStorage.option_ctrll = 1; 							// Use Ctrl+L functionality.
+	localStorage.option_ctrlk = localStorage.extensionName == "Fauxbar Lite" ? 0 : 1; // Use Ctrl+K functionality.
+	localStorage.option_ctrll = localStorage.extensionName == "Fauxbar Lite" ? 0 : 1; // Use Ctrl+L functionality.
 	localStorage.option_customscoring = 0; 					// Use custom frecency scoring.
 	localStorage.option_cutoff1 = 4; 						// Frecency bucket cutoff days #1
 	localStorage.option_cutoff2 = 14; 						// Frecency bucket cutoff days #2
 	localStorage.option_cutoff3 = 31; 						// Frecency bucket cutoff days #3
 	localStorage.option_cutoff4 = 90; 						// Frecency bucket cutoff days #4
+	localStorage.option_enableSearchContextMenu = 1;		// Right-click context menu for search input boxes on webpages
 	localStorage.option_fallbacksearchurl = "http://www.google.com/search?btnI=&q={searchTerms}";	// Fallback URL for Address Box.
 	localStorage.option_fauxbarfontcolor = "#000000";		// Address Box and Search Box input box font color.
 	localStorage.option_favcolor = "#FFFFFF";				// Bookmark icon tint color.
@@ -157,7 +158,6 @@ function resetOptions() {
 	localStorage.option_frecency_unvisitedbookmark = 1;
 
 	localStorage.option_font = window.OS == "Mac" ? "Lucida Grande" : window.OS == "Linux" ? "Ubuntu" : "Segoe UI";	// Global font name(s).
-	localStorage.option_forceoptionsicon = 0;				// Always show the options icon on every page. Disabled by default.
 	localStorage.option_hidehttp = 1;						// Hide "http://" from the beginning of URLs.
 	localStorage.option_hidefiletiles = 1;					// Prevent top site tiles from displaying file:/// URLs.
 	localStorage.option_hideopentiles = 0;					// Prevent top site tiles from displaying opened URLs. Disabled by default.
@@ -168,6 +168,7 @@ function resetOptions() {
 	localStorage.option_inputboxdisplayorder = "addressleft_searchright";	// Order of which Box comes first.
 	localStorage.option_inputfontsize = window.OS == "Mac" ? 13 : 15;	// Address & Search Box font size (px).
 	localStorage.option_leftcellwidthpercentage = 66;		// Width percentage of the Address Box.
+	localStorage.option_launchFauxbar = "newTab";			// Open Fauxbar upon clicking browser action icon. newTab, currentTab or newWindow
 	localStorage.option_maxaddressboxresults = 16;			// Max Address Box results to display to the user at a time.
 	localStorage.option_maxaddressboxresultsshown = 8;		// Max Address Box results to be shown at a time; extra results will have to be scrolled to see.
 	localStorage.option_maxretrievedsuggestions = 10;		// Max Search Box saved queries to retrieve. This option name is misleading; suggestions are generally JSON results from the search engine.
@@ -176,8 +177,6 @@ function resetOptions() {
 	localStorage.option_omniboxurltruncate = 55;			// Truncate Omnibox+Fauxbar URLs so that the titles can still be seen (hopefully).
 	localStorage.option_openfauxbarfocus = "addressbox";	// What to focus when Fauxbar opens. Can be "chrome", "addressbox" or "searchbox"
 	localStorage.option_optionpage = "option_section_general";	// Option section/subpage to load when Options are shown.
-	localStorage.option_osimproper = 1;						// Scan webpages for non-OpenSearch search engines; eg scan just lone input boxes.
-	localStorage.option_osproper = 1;						// Scan webpages for proper OpenSearch declarations.
 	localStorage.option_pagetilearrangement = "frecency";	// Page tile arrangement. Possible values: "frecency" "visitcount" "manual" "bookmarkbar"
 	localStorage.option_prerender = 1;						// Let Chrome pre-render the first Address Box result if possible.
 	localStorage.option_quickdelete = 1;					// Don't enable Quick Delete by default. Don't want the user randomly deleting their history without knowing it.

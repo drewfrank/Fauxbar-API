@@ -9,7 +9,7 @@
 		if (request == "restart fauxbar") {
 			chrome.management.getAll(function(extensions){
 				for (var e in extensions) {
-					if (extensions[e].name == "Fauxbar" && extensions[e].enabled == true) {
+					if ((extensions[e].name == "Fauxbar" || extensions[e].name == "Fauxbar Lite") && extensions[e].enabled == true) {
 						window.doEnable = true;
 						var eId = extensions[e].id;
 						setTimeout(function(){
@@ -22,7 +22,7 @@
 	});
 
 	chrome.management.onDisabled.addListener(function(extension) {
-		if (window.doEnable == true && extension.name == "Fauxbar") {
+		if (window.doEnable == true && (extension.name == "Fauxbar" || extension.name == "Fauxbar Lite")) {
 			var eId = extension.id;
 			setTimeout(function(){
 				chrome.management.setEnabled(eId, true, function(){
@@ -38,7 +38,7 @@
 				window.newState = "idle";
 				chrome.management.getAll(function(extensions){
 					for (var e in extensions) {
-						if (extensions[e].name == "Fauxbar" && extensions[e].enabled == true) {
+						if ((extensions[e].name == "Fauxbar" || extensions[e].name == "Fauxbar Lite") && extensions[e].enabled == true) {
 							chrome.extension.sendRequest(extensions[e].id, "restart fauxbar?");
 						}
 					}

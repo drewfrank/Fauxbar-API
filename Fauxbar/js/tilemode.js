@@ -29,7 +29,7 @@ function saveSiteTiles(justChecking) {
 					window.close();
 				} else {
 					chrome.tabs.getCurrent(function(tab){
-						chrome.tabs.update(tab.id, {url:"/html/fauxbar.html"});
+						chrome.tabs.update(tab.id, {url:chrome.extension.getURL("/html/fauxbar.html")});
 					});
 				}
 			});
@@ -45,7 +45,7 @@ function cancelTiles() {
 		window.close();
 	} else {
 		chrome.tabs.getCurrent(function(tab){
-			chrome.tabs.update(tab.id, {url:"/html/fauxbar.html"});
+			chrome.tabs.update(tab.id, {url:chrome.extension.getURL("/html/fauxbar.html")});
 		});
 	}
 }
@@ -65,7 +65,7 @@ window.onbeforeunload = function() {
 	if (localStorage.siteTiles && saveSiteTiles(true) != localStorage.siteTiles) {
 		return 'You have not saved your new tile configuration yet.\n\nAre you sure you want to leave this page and discard your changes?';
 	}
-}
+};
 window.tileEditMode = true;
 window.draggingTile = false;
 $("#awesomeinput").attr("placeholder","Add a site as a tile").blur();

@@ -40,7 +40,7 @@ $.get("/html/options.html", function(response){
 	}).trigger("resize");
 
 	// Update the page/tab title
-	document.title = "Fauxbar: Options";
+	document.title = (localStorage.extensionName ? localStorage.extensionName : "Fauxbar")+": Options";
 
 	// Make the Address Box lose focus
 	$("#awesomeinput").blur();
@@ -374,14 +374,41 @@ $.get("/html/options.html", function(response){
 		localStorage[$(this).attr("id")] = $(this).val();
 	});
 
+	// Change New Tab overriding text
+	var fauxbarExtension = '';
+	//var currentExtensionId = '';
+	$("#enableFauxbar").live("click", function(){
+		chrome.management.setEnabled(fauxbarExtension.id, true);
+	});
+	if (localStorage.extensionName == "Fauxbar Lite") {
+		$('#overrideNewTab input[type="checkbox"]').prop("checked", false);
+		$('#overrideNewTabDescription').html('To turn on this option, please install <a href="https://chrome.google.com/webstore/detail/hibkhcnpkakjniplpfblaoikiggkopka" target="blank">Fauxbar</a>.');
+		chrome.management.getAll(function(extensions){
+			for (var e in extensions) {
+				if (extensions[e].name == "Fauxbar" && !extensions[e].enabled) {
+					fauxbarExtension = extensions[e];
+					$('#overrideNewTabDescription').html('To turn on this option, please <a id="enableFauxbar" title="Click here to enable Fauxbar and disable Fauxbar Lite.">enable Fauxbar</a>.');
+				}
+			}
+		});
+	}
+	else if (localStorage.extensionName == "Fauxbar") {
+		chrome.management.getAll(function(extensions){
+			for (var e in extensions) {
+				if (extensions[e].name == "Fauxbar Lite" && !extensions[e].enabled) {
+					fauxbarExtension = extensions[e];
+					$('#overrideNewTabDescription').html('To turn off this option, please <a id="enableFauxbar" title="Click here to enable Fauxbar Lite and disable Fauxbar.">enable Fauxbar Lite</a>.');
+				}
+			}
+		});
+	}
+
 	// Update the Options Management page with the database stats
 	loadDatabaseStats();
-
 	loadOptionsJS();
 
 	// All the Options have been loaded and primed, so let's show the Options page now
 	$("#options").css("display","block");
-
 });
 
 // Update the Fauxbar Memory Helper status text on the Options page
@@ -480,7 +507,7 @@ function showRestoreInfo() {
 // Process the user's input from the "Restore..." box and overwrite the localStorage options and the odd database option with what the user has entered
 function restoreOptions() {
 	if ($("#restore").val().trim().length == 0) {
-		alert("Oops! The restore box appears to be empty.\n\nPaste your backup text into the box, then click Apply again.");
+		alert("Oops! The import box appears to be empty.\n\nPaste your exported options text into the box, then click Apply again.");
 		$("#restore").focus();
 		return false;
 	}
@@ -496,20 +523,20 @@ function restoreOptions() {
 	if (text && text.options && text.searchengines) {
 		window.restoreIsOkay = true;
 		for (var o in text.options) {
-			localStorage[o] = text.options[o];
+			if (o != "extensionName") {
+				localStorage[o] = text.options[o];
+			}
 		}
 		if (openDb()) {
 			window.db.transaction(function(tx){
 				tx.executeSql('DELETE FROM opensearches');
-				var se = "";
 				for (var s in text.searchengines) {
-					se = text.searchengines[s];
-					tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, position, suggestUrl, keyword) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [se.shortname, se.iconurl, se.searchurl, se.xmlurl, se.xml, se.isdefault, se.method, se.position, se.suggestUrl, se.keyword]);
+					var se = text.searchengines[s];
+					tx.executeSql('INSERT INTO opensearches (shortname, iconurl, searchurl, xmlurl, xml, isdefault, method, position, suggestUrl, keyword) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+						[se.shortname, se.iconurl, se.searchurl, se.xmlurl, se.xml, se.isdefault, se.method, se.position, se.suggestUrl, se.keyword]);
 				}
-
-				var tag = "";
 				for (var t in text.tags) {
-					tag = text.tags[t];
+					var tag = text.tags[t];
 					tx.executeSql('DELETE FROM tags WHERE url = ?', [tag.url]);
 					tx.executeSql('UPDATE urls SET tag = ? WHERE url = ?', [tag.tag, tag.url]);
 					tx.executeSql('INSERT INTO tags (url, tag) VALUES (?, ?)', [tag.url, tag.tag]);
@@ -526,8 +553,6 @@ function restoreOptions() {
 			alert("Uh-oh! Fauxbar is unable to open its database to restore your search engines, but your other options will be restored.");
 			window.location.reload();
 		}
-	} else {
-		// console.log("nope");
 	}
 }
 
@@ -664,7 +689,7 @@ function editSiteTiles() {
 				return;
 			}
 		}
-		chrome.tabs.create({url:"/html/fauxbar.html#edittiles=1"});
+		chrome.tabs.create({url:chrome.extension.getURL("/html/fauxbar.html#edittiles=1")});
 	});
 }
 
@@ -940,7 +965,7 @@ function rebuildDatabase() {
 	localStorage.issue47 = 1;
 	chrome.extension.sendRequest({action:"reindex"});
 	setTimeout(function(){
-		chrome.tabs.create({selected:true}, function(){
+		chrome.tabs.create({selected:true, url:chrome.extension.getURL("html/fauxbar.html")}, function(){
 			chrome.tabs.getCurrent(function(tab){
 				chrome.tabs.remove(tab.id);
 			});

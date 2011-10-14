@@ -194,7 +194,9 @@ $(document).ready(function(){
 	if (!localStorage.customStyles) {
 
 		// Load the user's font name
-		$("#customstyle").append("#apps, #topthumbs { font-family:"+localStorage.option_font+",Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; font-size:"+localStorage.option_sappsfontsize+"px; }");
+		$("#customstyle").append("#apps, #topthumbs { font-family:"+localStorage.option_font+", Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; font-size:"+localStorage.option_sappsfontsize+"px; }");
+		$("#customstyle").append("#apps a { color:"+localStorage.option_titlecolor+"; }");
+		$("#customstyle").append("#apps a:hover { color:"+localStorage.option_selectedtitlecolor+"; }");
 
 		// Show or hide the Fauxbar's drop shadow
 		if (localStorage.option_shadow && localStorage.option_shadow != 1) {

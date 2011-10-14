@@ -318,7 +318,7 @@ $(document).ready(function(){
 	}
 
 	if (localStorage.showintro != 0 && localStorage.indexedbefore == 1) {
-		$("#background").after('<div id="optionsintro" style="display:block">Welcome to Fauxbar.&nbsp; To open the options, right-click anywhere on the page.</div>');
+		$("#background").after('<div id="optionsintro" style="display:block">Welcome to '+(localStorage.extensionName ? localStorage.extensionName : 'Fauxbar')+'.&nbsp; To open the options, right-click anywhere on the page.</div>');
 	}
 
 	chrome.management.onInstalled.addListener(function(app) {
