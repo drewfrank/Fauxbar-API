@@ -871,7 +871,7 @@ $(document).ready(function(){
 	});
 
 	// New version info
-	var currentVersion = "1.1.1";
+	var currentVersion = "1.1.2";
 	localStorage.updateBlurb = ".&nbsp; The method for adding search engines has changed.&nbsp; A new Fauxbar Lite extension is also available that lets you leave Chrome's default New Tab page intact.";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
 		localStorage.readUpdateMessage = 0;

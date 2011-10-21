@@ -383,7 +383,7 @@ function submitOpenSearch(query) {
 		});
 	}
 
-	if ($(selectedMenuItem).attr("method").toLowerCase() == 'get') {
+	if ($(selectedMenuItem).length && $(selectedMenuItem).attr("method") && $(selectedMenuItem).attr("method").length && $(selectedMenuItem).attr("method").toLowerCase() == 'get') {
 		if (window.keywordEngine) {
 			window.executingKeywordSearch = true;
 		} else {
@@ -1095,13 +1095,14 @@ if (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0) {
 	}
 
 	// Update notification
-	$(document).ready(function(){
+	// Disabled in v1.1.2
+	/*$(document).ready(function(){
 		$("#maindiv").before('<div id="editmodeContainer" style="box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="/img/fauxbar48.png" /> '
 				+(localStorage.extensionName ? localStorage.extensionName : 'Fauxbar')+' has updated itself to version '+localStorage.currentVersion + localStorage.updateBlurb+'</div></div>');
 		$("#editmodeContainer").prepend('<div id="editModeButtons"><button onclick="dismissUpdateMessage(true)" style="font-family:'+localStorage.option_font
 				+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">View Changelog</button>&nbsp;<button onclick="dismissUpdateMessage()" style="font-family:'+localStorage.option_font+
 				', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">Dismiss</button></div>');
-	});
+	});*/
 }
 
 // Fill the search engine menu with the engines that have been added to Fauxbar

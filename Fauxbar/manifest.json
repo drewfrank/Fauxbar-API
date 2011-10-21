@@ -10,7 +10,7 @@
 
 	"name": "Fauxbar", //// Rename for Fauxbar Lite
 
-	"version": "1.1.1",
+	"version": "1.1.2",
 	"description": "An alternative to Chrome's Omnibox. Replaces the New Tab page.", //// Remove last sentence for Fauxbar Lite
 
 	"minimum_chrome_version": "14",
