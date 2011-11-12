@@ -177,6 +177,17 @@ if (localStorage.indexComplete == 1 && !getHashVar("options")) {
 	}
 }
 
+function sortKeysAlphabetically (x,y){
+	// Case insensitive sort: http://www.java2s.com/Code/JavaScript/Language-Basics/CaseInsensitiveComparisonfortheArraySortMethod.htm
+	var a = String(x).toUpperCase();
+	var b = String(y).toUpperCase();
+	if (a > b)
+		return 1;
+	if (a < b)
+		return -1;
+	return 0;
+}
+
 $(document).ready(function(){
 
 	$("#customstyle").append("#contextMenu { background-color:"+localStorage.option_resultbgcolor+"; color:"+localStorage.option_titlecolor+"; }");
@@ -199,7 +210,7 @@ $(document).ready(function(){
 					}
 				}
 			});
-		}
+		};
 		// When tile is moused over, show the uninstall icon after a moment; hide it when moused out
 		$(".app").live("mouseenter", function(){
 			$(".unin",this).animate({position:"relative"}, 700, function(){
@@ -219,16 +230,7 @@ $(document).ready(function(){
 				}
 			}
 			// Sort them alphabetically
-			apps2 = sortKeys(apps2).sort(function(x,y){
-				// Case insensitive sort: http://www.java2s.com/Code/JavaScript/Language-Basics/CaseInsensitiveComparisonfortheArraySortMethod.htm
-				var a = String(x).toUpperCase();
-				var b = String(y).toUpperCase();
-				if (a > b)
-					return 1
-				if (a < b)
-					return -1
-				return 0;
-		    });
+			apps2 = sortKeys(apps2).sort(sortKeysAlphabetically);
 
 			for (var a3 in apps) {
 				for (a4 in apps2) {
@@ -245,7 +247,7 @@ $(document).ready(function(){
 			for (var a in apps) {
 				if (apps[a].isApp == true) {
 					appHtml += '<a class="app app'+apps[a].id+'" href="'+apps[a].appLaunchUrl+'" appname="'+str_replace('"','&quot;',apps[a].name)+'" appid="'+apps[a].id+'">';
-					appHtml += '<img src="'+apps[a].icons[apps[a].icons.length-1].url+'" style="height:128px;width:128px;" /><br />';
+					appHtml += '<img src="'+(apps[a].icons ? apps[a].icons[apps[a].icons.length-1].url : '/img/app128default.png')+'" style="height:128px;width:128px" /><br />';
 					appHtml += '<span title="'+apps[a].description+'" style="display:inline-block">'+apps[a].name+'</span>';
 					appHtml += '</a>';
 				}
@@ -317,9 +319,9 @@ $(document).ready(function(){
 		$("#sapps").remove();
 	}
 
-	if (localStorage.showintro != 0 && localStorage.indexedbefore == 1) {
+	/*if (localStorage.showintro != 0 && localStorage.indexedbefore == 1) {
 		$("#background").after('<div id="optionsintro" style="display:block">Welcome to '+(localStorage.extensionName ? localStorage.extensionName : 'Fauxbar')+'.&nbsp; To open the options, right-click anywhere on the page.</div>');
-	}
+	}*/
 
 	chrome.management.onInstalled.addListener(function(app) {
 		if (app.isApp) {

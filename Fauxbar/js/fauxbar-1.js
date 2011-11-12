@@ -63,7 +63,7 @@ function strip_tags (input, allowed) {
 }
 
 // Tell the tab to go to a URL.
-function goToUrl(url, fromClickedResult) {
+function goToUrl(url, fromClickedResult, dontResolve) {
 	if (window.keywordEngine && !window.executingKeywordSearch) {
 		submitOpenSearch(url);
 		return;
@@ -140,6 +140,51 @@ function goToUrl(url, fromClickedResult) {
 		if (strstr(firstPart, "://") && substr_count(firstPart, "/") >= 3) {
 			urlIsValid = true;
 		}
+	}
+
+	// Check database to see if input is a valid URL that has been visited before
+	if (!urlIsValid && !dontResolve && ( url.split(' ').length == 1 || strstr(url.split(' ')[0],'/'))) {
+		hideResults();
+		window.db.readTransaction(function(tx){
+			tx.executeSql('SELECT url FROM urls WHERE url LIKE ? LIMIT 1', ['http://'+url.split('/')[0]+'%'], function(tx, results){
+				if (results.rows.length > 0) {
+					// URL (or domain at least) exists; URL is valid
+					goToUrl('http://'+url, false, true);
+				} else {
+					// URL seems to be invalid, do Ajax GET next to check further
+					goToUrl(url, false, -1);
+				}
+			});
+		}, function(t){
+			errorHandler(t, getLineInfo());
+		});
+		return;
+	}
+	
+	// Use Ajax to see if input resolves to a valid URL
+	if (!urlIsValid && dontResolve == -1 && ( url.split(' ').length == 1 || strstr(url.split(' ')[0],'/')) && localStorage.option_useAjaxToDetectIntranetUrls == 1) {
+		hideResults();
+		$.ajax({
+			async: true,
+			cache: true,
+			timeout: 1000,
+			url: 'http://'+url.split('/')[0],
+			success: function(){
+				// URL is valid
+				goToUrl('http://'+url, false, true);
+			},
+			error: function(a,b,c) {
+				if (c.code && c.code != 101) { // c.name == 'NETWORK_ERR'
+					// URL is valid (page returned an error code but the page exists regardless)
+					goToUrl('http://'+url, false, true);
+				}
+				else {
+					// URL could not be found, URL is invalid
+					goToUrl(url, false, true);
+				}
+			}
+		});
+		return;
 	}
 
 	if (!urlIsValid) {
@@ -478,7 +523,9 @@ chrome.extension.onRequest.addListener(function (request, sender) {
 		chrome.tabs.getAllInWindow(null, function(tabs){
 			var theTabs = [];
 			for (var t in tabs) {
-				theTabs[tabs[t].url] = tabs[t].url;
+				if (window.currentTabId != tabs[t].id) {
+					theTabs[tabs[t].url] = tabs[t].url;
+				}
 			}
 			$(".result").each(function(){
 				if (theTabs[$(this).attr("url")]) {
@@ -521,6 +568,10 @@ function removeContextMenu() {
 }
 
 function showContextMenu(e) {
+	// Prevent context menu from appearing on menubar bookmark folders
+	if (e.target.tagName == 'A' && !e.target.href) {
+		return false;
+	}
 	var html = '';
 	var usingSuperTriangle = e.currentTarget && e.currentTarget.className && (strstr(e.currentTarget.className,"superselect") ? true : false);
 	if (usingSuperTriangle == true) {
@@ -746,7 +797,7 @@ $("body").live("contextmenu",function(e){
 	if (!$(".glow").length) {
 		removeContextMenu();
 		if (e.button == 2 && !e.ctrlKey) {
-			if (e.target.id != "addressbaricon" && !strstr(e.target.className, "triangle")) {
+			if (e.target.id != "addressbaricon" && !strstr(e.target.className, "triangle") && e.target.tagName != 'MENU' && e.target.tagName != 'MENUNAME') {
 				showContextMenu(e);
 			}
 			return false;
@@ -1714,18 +1765,22 @@ if (localStorage.indexComplete != 1) {
 		$("#maindiv").after(response);
 		$("#addresswrapper").css("cursor","wait");
 		$("#apps").remove();
-		if (localStorage.needToReindex && localStorage.needToReindex == 1) {
-			$("#indexinginfo b").html("Fauxbar needs to reindex");
-			$("#indexinginfo span").html("Fauxbar's database structure has been modified, so Fauxbar needs to reindex your Chrome data. On the plus side, indexing is now approximately 70% faster than&nbsp;before.");
+		if (localStorage.reindexForMaintenance == 1) {
+			$("#indexinginfo b").html(localStorage.extensionName+" needs to reindex for maintenance");
+			$("#indexinginfo span#indexingInfo2").html(localStorage.extensionName+" needs to reindex your Chrome data to correct a bookmark-naming issue that was present in the previous version of "+localStorage.extensionName+".");
+			$("#currentstatus").html("Click <b>Start Indexing</b> to begin.");
+		} else if (localStorage.needToReindex && localStorage.needToReindex == 1) {
+			$("#indexinginfo b").html(localStorage.extensionName+" needs to reindex your Chrome data");
+			$("#indexinginfo span#indexingInfo2").html(localStorage.extensionName+"'s database structure has been modified, so "+localStorage.extensionName+" needs to reindex your Chrome data. On the plus side, indexing is now approximately 70% faster than&nbsp;before.");
 			$("#currentstatus").html("Click <b>Start Indexing</b> to begin.");
 		} else if (localStorage.indexedbefore == 1) {
-			$("#indexinginfo b").html("Fauxbar is Reindexing");
-			$("#indexinginfo span").html("Fauxbar is reindexing your history items and bookmarks.");
+			$("#indexinginfo b").html(localStorage.extensionName+" is reindexing");
+			$("#indexinginfo span#indexingInfo2").html(localStorage.extensionName+" is reindexing your history items and bookmarks.");
 			$("#currentstatus").html("Reindexing...");
 			$("button").last().prop('disabled',true).html('Please Wait...').blur();
 		} else if (localStorage.issue47 == 1) {
-			$("#indexinginfo b").html("Fauxbar is Rebuilding");
-			$("#indexinginfo span").html("Fauxbar is rebuilding its database, and reindexing your history items and bookmarks. Any custom keywords and search engines you had will also be restored shortly after.");
+			$("#indexinginfo b").html(localStorage.extensionName+" is rebuilding");
+			$("#indexinginfo span#indexingInfo2").html(localStorage.extensionName+" is rebuilding its database, and reindexing your history items and bookmarks. Any custom keywords and search engines you had will also be restored shortly after.");
 			$("#currentstatus").html("Rebuilding...");
 			$("button").last().prop('disabled',true).html('Please Wait...').blur();
 		}
@@ -2160,6 +2215,9 @@ function changeOptionPage(el) {
 
 		// Facebook Like button
 		$("#likeBox").html('<iframe src="http://www.facebook.com/plugins/like.php?app_id=112814858817841&amp;href=http%3A%2F%2Fwww.facebook.com%2Fpages%2FFauxbar%2F147907341953576&amp;send=false&amp;layout=standard&amp;width=450&amp;show_faces=false&amp;action=like&amp;colorscheme=light&amp;font=arial&amp;height=35" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:450px; height:35px;" allowTransparency="true"></iframe>');
+		
+		// Google+
+		//$('head').append('<script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>');
 	}
 }
 
@@ -2389,6 +2447,9 @@ function getResults(noQuery) {
 					window.selectStatement = selectStatement;
 					window.thisQuery = thisQuery;
 
+					if (clearMenus) {
+						clearMenus();
+					}
 					!window.goingToUrl && tx.executeSql(selectStatement, urltitleWords, function (tx, results) {
 
 						window.waitingForResults = false;
@@ -2629,7 +2690,7 @@ function getResults(noQuery) {
 									urlTextAttr = urlText;
 									if (!window.tileEditMode && !window.keywordEngine && localStorage.option_switchToTab != "disable") {
 										for (var ct in window.currentTabs) {
-											if (currentTabs[ct].url == hI.url) {
+											if (currentTabs[ct].url == hI.url && currentTabs[ct].id != window.currentTabId) {
 												if (localStorage.option_switchToTab == "replace") {
 													urlText = '<img src="/img/tabicon.png" style="opacity:.6" /> <span class="switch">Switch to tab</span>';
 												} else {

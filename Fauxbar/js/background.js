@@ -379,7 +379,8 @@ function backupSearchEngines() {
 
 // Update top sites (one at a time) with fresh frecency scores
 function updateTopSites() {
-	if (openDb()) {
+	// FIXME: Disabled in v1.2.0. Need to develop a better method of recalculating the top scores.
+	/*if (openDb()) {
 		window.db.readTransaction(function(tx){
 			tx.executeSql('SELECT url FROM urls WHERE type = 1 ORDER BY frecency DESC LIMIT 50', [], function(tx, results){
 				var len = results.rows.length, i;
@@ -395,7 +396,7 @@ function updateTopSites() {
 		}, function(t){
 			errorHandler(t, getLineInfo());
 		});
-	}
+	}*/
 }
 
 // Calculate and apply frecency scores for each top URL
@@ -637,9 +638,13 @@ function index() {
 					var calculateScoresAndFinish = function(url){
 						chrome.history.getVisits({url:url}, function(visits){
 							var md5Url = hex_md5(url);
-							visits.reverse();
-							toInsert.frecencyScores[md5Url] = calcScore(visits, typedVisitIds[md5Url]?typedVisitIds[md5Url]:'');
-							frecencyScoresMD5d++;
+							try {
+								visits.reverse();
+								toInsert.frecencyScores[md5Url] = calcScore(visits, typedVisitIds[md5Url]?typedVisitIds[md5Url]:'');
+								frecencyScoresMD5d++;
+							} catch(e) {
+								
+							}
 							// Insert everything into database if ready
 							if (toInsert.totalUrls == frecencyScoresMD5d) {
 								window.db.transaction(function(tx){
@@ -710,7 +715,7 @@ function index() {
 										}
 									}
 
-									var historyMsg = "Adding your "+number_format(toInsert.historyItems.length)+" history items to Fauxbar...";
+									var historyMsg = "Adding "+number_format(toInsert.historyItems.length)+" history items to Fauxbar...";
 									console.log(historyMsg);
 									window.indexStatus = historyMsg; // Step 5
 									chrome.extension.sendRequest({message:"currentStatus",status:historyMsg, step:5}); // Step 5
@@ -723,7 +728,7 @@ function index() {
 											[1, hI.url, titles[md5Url]?titles[md5Url]:hI.title, toInsert.frecencyScores[md5Url], typedVisitIds[md5Url]?typedVisitIds[md5Url]:'', tags[md5Url]?tags[md5Url].tag:'']
 										);
 									}
-									var bookmarkMsg = "Adding your "+number_format(toInsert.bookmarks.length)+" bookmarks to Fauxbar...";
+									var bookmarkMsg = "Adding "+number_format(toInsert.bookmarks.length)+" bookmarks to Fauxbar...";
 									console.log(bookmarkMsg);
 									window.indexStatus = bookmarkMsg; // Step 6
 									chrome.extension.sendRequest({message:"currentStatus",status:bookmarkMsg, step:6}); // Step 6
@@ -759,9 +764,10 @@ function index() {
 									setTimeout(function(){
 										if (localStorage.indexedbefore != 1) {
 											var f = localStorage.extensionName ? localStorage.extensionName : "Fauxbar";
-											alert(f+" has finished indexing your history items and bookmarks, and is now ready for use.\n\nFrom here on, "+f+" will silently update its index on-the-fly for you.");
+											window.webkitNotifications.createHTMLNotification('/html/notification_setupComplete.html').show();
 										}
 										localStorage.indexedbefore = 1;
+										delete localStorage.reindexForMaintenance;
 										updateTopSites();
 										chrome.extension.sendRequest("DONE INDEXING");
 									}, 1200);
@@ -769,8 +775,12 @@ function index() {
 							}
 						});
 					};
-					while (urls.length) {
-						calculateScoresAndFinish(urls.pop());
+					if (urls.length) {
+						while (urls.length) {
+							calculateScoresAndFinish(urls.pop());
+						}
+					} else {
+						calculateScoresAndFinish('');
 					}
 				});
 			});
@@ -871,13 +881,35 @@ $(document).ready(function(){
 	});
 
 	// New version info
-	var currentVersion = "1.1.2";
-	localStorage.updateBlurb = ".&nbsp; The method for adding search engines has changed.&nbsp; A new Fauxbar Lite extension is also available that lets you leave Chrome's default New Tab page intact.";
+	var currentVersion = "1.2.0";
+	localStorage.updateBlurb = ".&nbsp; Foo.";
 	if ((!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) || (localStorage.currentVersion && localStorage.currentVersion != currentVersion) || (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)) {
-		localStorage.readUpdateMessage = 0;
+		localStorage.readUpdateMessage = 1;
+		window.webkitNotifications.createHTMLNotification('/html/notification_updated.html').show();
+	}
+	
+	// Initialise menu bar options, added in 1.2.0
+	if (!localStorage.option_showMenuBar) {
+		localStorage.option_useAjaxToDetectIntranetUrls = 1;
+		resetMenuBarOptions();
+		delete localStorage.customStyles;
+		if (localStorage.indexedbefore == 1) {
+			localStorage.reindexForMaintenance = 1;
+			localStorage.indexComplete = 0;
+		}
 	}
 
-	// Enale right-click context menu for adding search engines, added in 1.1.1
+	// Lower Search Box suggestions, changed in 1.2.0
+	if (localStorage.currentVersion == '1.1.2') {
+		if (localStorage.option_maxretrievedsuggestions == 10) {
+			localStorage.option_maxretrievedsuggestions = 5;
+		}
+		if (localStorage.option_maxsuggestionsvisible == 20) {
+			localStorage.option_maxsuggestionsvisible = 15;
+		}
+	}
+
+	// Enable right-click context menu for adding search engines, added in 1.1.1
 	if (!localStorage.option_enableSearchContextMenu) {
 		localStorage.option_enableSearchContextMenu = 1;
 	}
@@ -1057,7 +1089,7 @@ $(document).ready(function(){
 							fileEntry.remove();
 						});
 					});
-					if (window.thumbsToDelete.length) {
+					if (window.thumbsToDelete && window.thumbsToDelete.length) {
 						deleteThumb(window.thumbsToDelete.pop());
 					} else {
 						delete window.thumbsToDelete;
@@ -1089,7 +1121,7 @@ $(document).ready(function(){
 	if (localStorage.indexComplete != 1) {
 		chrome.tabs.create({selected:true, url:chrome.extension.getURL("html/fauxbar.html")}, function(){
 			// User probably disabled/re-enabled Fauxbar during an indexing session, so start indexing again
-			if (localStorage.indexedbefore == 1) {
+			if (localStorage.indexedbefore == 1 && !localStorage.reindexForMaintenance) {
 				index();
 			}
 		});
@@ -1436,7 +1468,15 @@ $(document).ready(function(){
 		var urlIsValid = false;
 		if (substr_count(url, " ") == 0) {
 			var testUrl = url.toLowerCase();
-			if (testUrl.substr(0,7) != 'http://' && testUrl.substr(0,8) != 'https://' && testUrl.substr(0,6) != 'ftp://' && testUrl.substr(0,8) != 'file:///' && testUrl.substr(0,9) != 'chrome://' && testUrl.substr(0,6) != 'about:' && testUrl.substr(0,12) != 'view-source:' && testUrl.substr(0,17) != 'chrome-extension:' && testUrl.substr(0,5) != 'data:') {
+			if (testUrl.substr(0,7) != 'http://' &&
+				testUrl.substr(0,8) != 'https://' &&
+				testUrl.substr(0,6) != 'ftp://' &&
+				testUrl.substr(0,8) != 'file:///' &&
+				testUrl.substr(0,9) != 'chrome://' &&
+				testUrl.substr(0,6) != 'about:' &&
+				testUrl.substr(0,12) != 'view-source:' &&
+				testUrl.substr(0,17) != 'chrome-extension:' &&
+				testUrl.substr(0,5) != 'data:') {
 				if (substr_count(url, ".") == 0) {
 					// it's a search!
 				} else {
@@ -1448,6 +1488,54 @@ $(document).ready(function(){
 			}
 		}
 
+		if (urlIsValid) {
+			goToUrlFromOmnibox(url, urlIsValid);
+		} else {
+			// Check database to see if input is a valid URL that has been visited before
+			if (url.split(' ').length == 1 || strstr(url.split(' ')[0],'/')) {
+				window.db.readTransaction(function(tx){
+					tx.executeSql('SELECT url FROM urls WHERE url LIKE ? LIMIT 1', ['http://'+url.split('/')[0]+'%'], function(tx, results){
+						if (results.rows.length > 0) {
+							// URL (or domain at least) exists; URL is valid
+							goToUrlFromOmnibox('http://'+url, true);
+						} else {
+							// URL seems to be invalid, do Ajax GET next to check further
+							// Use Ajax to see if input resolves to a valid URL
+							if (localStorage.option_useAjaxToDetectIntranetUrls == 1) {
+								$.ajax({
+									async: true,
+									cache: true,
+									timeout: 1000,
+									url: 'http://'+url.split('/')[0],
+									success: function(){
+										urlIsValid = true;
+										url = 'http://'+url;
+										goToUrlFromOmnibox(url, urlIsValid);
+									},
+									error: function(a,b,c) {
+										if (c.code && c.code != 101) { // c.name == 'NETWORK_ERR'
+											urlIsValid = true;
+											url = 'http://'+url;
+										}
+										goToUrlFromOmnibox(url, urlIsValid);
+									}
+								});
+							} else {
+								goToUrlFromOmnibox(url, urlIsValid);
+							}
+						}
+					});
+				}, function(t){
+					errorHandler(t, getLineInfo());
+				});
+				return;
+			} else {
+				goToUrlFromOmnibox(url, urlIsValid);
+			}
+		}
+	});
+	
+	function goToUrlFromOmnibox(url, urlIsValid) {
 		// Do a search with Fallback URL if it's not a valid URL
 		if (!urlIsValid) {
 			if (localStorage.option_fallbacksearchurl && localStorage.option_fallbacksearchurl.length && strstr(localStorage.option_fallbacksearchurl, "{searchTerms}")) {
@@ -1463,7 +1551,7 @@ $(document).ready(function(){
 		chrome.tabs.getSelected(null, function(tab){
 			chrome.tabs.update(tab.id, {url:url, selected:true});
 		});
-	});
+	}
 
 	// Background page listens for requests...
 	chrome.extension.onRequest.addListener(function(request, sender){
@@ -1533,12 +1621,32 @@ $(document).ready(function(){
 
 	// Tabs! //
 
+	// TODO: Update recently closed tabs array
+	/*window.recentTabs_current = [];
+	window.recentTabs_closed = [];*/
+
 	// When tab is removed or created, refresh any current Address Box results so they can show/hide any "Switch to tab" texts
-	chrome.tabs.onRemoved.addListener(function() {
+	chrome.tabs.onRemoved.addListener(function(tabId) {
 		refreshResults();
+
+		// TODO: Update recently closed tabs array
+		/*if (window.recentTabs_current[tabId]) {
+			window.recentTabs_closed[tabId] = window.recentTabs_current[tabId];
+			window.recentTabs_current[tabId] = null;
+			delete window.recentTabs_current[tabId];
+		}*/
 	});
-	chrome.tabs.onCreated.addListener(function() {
+	chrome.tabs.onCreated.addListener(function(tab) {
 		refreshResults();
+		
+		// TODO: Update recently closed tabs array
+		/*var extUrl = chrome.extension.getURL('');
+		if (tab.url.substr(0,extUrl.length) != extUrl && tab.url.substr(0,15) != 'chrome://newtab') {
+			if (!window.recentTabs_current[tab.id]) {
+				window.recentTabs_current[tab.id] = { states:[] };
+			}
+			window.recentTabs_current[tab.id].states[window.recentTabs_current[tab.id].states.length] = { url:tab.url, title:tab.title };
+		}*/
 	});
 
 	// When user changes tabs, send request if the tab has not been scrolled down, to see if the page should have a new top site tile thumbnail generated
@@ -1558,7 +1666,6 @@ $(document).ready(function(){
 		toggleContextMenu && toggleContextMenu(tabId);
 		// Update title in database
 		if (changeInfo.status && changeInfo.status == "complete") {
-			//console.log(tab.title+" - "+tab.url);
 			openDb() && window.db.transaction(function (tx) {
 				tx.executeSql('UPDATE urls SET title = ? WHERE url = ? AND type = 1', [tab.title, tab.url]);
 				tx.executeSql('UPDATE thumbs SET title = ? WHERE url = ?', [tab.title, tab.url]);
@@ -1566,6 +1673,15 @@ $(document).ready(function(){
 				errorHandler(t, getLineInfo());
 			});
 		}
+		
+		// TODO: Update current tabs array
+		/*var extUrl = chrome.extension.getURL('');
+		if (tab.status == 'complete' && tab.url.substr(0,extUrl.length) != extUrl && tab.url.substr(0,15) != 'chrome://newtab') {
+			if (!window.recentTabs_current[tabId]) {
+				window.recentTabs_current[tabId] = { states:[] };
+			}
+			window.recentTabs_current[tabId].states[window.recentTabs_current[tabId].states.length] = { url:tab.url, title:tab.title };
+		}*/
 	});
 
 	// When tab moves to a new Window, refresh Address Box results "Switch to tab" texts
@@ -1632,7 +1748,8 @@ $(document).ready(function(){
 								window.db.transaction(function (tx) {
 									tx.executeSql('SELECT typedVisitIds FROM urls WHERE url = ? LIMIT 1', [historyItem.url], function(tx, results) {
 										var frecency = calculateFrecency(visitItems, results.rows.length ? results.rows.item(0).typedVisitIds+visitId : visitId);
-										tx.executeSql('UPDATE urls SET title = ?, frecency = ?, typedVisitIds = (typedVisitIds||?) WHERE url = ?', [historyItem.title, frecency, visitId, historyItem.url]);
+										tx.executeSql('UPDATE urls SET frecency = ?, typedVisitIds = (typedVisitIds||?) WHERE url = ?', [frecency, visitId, historyItem.url]);
+										tx.executeSql('UPDATE urls SET title = ? WHERE url = ? AND type = 1', [historyItem.title, historyItem.url]);
 										tx.executeSql('UPDATE thumbs SET title = ?, frecency = ? WHERE url = ?', [historyItem.title, frecency, historyItem.url]);
 									});
 								}, function(t){
@@ -1868,7 +1985,7 @@ $(document).ready(function(){
 				title: localStorage.extensionName +": Add as search engine...",
 				contexts: ["editable"],
 				onclick: function(info, tab) {
-					chrome.tabs.executeScript(tab.id, {file:"/js/jquery-1.6.3.min.js"}, function(){
+					chrome.tabs.executeScript(tab.id, {file:"/js/jquery-1.7.min.js"}, function(){
 						chrome.tabs.executeScript(tab.id, {file:"/js/contextMenu-addAsSearchEngine.js"});
 					});
 				}

@@ -121,6 +121,8 @@ function compareStringLengths (a, b) {
 // Set localStorage vars with default Fauxbar values.
 // Used when first loading Fauxbar, or when user chooses to reset all the values.
 function resetOptions() {
+	delete localStorage.customStyles;
+	
 	localStorage.option_alert = 1; 							// Show a message when there's a database error.
 	localStorage.option_altd = localStorage.extensionName == "Fauxbar Lite" ? 0 : 1; // Use Alt+D functionality.
 	localStorage.option_autofillurl = 1; 					// Auto-fill the Address Box's input with a matching URL when typing.
@@ -171,8 +173,8 @@ function resetOptions() {
 	localStorage.option_launchFauxbar = "newTab";			// Open Fauxbar upon clicking browser action icon. newTab, currentTab or newWindow
 	localStorage.option_maxaddressboxresults = 16;			// Max Address Box results to display to the user at a time.
 	localStorage.option_maxaddressboxresultsshown = 8;		// Max Address Box results to be shown at a time; extra results will have to be scrolled to see.
-	localStorage.option_maxretrievedsuggestions = 10;		// Max Search Box saved queries to retrieve. This option name is misleading; suggestions are generally JSON results from the search engine.
-	localStorage.option_maxsuggestionsvisible = 20;			// Max queries/suggestions to display before needing to scroll. So with these 2 default options, 10 JSON suggestions will probably be displayed.
+	localStorage.option_maxretrievedsuggestions = 5;		// Max Search Box saved queries to retrieve. This option name is misleading; suggestions are generally JSON results from the search engine.
+	localStorage.option_maxsuggestionsvisible = 15;			// Max queries/suggestions to display before needing to scroll. So with these 2 default options, 10 JSON suggestions will probably be displayed.
 	localStorage.option_maxwidth = 1200;					// Max-width for the Fauxbar('s wrapper).
 	localStorage.option_omniboxurltruncate = 55;			// Truncate Omnibox+Fauxbar URLs so that the titles can still be seen (hopefully).
 	localStorage.option_openfauxbarfocus = "addressbox";	// What to focus when Fauxbar opens. Can be "chrome", "addressbox" or "searchbox"
@@ -212,11 +214,50 @@ function resetOptions() {
 	localStorage.option_underline = "0";					// Underline matching words in Address Box results. Off by default, looks a bit too busy/messy.
 	localStorage.option_urlcolor = "#0066CC";				// Result URL font color.
 	localStorage.option_urlsize = window.OS == "Mac" ? 11 : window.OS == "Linux" ? 13 : 12;		// Result URL font size (px).
+	localStorage.option_useAjaxToDetectIntranetUrls = 1;
 	localStorage.option_weight1 = 100;						// Frecency bucket cutoff weight #1
 	localStorage.option_weight2 = 70;						// Frecency bucket cutoff weight #2
 	localStorage.option_weight3 = 50;						// Frecency bucket cutoff weight #3
 	localStorage.option_weight4 = 30;						// Frecency bucket cutoff weight #4
 	localStorage.option_weight5 = 10;						// Frecency bucket cutoff weight #5
+	resetMenuBarOptions();
+}
+
+function resetMenuBarOptions() {
+	localStorage.option_showMenuBar = 1;
+	localStorage.option_menuBarBackgroundColor = '#F0F0F0';
+	localStorage.option_showMenuBarDate = 1;
+	localStorage.option_menuBarDateFormat = 'l, F j, Y';
+	localStorage.option_showTabsMenu = 1;
+	localStorage.option_tabsMenu_showReloadAllTabs = 1;
+	localStorage.option_tabsMenu_showNewWindow = 1;
+	localStorage.option_tabsMenu_showNewIncognitoWindow = 1;
+	localStorage.option_tabsMenu_showSubMenus = 0;
+	localStorage.option_showHistoryMenu = 1;
+	localStorage.option_historyMenu_showHistoryPageLink = 1;
+	localStorage.option_historyMenu_showClearDataLink = 1;
+	localStorage.option_historyMenu_numberOfItems = 15;
+	localStorage.option_showBookmarksMenu = 1;
+	localStorage.option_bookmarksMenu_foldersFirst = 1;
+	localStorage.option_bookmarksMenu_showBookmarkManagerLink = 1;
+	localStorage.option_bookmarksMenu_showRecentBookmarks = 1;
+	localStorage.option_bookmarksMenu_numberOfRecentBookmarks = 15;
+	localStorage.option_showAppsMenu = 1;
+	localStorage.option_showExtensionsMenu = 1;
+	localStorage.option_extensionsMenu_showExtensionsLink = 1;
+	localStorage.option_showChromeMenu = 1;
+	localStorage.option_chromeMenu_showBookmarks = 1;
+	localStorage.option_chromeMenu_showDownloads = 1;
+	localStorage.option_chromeMenu_showExtensions = 1;
+	localStorage.option_chromeMenu_showHistory = 1;
+	localStorage.option_chromeMenu_showOptions = 1;
+	localStorage.option_chromeMenu_showExperiments = 1;
+	localStorage.option_chromeMenu_showPlugins = 1;
+	localStorage.option_showFauxbarMenu = 1;
+	localStorage.option_menuBar_useHistory2 = 1;
+	localStorage.option_menuBar_useOldExtensionsPage = 0;
+	localStorage.option_menuBarFontColor = '#000000';
+	delete localStorage.hideTabTips;
 }
 
 window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;

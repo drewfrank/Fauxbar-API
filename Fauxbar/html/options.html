@@ -12,8 +12,9 @@
 			<div id="option_section_general" class="section_selected" optionbox="generaloptions">General</div>
 			<div id="option_section_addressbox" class="section_general" optionbox="addressoptions">Address Box</div>
 			<div id="option_section_searchengines" class="section_general" optionbox="searchoptions">Search Engines</div>
-			<div id="option_section_results" class="section_general" optionbox="resultoptions">Results &amp; Suggestions</div>
 			<div id="option_section_tiles" class="section_general" optionbox="tilesoptions">Tiles</div>
+			<div id="option_section_menubar" class="section_general" optionbox="menubaroptions">Menu Bar</div>
+			<div id="option_section_results" class="section_general" optionbox="resultoptions">Colors &amp; Styling</div>
 			<div id="option_section_background" class="section_general" optionbox="backgroundoptions">Page Background</div>
 			<div id="option_section_frecency" class="section_general" optionbox="frecencyoptions">Frecency Scoring</div>
 
@@ -179,7 +180,7 @@
 Then, if you type the same query in the future, Fauxbar will ask Chrome to start loading the page in the background for you, hopefully saving you time.">(?)</span>
 							</label>
 							<label class="legend">
-								<input name="option_hidehttp" id="option_hidehttp" type="checkbox" /> Hide <b>http://</b> from the beginning of URLs
+								<input name="option_hidehttp" id="option_hidehttp" type="checkbox" /> Hide &quot;http://&quot; from the beginning of URLs
 							</label>
 							<label class="legend">
 								<input name="option_bold" id="option_bold" type="checkbox" /> Bolden matching words
@@ -265,6 +266,18 @@ Then, if you type the same query in the future, Fauxbar will ask Chrome to start
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
+						<th>Intranet</th>
+						<td>
+							<label class="legend" style="margin-top:1px">
+								<input name="option_useAjaxToDetectIntranetUrls" id="option_useAjaxToDetectIntranetUrls" type="checkbox" /> Use Ajax to detect intranet URLs
+								<span style="opacity:.5; cursor:help" title="To ensure Fauxbar recognizes custom intranet domain names, enable this option.
+
+But if you don't normally visit local intranet sites that use custom domain names, disabling this option can speed up Address Box behavior in certain scenarios.">(?)</span>
+							</label>
+						</td>
+					</tr>
+					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr>
 						<th>Focus</th>
 						<td>
 							<label class="legend" style="margin-top:1px">
@@ -278,6 +291,27 @@ Then, if you type the same query in the future, Fauxbar will ask Chrome to start
 							</label>
 						</td>
 					</tr>
+					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr>
+						<th>Quick Delete</th>
+						<td>
+							<label class="legend" style="margin-top:1px">
+								When using Fauxbar's Address Box or Search Box...
+							</label>
+							<label class="legend">
+								<input name="option_quickdelete" id="option_quickdelete" type="checkbox" /> Delete a highlighted history result or search query by pressing <b>Delete</b>
+							</label>
+							<label class="legend">
+								<input name="option_quickdelete_confirm" id="option_quickdelete_confirm" type="checkbox" /> Prompt to confirm before deleting a history result
+							</label>
+							<div class="optionstip" style="line-height:145%">
+								If Quick Delete is enabled and you press <b>Delete</b>:<br />
+								&nbsp;&bull; any highlighted history results will be deleted from both Chrome and <span class="extensionName" style="font-size:12px">Fauxbar</span>.<br />
+								&nbsp;&bull; any highlighted search queries will be deleted from <span class="extensionName" style="font-size:12px">Fauxbar</span>'s query history.<br />
+								Highlighted bookmarks remain safe and will not be deleted, though they may disappear from <span class="extensionName" style="font-size:12px">Fauxbar</span> for a moment.
+							</div>
+						</td>
+					</tr>
 				</table>
 			</div>
 
@@ -288,8 +322,9 @@ Then, if you type the same query in the future, Fauxbar will ask Chrome to start
 					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Search Engine Options
 				</h1>
-				You can add search engines to <span class="extensionName">Fauxbar</span> when you visit certain websites.<br />
-				While typing a search query in <span class="extensionName">Fauxbar</span>, suggestions and previous queries can also be displayed.
+				If a website you visit has a search field, right-click the field to add it as a <span class="extensionName">Fauxbar</span> search engine.<br/>
+<!--				Search engines can be added to <span class="extensionName">Fauxbar</span> by right-clicking on websites' search fields.<br />-->
+				Then, within <span class="extensionName">Fauxbar</span>, search engines you've added can be used from either the Address Box or Search Box.
 				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
@@ -353,7 +388,8 @@ Then, if you type the same query in the future, Fauxbar will ask Chrome to start
 								<input name="option_showjsonsuggestions" id="option_showjsonsuggestions" type="checkbox" /> Show suggestions from the selected search engine if possible
 							</label>
 							<label class="legend">
-								Retrieve up to <input name="option_maxretrievedsuggestions" id="option_maxretrievedsuggestions" class="upto inputoption" type="number" min="0" max="100" step="5" value="" maxlength="3" size="4" style="text-align:center; padding:0" /> matching queries at a time
+								Retrieve up to <input name="option_maxretrievedsuggestions" id="option_maxretrievedsuggestions" class="upto inputoption" type="number" min="0" max="100" step="5" value="" maxlength="3" size="4" style="text-align:center; padding:0" />
+								previous queries at a time
 							</label>
 							<label class="legend">
 								Display up to <input name="option_maxsuggestionsvisible" id="option_maxsuggestionsvisible" class="upto inputoption" type="number" min="0" max="100" step="5" value="" maxlength="3" size="4" style="text-align:center; padding:0" /> queries and suggestions without needing to scroll
@@ -380,11 +416,37 @@ Then, if you type the same query in the future, Fauxbar will ask Chrome to start
 				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
 				<h1>
 					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
-					Result &amp; Suggestion Options
+					Color &amp; Styling Options
 				</h1>
-				Define how <span class="extensionName">Fauxbar</span>'s Address Box results and search engine queries/suggestions should look.<br />
-				The ability to quickly delete history items and search queries can also be toggled below.
+				Many parts of <span class="extensionName">Fauxbar</span> can be colored and sized to your liking.
 				<table>
+					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr>
+						<th>Preset Colors</th>
+						<td>
+							<div class="legend" style="margin-top:-3px; margin-bottom:0; padding-bottom:0">
+								Apply a preset color scheme:
+
+								<span style="white-space:nowrap; display:inline-block">
+									<button style="font-size:12px; padding:2px 4px 2px 3px;" onclick="applyColors('chrome')">
+										<img src="/img/chrome.png" style="vertical-align:middle; margin-top:-3px; height:16px; width:16px;" />
+										"Chrome"
+									</button>&nbsp;<button style="font-size:12px; padding:2px 4px 2px 3px;" onclick="applyColors('firefox')">
+										<img src="/img/firefox.png" style="vertical-align:middle; margin-top:-3px; height:16px; width:16px;" />
+										"Firefox"
+									</button>&nbsp;<button style="font-size:12px; padding:2px 4px 2px 3px;" onclick="applyColors('fauxbar')">
+										<img src="/img/fauxbar16.png" style="vertical-align:middle; margin-top:-3px; height:16px; width:16px;" />
+										"Fauxbar"
+									</button>
+								</span>
+
+								<div class="optionstip">
+									Certain color settings on this page will be overwritten.
+								</div>
+
+							</div>
+						</td>
+					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
 						<th>Normal Styles</th>
@@ -457,47 +519,59 @@ Then, if you type the same query in the future, Fauxbar will ask Chrome to start
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
-						<th>Preset Colors</th>
+						<th>Menu Bar</th>
 						<td>
-							<div class="legend" style="margin-top:-3px; margin-bottom:0; padding-bottom:0">
-								Apply a preset color scheme:
-
-								<span style="white-space:nowrap; display:inline-block">
-									<button style="font-size:12px; padding:2px 4px 2px 3px;" onclick="applyColors('chrome')">
-										<img src="/img/chrome.png" style="vertical-align:middle; margin-top:-3px; height:16px; width:16px;" />
-										"Chrome"
-									</button>&nbsp;<button style="font-size:12px; padding:2px 4px 2px 3px;" onclick="applyColors('firefox')">
-										<img src="/img/firefox.png" style="vertical-align:middle; margin-top:-3px; height:16px; width:16px;" />
-										"Firefox"
-									</button>&nbsp;<button style="font-size:12px; padding:2px 4px 2px 3px;" onclick="applyColors('fauxbar')">
-										<img src="/img/fauxbar16.png" style="vertical-align:middle; margin-top:-3px; height:16px; width:16px;" />
-										"Fauxbar"
-									</button>
-								</span>
-
-								<div class="optionstip">
-									Color settings on this page will be overwritten.
-								</div>
-
-							</div>
+							<label class="legend" style="margin-top:1px">
+								Background color:
+								<input title="Default: #F0F0F0" name="option_menuBarBackgroundColor" id="option_menuBarBackgroundColor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+							</label>
+							<label class="legend" style="margin-top:1px">
+								Font color:
+								<input title="Default: #000000" name="option_menuBarFontColor" id="option_menuBarFontColor" type="text" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+							</label>
 						</td>
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
-						<th>Quick Delete</th>
+						<th>The Fauxbar</th>
 						<td>
-							<label class="legend">
-								<input name="option_quickdelete" id="option_quickdelete" type="checkbox" /> Delete a highlighted history result or search query by pressing <b>Delete</b>
+							<label class="legend" style="margin-top:-4px">
+								Maximum width: <input name="option_maxwidth" id="option_maxwidth" type="number" min="700" max="9999" step="100" spellcheck="false" maxlength="4" size="6" spellcheck="false" style="text-align:center" /> pixels
 							</label>
-							<label class="legend">
-								<input name="option_quickdelete_confirm" id="option_quickdelete_confirm" type="checkbox" /> Prompt to confirm before deleting a history result
-							</label>
-							<div class="optionstip" style="line-height:145%">
-								If Quick Delete is enabled and you press <b>Delete</b>:<br />
-								&nbsp;&bull; any highlighted history results will be deleted from both Chrome and <span class="extensionName" style="font-size:12px">Fauxbar</span>.<br />
-								&nbsp;&bull; any highlighted search queries will be deleted from <span class="extensionName" style="font-size:12px">Fauxbar</span>'s query history.<br />
-								Highlighted bookmarks remain safe and will not be deleted, though they may disappear from <span class="extensionName" style="font-size:12px">Fauxbar</span> for a moment.
+							<div style="margin-top:-4px">
+								Top gradient:
+								<input title="Default: #000000" name="option_topgradient" id="option_topgradient" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+								<input title="Default: 12%" name="option_topopacity" id="option_topopacity" class="opacity" type="number" min="0" max="100" step="1" maxlength="3" size="4" spellcheck="false" style="text-align:center" />%
 							</div>
+							<div style="margin-top:3px">
+								Bottom gradient:
+								<input title="Default: #000000" name="option_bottomgradient" id="option_bottomgradient" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+								<input title="Default: 50%" name="option_bottomopacity" id="option_bottomopacity" class="opacity" type="number" min="0" max="100" step="1" maxlength="3" size="4" spellcheck="false" style="text-align:center" />%
+							</div>
+							<label class="legend" style="margin-top:6px">
+								<input name="option_shadow" id="option_shadow" type="checkbox" /> Show a drop shadow
+							</label>
+						</td>
+					</tr>
+					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr>
+						<th>Input Boxes</th>
+						<td>
+							<label class="legend" style="margin-top:-4px">
+								Font size: <input name="option_inputfontsize" id="option_inputfontsize" class="fontsize" type="number" min="13" maxlength="2" size="3" spellcheck="false" style="text-align:center" /> pixels
+							</label>
+							<label class="legend">
+								Font color:
+								<input title="Default: #000000" name="option_fauxbarfontcolor" id="option_fauxbarfontcolor" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+							</label>
+							<label class="legend">
+								Background color:
+								<input title="Default: #FFFFFF" name="option_inputbgcolor" id="option_inputbgcolor" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+							</label>
+							<label class="legend">
+								Icon color:
+								<input title="Default: #3374AB" name="option_iconcolor" id="option_iconcolor" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
+							</label>
 						</td>
 					</tr>
 				</table>
@@ -597,7 +671,7 @@ Then, if you type the same query in the future, Fauxbar will ask Chrome to start
 					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					General Options
 				</h1>
-				Define how <span class="extensionName">Fauxbar</span> should look and behave when opened.
+				Below are some initial options to configure <span class="extensionName">Fauxbar</span> how you'd like.
 				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
@@ -640,16 +714,6 @@ Then, if you type the same query in the future, Fauxbar will ask Chrome to start
 						<th>Input Boxes</th>
 						<td>
 							<label class="legend" style="margin-top:1px">
-								<!--
-									Although most checkbox options can be applied instantly without needing to reload the page, Chrome/WebKit's HTML5 speech input icons don't seem to be able to be changed on the fly.
-									So the page has to actually be reloaded for the user to see the page, so display a link to get the user to click to reload the page so they can see the change.
-								-->
-								<input name="option_speech" id="option_speech" type="checkbox" onchange="$('#speechtip').css('display','inline-block')" /> Show speech input icons
-								<span id="speechtip" style="display:none">
-									&ndash; <a onclick="javascript:window.location.reload(); return false" style="text-decoration:underline; cursor:pointer; color:#06c">Reload this page</a> to apply
-								</span>
-							</label>
-							<label class="legend">
 								Display:
 								<select id="option_inputboxdisplayorder" name="option_inputboxdisplayorder">
 									<option value="addressleft_searchright">Address Box then Search Box</option>
@@ -658,42 +722,15 @@ Then, if you type the same query in the future, Fauxbar will ask Chrome to start
 									<option value="searchonly">Search Box only</option>
 								</select>
 							</label>
-							<label class="legend" style="margin-top:-4px">
-								Font size: <input name="option_inputfontsize" id="option_inputfontsize" class="fontsize" type="number" min="13" maxlength="2" size="3" spellcheck="false" style="text-align:center" /> pixels
-							</label>
 							<label class="legend">
-								Font color:
-								<input title="Default: #000000" name="option_fauxbarfontcolor" id="option_fauxbarfontcolor" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
-							</label>
-							<label class="legend">
-								Background color:
-								<input title="Default: #FFFFFF" name="option_inputbgcolor" id="option_inputbgcolor" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
-							</label>
-							<label class="legend">
-								Icon color:
-								<input title="Default: #3374AB" name="option_iconcolor" id="option_iconcolor" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
-							</label>
-						</td>
-					</tr>
-					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
-					<tr>
-						<th>The Fauxbar</th>
-						<td>
-							<label class="legend" style="margin-top:-4px">
-								Maximum width: <input name="option_maxwidth" id="option_maxwidth" type="number" min="700" max="9999" step="100" spellcheck="false" maxlength="4" size="6" spellcheck="false" style="text-align:center" /> pixels
-							</label>
-							<div style="margin-top:-4px">
-								Top gradient:
-								<input title="Default: #000000" name="option_topgradient" id="option_topgradient" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
-								<input title="Default: 12%" name="option_topopacity" id="option_topopacity" class="opacity" type="number" min="0" max="100" step="1" maxlength="3" size="4" spellcheck="false" style="text-align:center" />%
-							</div>
-							<div style="margin-top:3px">
-								Bottom gradient:
-								<input title="Default: #000000" name="option_bottomgradient" id="option_bottomgradient" type="text" spellcheck="false" class="color {hash:true, pickerPosition:'right'}" maxlength="7" size="6" spellcheck="false" style="text-align:center" />
-								<input title="Default: 50%" name="option_bottomopacity" id="option_bottomopacity" class="opacity" type="number" min="0" max="100" step="1" maxlength="3" size="4" spellcheck="false" style="text-align:center" />%
-							</div>
-							<label class="legend" style="margin-top:6px">
-								<input name="option_shadow" id="option_shadow" type="checkbox" /> Show a drop shadow
+								<!--
+									Although most checkbox options can be applied instantly without needing to reload the page, Chrome/WebKit's HTML5 speech input icons don't seem to be able to be changed on the fly.
+									So the page has to actually be reloaded for the user to see the page, so display a link to get the user to click to reload the page so they can see the change.
+								-->
+								<input name="option_speech" id="option_speech" type="checkbox" onchange="$('#speechtip').css('display','inline-block')" /> Show speech input icons
+								<span id="speechtip" style="display:none">
+									&ndash; <a onclick="javascript:window.location.reload(); return false" style="text-decoration:underline; cursor:pointer; color:#06c">Reload this page</a> to apply
+								</span>
 							</label>
 						</td>
 					</tr>
@@ -706,7 +743,7 @@ Then, if you type the same query in the future, Fauxbar will ask Chrome to start
 							</label>
 							<label class="legend" style="margin-top:4px">
 								<input name="option_showStarInOmnibox" id="option_showStarInOmnibox" type="checkbox" style="vertical-align:middle; margin-top:0"/>
-								attempt to show a &#9733; character for bookmark results
+								Attempt to show a &#9733; character for bookmark results
 								<span style="opacity:.5; cursor:help"
 									  title="If enabled, Fauxbar+Omnibox bookmark results will attempt to display a star character between the result's URL and title. If Chrome is unable to display a star, a white box will be displayed instead.
 
@@ -714,7 +751,7 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 							</label>
 							<label class="legend">
 								<input type="checkbox" checked disabled style="vertical-align:middle; margin-top:-1px" />
-								truncate result URLs exceeding:
+								Truncate result URLs exceeding:
 								<input title="Default: 55" name="option_omniboxurltruncate" id="option_omniboxurltruncate" class="upto inputoption" type="number" min="0" max="999" step="5" spellcheck="false" maxlength="3" size="4" spellcheck="false" style="text-align:center" />
 								characters
 								<span style="opacity:.5; cursor:help"
@@ -739,7 +776,7 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px;" />
 					Management
 				</h1>
-				<span class="extensionName">Fauxbar</span> version 1.1.2 &nbsp;<span style="opacity:.5">(21 Oct 2011)</span>
+				<span class="extensionName">Fauxbar</span> version 1.2.0 &nbsp;<span style="opacity:.5">(13 Nov 2011)</span>
 				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
@@ -841,7 +878,240 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 					</tr>
 				</table>
 			</div>
-
+			
+			<!-- Menu Bar options -->
+			<div id="menubaroptions" class="optionbox">
+				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<h1>
+					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
+					Menu Bar Options
+				</h1>
+				<span class="extensionName">Fauxbar</span>'s menu bar provides convenient access to the main parts of Chrome.
+				
+				<table>
+					<tr class=""><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr>
+						<td colspan="2">
+							<label class="legend">
+								<input name="option_showMenuBar" id="option_showMenuBar" type="checkbox" />
+								Display <span class="extensionName">Fauxbar</span>'s menu bar
+							</label>
+						</td>
+					</tr>
+					<tr class="menuOptions"><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr class="menuOptions">
+						<th>Date</th>
+						<td class="menuOptions">
+							<label class="legend" style="margin-top:1px; clear:none">
+								<input name="option_showMenuBarDate" id="option_showMenuBarDate" type="checkbox" />
+								Display the current date<span class="menuBarDate"> as:</span>
+							</label>
+							<select id="option_menuBarDateFormat" name="option_menuBarDateFormat" class="menuBarDate">
+								<option value="l, F j, Y"></option>
+								<option value="l, F j Y"></option>
+								<option value="l, F j"></option>
+								<option value="F j, Y"></option>
+								<option value="F j Y"></option>
+								<option value="F j"></option>
+								
+								<option value="l, j F, Y"></option>
+								<option value="l, j F Y"></option>
+								<option value="l, j F"></option>
+								<option value="j F, Y"></option>
+								<option value="j F Y"></option>
+								<option value="j F"></option>
+							</select>
+						</td>
+					</tr>
+					<tr class="menuOptions"><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr class="menuOptions">
+						<th>Tabs</th>
+						<td class="menuOptions tabsMenu">
+							<label class="legend" style="margin-top:1px">
+								<input name="option_showTabsMenu" id="option_showTabsMenu" type="checkbox" />
+								Display the Tabs menu
+							</label>
+							<label class="legend tabsMenu">
+								<input name="option_tabsMenu_showReloadAllTabs" id="option_tabsMenu_showReloadAllTabs" type="checkbox" />
+								Display "Reload all tabs"
+							</label>
+							<label class="legend tabsMenu">
+								<input name="option_tabsMenu_showNewWindow" id="option_tabsMenu_showNewWindow" type="checkbox" />
+								Display "New window"
+							</label>
+							<label class="legend tabsMenu">
+								<input name="option_tabsMenu_showNewIncognitoWindow" id="option_tabsMenu_showNewIncognitoWindow" type="checkbox" />
+								Display "New incognito window"
+							</label>
+							<label class="legend tabsMenu">
+								<input name="option_tabsMenu_showSubMenus" id="option_tabsMenu_showSubMenus" type="checkbox" />
+								Display tab management sub-menus
+								<span style="opacity:.5; cursor:help" title="Gives each tab item a sub-menu containing:
+&bull; Switch to tab
+&bull; Reload
+&bull; Duplicate
+&bull; Pin/Unpin tab
+&bull; Close tab
+&bull; Close other tabs">(?)</span>
+							</label>
+							<div class="optionstip" style="margin-top:5px">To switch to a tab, left-click its menu item.</div>
+							<div class="optionstip">To close a tab, middle-click its menu item.</div>
+						</td>
+					</tr>
+					<tr class="menuOptions"><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr class="menuOptions">
+						<th>History</th>
+						<td class="menuOptions historyMenu">
+							<label class="legend" style="margin-top:1px">
+								<input name="option_showHistoryMenu" id="option_showHistoryMenu" type="checkbox" />
+								Display the History menu
+							</label>
+							<label class="legend historyMenu">
+								<input name="option_historyMenu_showHistoryPageLink" id="option_historyMenu_showHistoryPageLink" type="checkbox" />
+								Display a link to open Chrome's history page
+							</label>
+							<label class="legend historyMenu">
+								<input name="option_historyMenu_showClearDataLink" id="option_historyMenu_showClearDataLink" type="checkbox" />
+								Display a link to clear your Chrome browsing data
+							</label>
+							<label class="legend historyMenu">
+								Display
+								<input name="option_historyMenu_numberOfItems" id="option_historyMenu_numberOfItems" type="number" step="1" min="1" title="Default: 15" style="text-align:center" />
+								recent history items
+							</label>
+						</td>
+					</tr>
+					<tr class="menuOptions"><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr class="menuOptions">
+						<th>Bookmarks</th>
+						<td class="menuOptions bookmarksMenu">
+							<label class="legend" style="margin-top:1px">
+								<input name="option_showBookmarksMenu" id="option_showBookmarksMenu" type="checkbox" />
+								Display the Bookmarks menu
+							</label>
+							<label class="legend bookmarksMenu">
+								<input name="option_bookmarksMenu_foldersFirst" id="option_bookmarksMenu_foldersFirst" type="checkbox" />
+								Display bookmark folders above bookmarked pages
+								<span style="opacity:.5; cursor:help" title="If enabled, bookmark folders will always appear above bookmarked pages, except for the top-level Bookmarks Bar folder.">(?)</span>
+							</label>
+							<label class="legend bookmarksMenu">
+								<input name="option_bookmarksMenu_showBookmarkManagerLink" id="option_bookmarksMenu_showBookmarkManagerLink" type="checkbox" />
+								Display a link to open Chrome's bookmark manager
+							</label>
+							<label class="legend bookmarksMenu recentBookmarks">
+								<input name="option_bookmarksMenu_showRecentBookmarks" id="option_bookmarksMenu_showRecentBookmarks" type="checkbox" />
+								Display a sub-menu containing
+							</label>
+							<div class="bookmarksMenu">
+								<input name="option_bookmarksMenu_numberOfRecentBookmarks" id="option_bookmarksMenu_numberOfRecentBookmarks" type="number" step="1" min="1" title="Default: 15" style="text-align:center" />
+								recently-added bookmarks
+							</div>
+						</td>
+					</tr>
+					<tr class="menuOptions"><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr class="menuOptions">
+						<th>Apps</th>
+						<td class="menuOptions appsMenu">
+							<label class="legend" style="margin-top:1px">
+								<input name="option_showAppsMenu" id="option_showAppsMenu" type="checkbox" />
+								Display the Apps menu
+							</label>
+							<!--<label class="legend appsMenu">
+								<input name="option_appsMenu_showWebStoreLink" id="option_appsMenu_showWebStoreLink" type="checkbox" />
+								Display a Chrome Web Store link
+							</label>-->
+						</td>
+					</tr>
+					<tr class="menuOptions"><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr class="menuOptions">
+						<th>Extensions</th>
+						<td class="menuOptions extensionsMenu">
+							<label class="legend" style="margin-top:1px">
+								<input name="option_showExtensionsMenu" id="option_showExtensionsMenu" type="checkbox" />
+								Display the Extensions menu
+							</label>
+							<label class="legend extensionsMenu">
+								<input name="option_extensionsMenu_showExtensionsLink" id="option_extensionsMenu_showExtensionsLink" type="checkbox" />
+								Display a link to open Chrome's extensions page
+							</label>
+							<!--<label class="legend extensionsMenu">
+								<input name="option_extensionsMenu_showWebStoreLink" id="option_extensionsMenu_showWebStoreLink" type="checkbox" />
+								Display a Chrome Web Store link
+							</label>-->
+						</td>
+					</tr>
+					<tr class="menuOptions"><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr class="menuOptions">
+						<th>Chrome</th>
+						<td class="menuOptions chromeMenu">
+							<label class="legend" style="margin-top:1px">
+								<input name="option_showChromeMenu" id="option_showChromeMenu" type="checkbox" />
+								Display the Chrome menu
+							</label>
+							<label class="legend chromeMenu">
+								Display links to open Chrome's...
+							</label>
+							<label class="legend chromeMenu">
+								<input name="option_chromeMenu_showBookmarks" id="option_chromeMenu_showBookmarks" type="checkbox" />
+								Bookmarks
+							</label>
+							<label class="legend chromeMenu">
+								<input name="option_chromeMenu_showDownloads" id="option_chromeMenu_showDownloads" type="checkbox" />
+								Downloads
+							</label>
+							<label class="legend chromeMenu">
+								<input name="option_chromeMenu_showExtensions" id="option_chromeMenu_showExtensions" type="checkbox" />
+								Extensions
+							</label>
+							<label class="legend chromeMenu">
+								<input name="option_chromeMenu_showHistory" id="option_chromeMenu_showHistory" type="checkbox" />
+								History
+							</label>
+							<label class="legend chromeMenu">
+								<input name="option_chromeMenu_showOptions" id="option_chromeMenu_showOptions" type="checkbox" />
+								Options
+							</label>
+							<label class="legend chromeMenu">
+								<input name="option_chromeMenu_showExperiments" id="option_chromeMenu_showExperiments" type="checkbox" />
+								Experiments
+							</label>
+							<label class="legend chromeMenu">
+								<input name="option_chromeMenu_showPlugins" id="option_chromeMenu_showPlugins" type="checkbox" />
+								Plug-ins
+							</label>
+						</td>
+					</tr>
+					<tr class="menuOptions"><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr class="menuOptions">
+						<th><span class="extensionName">Fauxbar</span></th>
+						<td class="menuOptions fauxbarMenu">
+							<label class="legend" style="margin-top:1px">
+								<input name="option_showFauxbarMenu" id="option_showFauxbarMenu" type="checkbox" />
+								Display the <span class="extensionName">Fauxbar</span> menu
+							</label>
+						</td>
+					</tr>
+					<tr class="menuOptions"><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr class="menuOptions">
+						<th>Other</th>
+						<td class="menuOptions">
+							<label class="legend" style="margin-top:1px">
+								<input name="option_menuBar_useHistory2" id="option_menuBar_useHistory2" type="checkbox" />
+								For history page links, use Chrome's alternative history page
+								<span style="opacity:.5; cursor:help"
+									  title="If enabled, certain links for Chrome's history page within Fauxbar's menu bar will go to &quot;chrome://history2&quot; instead of &quot;chrome://history&quot;">(?)</span>
+							</label>
+							<label class="legend">
+								<input name="option_menuBar_useOldExtensionsPage" id="option_menuBar_useOldExtensionsPage" type="checkbox" />
+								For extension page links, use Chrome's old extensions page
+								<span style="opacity:.5; cursor:help"
+									  title="If enabled, certain links for Chrome's extensions page within Fauxbar's menu bar will go to &quot;chrome://extensions&quot; instead of &quot;chrome://settings/extensionSettings&quot;">(?)</span>
+							</label>
+						</td>
+					</tr>
+				</table>
+			</div>
+			
 			<!-- Frecency Scoring options -->
 			<div id="frecencyoptions" class="optionbox">
 				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
@@ -868,7 +1138,7 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 						<td colspan="2">
 							<label class="legend" style="margin-top:11px">
 								<input name="option_customscoring" id="option_customscoring" type="checkbox" />
-								Use custom frecency scoring...
+								Use custom frecency scoring
 							</label>
 						</td>
 					</tr>
@@ -1004,6 +1274,10 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 						</th>
 						<td>
 							<div id="likeBox"></div>
+							<!--<div style="margin-bottom:6px; height:22px">
+								<div class="g-plusone" data-size="medium" data-annotation="inline" data-href="http://code.google.com/p/fauxbar/"></div>
+							</div>-->
+							
 							<a href="http://code.google.com/p/fauxbar/" target="_blank" style="color:#06c">Project Overview</a><br />
 							<a href="http://code.google.com/p/fauxbar/w/list" target="_blank" style="color:#06c">Documentation Wiki</a><br />
 							<a href="http://code.google.com/p/fauxbar/issues/list" target="_blank" style="color:#06c">Suggestions &amp; Bug Reports</a><br />
@@ -1030,8 +1304,17 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 							Facebook
 						</th>
 						<td>
-							<a href="http://www.facebook.com/Fauxbar?sk=wall" target="_blank" style="color:#06c">Fauxbar's Wall</a><br />
-							<a href="http://www.facebook.com/Fauxbar?sk=notes" target="_blank" style="color:#06c">Notes (Blog)</a><br />
+							<a href="http://www.facebook.com/Fauxbar" target="_blank" style="color:#06c">Fauxbar's Facebook page</a><br />
+						</td>
+					</tr>
+					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr>
+						<th>
+							<img src="/img/icon-gplus.png" />
+							Google+
+						</th>
+						<td>
+							<a href="https://plus.google.com/106763880873922603221" target="_blank" style="color:#06c">Fauxbar's Google+ page</a><br />
 						</td>
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>

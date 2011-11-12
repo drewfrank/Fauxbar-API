@@ -1,18 +1,28 @@
 <html> <!-- Main Fauxbar page -->
 <head>
-<script type="text/javascript" src="/js/jquery-1.6.3.min.js"></script>
+	<script type="text/javascript" src="/js/jquery-1.7.min.js"></script>
 	<script type="text/javascript">
-		chrome.tabs.getCurrent(function(tab){
-			chrome.tabs.update(tab.id, {selected:localStorage.option_openfauxbarfocus == "chrome" ? false : true}, function(){
-				$(document).ready(function(){
-					jQuery.getScript("/js/md5-min.js");
-					jQuery.getScript("/js/fauxbar-2.js");
-					jQuery.getScript("/js/common-1.js");
-					jQuery.getScript("/js/fauxbar-1.js");
+		try {
+			chrome.tabs.getCurrent(function(tab){
+				chrome.tabs.update(tab.id, {selected:localStorage.option_openfauxbarfocus != "chrome"}, function(){
+					$(document).ready(function(){
+						jQuery.getScript("/js/md5-min.js");
+						jQuery.getScript("/js/fauxbar-2.js");
+						jQuery.getScript("/js/common-1.js");
+						jQuery.getScript("/js/fauxbar-1.js");
+						jQuery.getScript("/js/menubar.js");
+					});
 				});
+				window.currentTabId = tab.id;
 			});
+			var speech = localStorage.option_speech == 1 ? "x-webkit-speech" : "";
+		}
+		catch (e) {
+			window.location.reload();
+		}
+		$(document).ready(function(){
+			localStorage.option_showMenuBarDate == 1 && $('#menubar').prepend('<menuDate>'+date(localStorage.option_menuBarDateFormat?localStorage.option_menuBarDateFormat:'l, j F Y')+'</menuDate>');
 		});
-		var speech = localStorage.option_speech == 1 ? "x-webkit-speech" : "";
 	</script>
 	<title>Fauxbar</title>
 	<link href="/css/fauxbar.css" rel="stylesheet" type="text/css" />
@@ -28,6 +38,19 @@
 
 	<!-- Background container -->
 	<div id="background"></div>
+
+	<!-- Menu bar -->
+	<div id="menubar">
+		<menu
+		tabs><menuName>Tabs</menuName></menu><menu
+		history><menuName>History</menuName></menu><menu
+		bookmarks><menuName>Bookmarks</menuName></menu><menu
+		apps><menuName>Apps</menuName></menu><menu
+		extensions><menuName>Extensions</menuName></menu><menu
+		chrome><menuName>Chrome</menuName></menu><menu
+		fauxbar><menuName>Fauxbar</menuName></menu>
+		<div style="clear:both"></div>
+	</div>
 
 	<!-- Container for the Fauxbar, Options, results and queries/suggestions -->
 	<div id="maindiv" style="padding:25px">

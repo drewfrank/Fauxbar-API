@@ -201,14 +201,15 @@ function getLineInfo() {
 function logError(msg, file, line) {
 	// "Uncaught Error: INVALID_STATE_ERR: DOM Exception 11" seems to happen during page transitions - not really an error worth bothering about
 	if (!window.goingToUrl && msg != "Uncaught Error: INVALID_STATE_ERR: DOM Exception 11" && msg != "Uncaught ReferenceError: returnExtensionsData is not defined"
-		&& msg != "Uncaught Error: You do not have permission to use 'management.getAll'. Be sure to declare in your manifest what permissions you need.") {
+		&& msg != "Uncaught Error: You do not have permission to use 'management.getAll'. Be sure to declare in your manifest what permissions you need."
+		&& msg != 'Uncaught ReferenceError: downloadsList is not defined') {
 		var base = chrome.extension.getURL("");
 		if (file.substring(0, base.length) == base) {
 			file = file.substring(base.length);
 		}
 		console.log(msg+'\n'+file+', line '+line);
 		if (openDb()) {
-			if (!strstr(file, "jquery-1.6.3.min.js")) {
+			if (!strstr(file, "jquery-1.7.min.js")) {
 				if (!localStorage.unreadErrors) {
 					localStorage.unreadErrors = 0;
 				}

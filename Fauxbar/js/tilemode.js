@@ -152,7 +152,9 @@ $("#addresswrapper").parent().css("display","table-cell");
 $("#searchwrapper").parent().css("display","none");
 $(".wrapper").css("max-width",maxWidth+"px");
 $("#editmodeContainer").remove();
-$("#maindiv").before('<div id="editmodeContainer" style="opacity:0; box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="/img/fauxbar48.png" /> <b>Tile editing enabled.</b> Add sites as tiles using the modified Address Box below. Drag tiles to rearrange. Right-click to rename.&nbsp;'
+console.log($('#menubar').css('display'));
+$("#maindiv").before('<div id="editmodeContainer" style="opacity:0; box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="/img/fauxbar48.png" style="margin-top:'+
+						($('#menubar').css('display') == 'none' ? '1' : $('#menubar').outerHeight()+1)+'px" /> <b>Tile editing enabled.</b> Add sites as tiles using the modified Address Box below. Drag tiles to rearrange. Right-click to rename.&nbsp;'
 						+' <div style="display:inline; white-space:nowrap">Maximum tiles per row: <select style="position:relative; z-index:999; font-family:inherit; margin-bottom:-2px">'
 						+'<option value="1">1</option>'
 						+'<option value="2">2</option>'

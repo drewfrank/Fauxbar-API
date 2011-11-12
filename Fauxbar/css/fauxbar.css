@@ -217,3 +217,29 @@ input::-webkit-input-placeholder { color:rgba(0,0,0,.5); font-style:italic; }
 .resultTag { padding:2px 5px 0 8px; text-decoration:none; }
 
 #addressbaricon { margin-top:1px; }
+
+#menubar { background:-webkit-gradient(linear, left top, left bottom, from(rgba(255,255,255,.08)), to(rgba(0,0,0,.06))); position:relative; z-index:3000000; font-size:12px; padding:0 4px; 
+		   border-bottom:1px solid rgba(0,0,0,.15); border-top:1px solid rgba(255,255,255,.65); border-bottom:1px solid rgba(0,0,0,.25);
+		   box-shadow:0 1px 0 rgba(255,255,255,.6); }
+
+#menubar *::selection { background:rgba(0,0,0,0); color:inherit; }
+menu, menuDate { opacity:.85; display:inline-block; padding:5px 6px 6px 6px; margin:0; }
+menuDate { float:right; }
+menu:hover { background:-webkit-gradient(linear, left top, left bottom, from(rgba(255,255,255,.6)), to(rgba(255,255,255,.4))); }
+menu.selected { opacity:1; background-color:#fff; }
+menu items { display:none; position:fixed; z-index:1; margin:1px 0 0 -1px; background-color:#fff; box-shadow:0 3px 8px rgba(0,0,0,.45); padding:3px; border-radius:1px; border:1px solid rgba(0,0,0,.3); }
+
+menu.selected > items { display:inline-block; }
+menu item.expanded > items { display:inline-block; }
+
+menu items item { display:block; background-position:3px 49%; background-repeat:no-repeat; background-size:16px 16px; border-radius:2px;  }
+menu item a { white-space:nowrap; display:block; min-width:110px; padding:4px 28px 4px 24px; color:inherit; }
+menu items item:not([faded]):hover > a, menu item:not([faded]).hovering > a { background:-webkit-gradient(linear, left top, left bottom, from(transparent), to(rgba(0,0,0,.06))); }
+menu items group { display:block; }
+menu item > items { margin:-3px 0 0 2px; }
+#menubar hr { font-size:1px; line-height:1px; border:0 solid rgba(0,0,0,.1); border-top-width:1px; margin:3px 0; }
+#menubar item[faded] { background-color:transparent; opacity:.5; }
+
+menu items arrow { display:inline-block; float:right; -webkit-transform:rotate(-90deg) scale(.75,.45); margin-right:-25px; }
+
+menu items.displayNone { display:none; }

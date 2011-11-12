@@ -201,8 +201,18 @@ function number_format (number, decimals, dec_point, thousands_sep) {
 }
 
 // http://phpjs.org/functions/urldecode:572
+// Modified to catch malformed URI errors
 function urldecode (str) {
-    return decodeURIComponent((str + '').replace(/\+/g, '%20'));
+	try {
+		return decodeURIComponent((str + '').replace(/\+/g, '%20'));
+	} catch(e) {
+		console.log(e);
+		if (e.message) {
+			return 'Error: '+e.message;
+		} else {
+			return 'Error: Unable to decode URL';
+		}
+	}
 }
 
 // Initialize/create the database

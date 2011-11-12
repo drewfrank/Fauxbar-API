@@ -240,7 +240,7 @@ $(document).ready(function(){
 
 		// Apply the user's global font name, if selected
 		if (localStorage.option_font && localStorage.option_font.length) {
-			$("#customstyle").append("#thefauxbar *, #options .resultpreview * { font-family:"+localStorage.option_font+", Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; }");
+			$("#customstyle").append("#thefauxbar *, #options .resultpreview *, #menubar { font-family:"+localStorage.option_font+", Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; }");
 		}
 
 		// Apply the user's specified font size for the Address Box and Search Box
@@ -282,7 +282,7 @@ $(document).ready(function(){
 
 		// Apply the user's sepcified highlighted background color for results/queries/suggestions
 		if (localStorage.option_selectedresultbgcolor && localStorage.option_selectedresultbgcolor.length) {
-			$("#customstyle").append(".arrowed, #options .arrowed .dotdotdot, .arrowed .result_title .dotdotdot, .arrowed .result_url .dotdotdot, .rightClickedResult, .rightClickedResult .result_title .dotdotdot, .rightClickedResult .result_url .dotdotdot, .rightClickedResult .resultTag, .arrowed .resultTag { background-color:"+localStorage.option_selectedresultbgcolor+"; }");
+			$("#customstyle").append("#apps a:hover, .arrowed, #options .arrowed .dotdotdot, .arrowed .result_title .dotdotdot, .arrowed .result_url .dotdotdot, .rightClickedResult, .rightClickedResult .result_title .dotdotdot, .rightClickedResult .result_url .dotdotdot, .rightClickedResult .resultTag, .arrowed .resultTag { background-color:"+localStorage.option_selectedresultbgcolor+"; }");
 		}
 
 		// Apply the user's specified font size for result titles
@@ -342,9 +342,33 @@ $(document).ready(function(){
 			$("#customstyle").append("input::-webkit-input-placeholder { font-style:"+(window.OS == "Windows" ? "italic" : "normal")+" }");
 			$("#customstyle").append("#addressbox_triangle:hover .triangle, #opensearch_triangle:hover .triangle, #super_triangle:hover .triangle { color:rgba("+placeholderRGBA+",.59); }");
 		}
+		
+		// Menu bar styles
+		if (localStorage.option_showMenuBar == 1) {
+			$('#customstyle').append('#menubar { background-color:'+localStorage.option_menuBarBackgroundColor+'; }');
+			if (localStorage.option_showTabsMenu == 0) { $('#customstyle').append('menu[tabs] { display:none; }'); }
+			if (localStorage.option_showHistoryMenu == 0) { $('#customstyle').append('menu[history] { display:none; }'); }
+			if (localStorage.option_showBookmarksMenu == 0) { $('#customstyle').append('menu[bookmarks] { display:none; }'); }
+			if (localStorage.option_showAppsMenu == 0) { $('#customstyle').append('menu[apps] { display:none; }'); }
+			if (localStorage.option_showExtensionsMenu == 0) { $('#customstyle').append('menu[extensions] { display:none; }'); }
+			if (localStorage.option_showChromeMenu == 0) { $('#customstyle').append('menu[chrome] { display:none; }'); }
+			if (localStorage.option_showFauxbarMenu == 0) { $('#customstyle').append('menu[fauxbar] { display:none; }'); }
+			
+			$('#customstyle').append(
+				'#menubar { font-size:'+localStorage.option_urlsize+'px; }' +
+				'menu item { color:'+localStorage.option_titlecolor+'; }' +
+				'menu items > item:not(.faded):hover, menu items > group > item:not(.faded):hover, menu item:not(.faded).hovering { color:'+localStorage.option_selectedtitlecolor+'; background-color:'+localStorage.option_selectedresultbgcolor+'; }' +
+				'menu items item:hover > items, menu item.hovering > items { color:'+localStorage.option_titlecolor+'; background-color:'+localStorage.option_resultbgcolor+'; }' +
+				'#menubar hr { border-color:'+localStorage.option_separatorcolor+'; }' +
+				'menuName, menuDate { color:'+localStorage.option_menuBarFontColor+'; }' +
+				'#menubar item[faded] { color:'+localStorage.option_titlecolor+'; }'
+			);
+			
+		} else {
+			$('#customstyle').append('#menubar { display:none; }');
+		}
 
 		// So, just make the Fauxbar appear instantly, now that all the custom colors and stuff have been applied.
-
 		localStorage.customStyles = $("#customstyle").html();
 	} else {
 		$("#customstyle").append(localStorage.customStyles);
@@ -386,6 +410,3 @@ function hexToR(h) { return parseInt((cutHex(h)).substring(0,2),16) }
 function hexToG(h) { return parseInt((cutHex(h)).substring(2,4),16) }
 function hexToB(h) { return parseInt((cutHex(h)).substring(4,6),16) }
 function cutHex(h) { return (h.charAt(0)=="#") ? h.substring(1,7) : h}
-
-
-

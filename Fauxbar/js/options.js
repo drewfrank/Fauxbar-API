@@ -85,7 +85,7 @@ $.get("/html/options.html", function(response){
 
 	// When the Chrome window is resized, resize the Options page appropriately
 	$(window).bind("resize", function(){
-		$(".optionbox").css("height", $(window).height()-150-$("#thefauxbar").height()+"px");
+		$(".optionbox").css("height", $(window).height()-150-$("#thefauxbar").height()-$('#menubar').outerHeight()+"px");
 	});
 	// And trigger it too here, so that the Option page's dimensions are correct from the getgo
 	$(window).resize();
@@ -239,10 +239,10 @@ $.get("/html/options.html", function(response){
 	$("#option_font").live("change", function(){
 		var newFont = $(this).val().trim();
 		if (newFont) {
-			$("#customstyle").append('#thefauxbar *, #options .resultpreview * { font-family:'+newFont+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; }');
+			$("#customstyle").append('#thefauxbar *, #options .resultpreview *, #menubar { font-family:'+newFont+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; }');
 		} else {
 			var lucida = window.OS == "Mac" ? "Lucida Grande, " : "";
-			$("#customstyle").append('#thefauxbar *, #options .resultpreview * { font-family:'+lucida+' Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; }');
+			$("#customstyle").append('#thefauxbar *, #options .resultpreview *, #menubar { font-family:'+lucida+' Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; }');
 		}
 	});
 
@@ -347,7 +347,15 @@ $.get("/html/options.html", function(response){
 		toAppend += "#contextMenu .menuHr { background-color:"+$("#option_separatorcolor").val()+"; }";
 		toAppend += ".inputwrapper { background-color:"+$("#option_inputbgcolor").val()+"; }";
 		toAppend += ".inputwrapper input { color:"+$("#option_fauxbarfontcolor").val()+"; }";
-
+		
+		// Menu bar styles
+		toAppend += '#menubar { font-size:'+$('#option_urlsize').val()+'px; }';
+		toAppend += 'menu item { color:'+$('#option_titlecolor').val()+'; }';
+		toAppend += 'menu items > item:not(.faded):hover, menu items > group > item:not(.faded):hover, menu item:not(.faded).hovering { color:'+$('#option_selectedtitlecolor').val()+'; background-color:'+$('#option_selectedresultbgcolor').val()+'; }';
+		toAppend += 'menu items item:not(.faded):hover > items, menu item.hovering > items { color:'+$('#option_titlecolor').val()+'; background-color:'+$('#option_resultbgcolor').val()+'; }';
+		toAppend += '#menubar hr { border-color:'+$('#option_separatorcolor').val()+'; }';
+		toAppend += '#menubar item[faded] { color:'+$('#option_titlecolor').val()+'; }';
+		
 		var placeholderRGBA = hexToR(localStorage.option_fauxbarfontcolor)+','+hexToG(localStorage.option_fauxbarfontcolor)+','+hexToB(localStorage.option_fauxbarfontcolor);
 		toAppend += "input::-webkit-input-placeholder, .triangle { color:rgba("+placeholderRGBA+",.5); }";
 		toAppend += "#addressbox_triangle:hover .triangle, #opensearch_triangle:hover .triangle, #super_triangle:hover .triangle { color:rgba("+placeholderRGBA+",.59); }";
@@ -376,7 +384,6 @@ $.get("/html/options.html", function(response){
 
 	// Change New Tab overriding text
 	var fauxbarExtension = '';
-	//var currentExtensionId = '';
 	$("#enableFauxbar").live("click", function(){
 		chrome.management.setEnabled(fauxbarExtension.id, true);
 	});
@@ -402,6 +409,78 @@ $.get("/html/options.html", function(response){
 			}
 		});
 	}
+	
+	// Menu bar options
+	
+	$('#option_showMenuBar').live('change', function(){
+		$('#menubar, .menuOptions').css('display', $(this).prop('checked') == 1 ? '' : 'none');
+		$(window).resize();
+	}).change();
+	
+	$('#option_menuBarDateFormat option').each(function(){
+		$(this).html(date($(this).attr('value')));
+	});
+	$('#option_menuBarDateFormat').prevAll('br').first().remove();
+	$('#option_menuBarDateFormat').live('change', function(){
+		$('menuDate').html(date($('#option_menuBarDateFormat').val()));
+	});
+	$('#option_showMenuBarDate').live('change', function(){
+		if ($(this).prop("checked") == 1) {
+			$('.menuBarDate').css('opacity',1);
+			$('#option_menuBarDateFormat').prop('disabled',0);
+			$('menuDate').css('display','');
+		} else {
+			$('.menuBarDate').css('opacity',0);
+			$('#option_menuBarDateFormat').prop('disabled',1);
+			$('menuDate').css('display','none');
+		}
+	}).change();
+	
+	$('#option_menuBarBackgroundColor').live('change', function(){
+		$('#menubar').css('background-color',$(this).val());
+	}).change();
+	
+	$('#option_showTabsMenu').live('change', function(){
+		$('menu[tabs], label.tabsMenu, td.tabsMenu br, td.tabsMenu .optionstip').css('display', $(this).prop('checked') == 1 ? 'inline-block' : 'none');
+	}).change();
+	
+	$('#option_showHistoryMenu').live('change', function(){
+		$('menu[history], label.historyMenu, td.historyMenu br, td.historyMenu .optionstip').css('display', $(this).prop('checked') == 1 ? 'inline-block' : 'none');
+	}).change();
+	
+	$('#option_showBookmarksMenu').live('change', function(){
+		$('menu[bookmarks], label.bookmarksMenu, td.bookmarksMenu br, td.bookmarksMenu .optionstip, div.bookmarksMenu').css('display', $(this).prop('checked') == 1 ? 'inline-block' : 'none');
+	}).change();
+	
+	$('#option_showAppsMenu').live('change', function(){
+		$('menu[apps], label.appsMenu, td.appsMenu br, td.appsMenu .optionstip, div.appsMenu').css('display', $(this).prop('checked') == 1 ? 'inline-block' : 'none');
+	}).change();
+	
+	$('#option_showExtensionsMenu').live('change', function(){
+		$('menu[extensions], label.extensionsMenu, td.extensionsMenu br, td.extensionsMenu .optionstip, div.extensionsMenu').css('display', $(this).prop('checked') == 1 ? 'inline-block' : 'none');
+	}).change();
+	
+	$('#option_showChromeMenu').live('change', function(){
+		$('menu[chrome], label.chromeMenu, td.chromeMenu br, td.chromeMenu .optionstip, div.chromeMenu').css('display', $(this).prop('checked') == 1 ? 'inline-block' : 'none');
+	}).change();
+	
+	$('#option_showFauxbarMenu').live('change', function(){
+		$('menu[fauxbar], label.fauxbarMenu, td.fauxbarMenu br, td.fauxbarMenu .optionstip, div.fauxbarMenu').css('display', $(this).prop('checked') == 1 ? 'inline-block' : 'none');
+	}).change();
+	
+	$('.recentBookmarks').next('br').remove();
+	$('#option_bookmarksMenu_showRecentBookmarks').live('change', function(){
+		$('#option_bookmarksMenu_numberOfRecentBookmarks').prop('disabled', $(this).prop('checked') == false);
+	}).change();
+	
+	$('#option_menuBarFontColor').live('change', function(){
+		$('menuName, menuDate').css('color', $(this).val());
+	}).change();
+	
+	// Toggle menu items
+	$('.menuOptions input').live('change', function(){
+		refreshAllMenus && refreshAllMenus();
+	});
 
 	// Update the Options Management page with the database stats
 	loadDatabaseStats();
@@ -765,8 +844,8 @@ function loadOptionsJS() {
 	});
 
 	// Get Fauxbar's Twitter RSS feed, find the first non-reply, and use it as a news message
-	// If there's no cache or if cache is more than an hour old, fetch news
-	if (!localStorage.latestNewsTime || !localStorage.latestNews || parseFloat(date("U")) - parseFloat(localStorage.latestNewsTime) > 3600) {
+	// If there's no cache or if cache is more than 24 hours old, fetch news
+	if (!localStorage.latestNewsTime || !localStorage.latestNews || parseFloat(date("U")) - parseFloat(localStorage.latestNewsTime) > 86400) {
 		$.ajax({
 			type: "GET",
 			url: "http://twitter.com/statuses/user_timeline/Fauxbar.rss",

@@ -60,3 +60,5 @@ table#options li { margin-top:3px; margin-bottom:3px; }
 
 #supportoptions a { text-decoration:none; }
 #supportoptions a:hover, .optionstip a:hover, #enableFauxbar:hover { text-decoration:underline; cursor:pointer }
+
+input[type="number"] { width:62px; }
