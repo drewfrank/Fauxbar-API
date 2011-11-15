@@ -1131,7 +1131,7 @@ $("#contextMenu .menuOption").live("mousedown", function(){
 });
 
 // Show update message if it hasn't been read yet
-if (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0) {
+/*if (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0) {
 
 	function dismissUpdateMessage(viewChangelog) {
 		localStorage.readUpdateMessage = 1;
@@ -1143,7 +1143,7 @@ if (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0) {
 			$("#editmodeContainer").remove();
 		}
 		$(window).resize();
-	}
+	}*/
 
 	// Update notification
 	// Disabled in v1.1.2
@@ -1154,7 +1154,7 @@ if (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0) {
 				+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">View Changelog</button>&nbsp;<button onclick="dismissUpdateMessage()" style="font-family:'+localStorage.option_font+
 				', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">Dismiss</button></div>');
 	});*/
-}
+/*}*/
 
 // Fill the search engine menu with the engines that have been added to Fauxbar
 function populateOpenSearchMenu(force) {
