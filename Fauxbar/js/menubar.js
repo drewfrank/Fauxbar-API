@@ -75,9 +75,7 @@ function refreshChromeMenu() {
 			(localStorage.option_chromeMenu_showBookmarks == 1 ? '<item style="background-image:url(/img/bookmarks_favicon.png)"><a href="chrome://bookmarks">Bookmarks</a></item>' : '') +
 			(localStorage.option_chromeMenu_showDownloads == 1 ? '<item style="background-image:url(chrome://favicon/chrome://downloads/)"><a href="chrome://downloads">Downloads</a></item>' : '') +
 			(localStorage.option_chromeMenu_showExtensions == 1 ?
-				'<item style="background-image:url(chrome://favicon/chrome://extensions/)"><a href="'
-				+ (localStorage.option_menuBar_useOldExtensionsPage == 1 ? 'chrome://extensions' : 'chrome://settings/extensionSettings') +
-				'">Extensions</a></item>' : '') +
+				'<item style="background-image:url(chrome://favicon/chrome://plugins/)"><a href="chrome://settings/extensions">Extensions</a></item>' : '') +
 			(localStorage.option_chromeMenu_showHistory == 1 ?
 				'<item style="background-image:url(chrome://favicon/chrome://history/)"><a href="chrome://history'+(localStorage.option_menuBar_useHistory2==1?'2':'')+'">History</a></item>' : '') +
 			(localStorage.option_chromeMenu_showOptions == 1 ?
@@ -86,6 +84,7 @@ function refreshChromeMenu() {
 						'<item><a href="chrome://settings/browser">Basics</a></item>' +
 						'<item><a href="chrome://settings/personal">Personal stuff</a></item>' +
 						'<item><a href="chrome://settings/advanced">Under the hood</a></item>' +
+						'<item><a href="chrome://settings/extensions">Extensions</a></item>' +
 						'<hr/>' +
 						'<item><a href="chrome://settings/clearBrowserData">Clear browsing data...</a></item>' +
 						'<item><a href="chrome://settings/importData">Import bookmarks and settings...</a></item>' +
@@ -179,9 +178,7 @@ function refreshAppAndExtensionMenus() {
 			'<item style="background-image:url(/img/icon-webstore.png)"><a getMoreExtensions href="https://chrome.google.com/webstore/category/extensions">Get more extensions</a></item>' +
 			(
 				localStorage.option_extensionsMenu_showExtensionsLink == 1 ?
-					'<hr /><item style="background-image:url(chrome://favicon/chrome://extensions)"><a href="'
-						+ (localStorage.option_menuBar_useOldExtensionsPage == 1 ? 'chrome://extensions' : 'chrome://settings/extensionSettings') +
-						'">Open the extensions page</a></item></items>'
+					'<hr /><item style="background-image:url(chrome://favicon/chrome://plugins)"><a href="chrome://settings/extensions">Open the extensions page</a></item></items>'
 					: ''
 			)
 		);
@@ -557,11 +554,10 @@ chrome.bookmarks.onRemoved.addListener(refreshBookmarkMenu);
 
 function refreshFauxbarMenu() {
 	var options = window.location.href != chrome.extension.getURL("/html/fauxbar.html#options=1") ?
-		'<item style="background-image:url(chrome://favicon/chrome://settings)" '+(localStorage.indexComplete==1?'':'faded')+'><a '+(localStorage.indexComplete==1?'options':'')+'>Options</a></item><hr/>' : '';
+		'<item style="background-image:url(chrome://favicon/chrome://settings)" '+(localStorage.indexComplete==1?'':'faded')+'><a '+(localStorage.indexComplete==1?'options':'')+'>Options</a></item>' : '';
 	$('menu[fauxbar]').html('<menuName>'+localStorage.extensionName+'</menuName><items><group>' +
-		'<item faded><a>'+'Version '+localStorage.currentVersion+'</a></item>' +
-		'<hr/>' +
 		options +
+		'<item faded><a>'+'Version '+localStorage.currentVersion+'</a></item><hr/>' +
 		'<item style="background-image:url(/img/fauxbar16.png)"><a href="http://code.google.com/p/fauxbar/">Project overview</a></item>' +
 		'<item><a href="http://code.google.com/p/fauxbar/w/list">Documentation</a></item>' +
 		'<item><a href="http://code.google.com/p/fauxbar/issues/list">Suggestions and bug reports</a></item>' +

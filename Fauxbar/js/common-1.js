@@ -255,7 +255,6 @@ function resetMenuBarOptions() {
 	localStorage.option_chromeMenu_showPlugins = 1;
 	localStorage.option_showFauxbarMenu = 1;
 	localStorage.option_menuBar_useHistory2 = 1;
-	localStorage.option_menuBar_useOldExtensionsPage = 0;
 	localStorage.option_menuBarFontColor = '#000000';
 	delete localStorage.hideTabTips;
 }
