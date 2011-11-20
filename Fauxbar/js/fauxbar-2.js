@@ -245,7 +245,7 @@ $(document).ready(function(){
 			var appHtml = '';
 			var spanOpen = false;
 			for (var a in apps) {
-				if (apps[a].isApp == true) {
+				if (apps[a].isApp == true && apps[a].enabled) {
 					appHtml += '<a class="app app'+apps[a].id+'" href="'+apps[a].appLaunchUrl+'" appname="'+str_replace('"','&quot;',apps[a].name)+'" appid="'+apps[a].id+'">';
 					appHtml += '<img src="'+(apps[a].icons ? apps[a].icons[apps[a].icons.length-1].url : '/img/app128default.png')+'" style="height:128px;width:128px" /><br />';
 					appHtml += '<span title="'+apps[a].description+'" style="display:inline-block">'+apps[a].name+'</span>';
