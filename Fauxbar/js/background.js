@@ -881,17 +881,16 @@ $(document).ready(function(){
 	});
 
 	// New version info
-	var currentVersion = "1.2.1";
-	//localStorage.updateBlurb = ".&nbsp; Foo.";
+	var currentVersion = "1.2.2";
 	if (
 		(!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) ||
 		(localStorage.currentVersion && localStorage.currentVersion != currentVersion) ||
 		(localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)
 	) {
-		if (localStorage.currentVersion != '1.2.0') {
+		/*if (localStorage.currentVersion != '1.2.0') {
 			localStorage.readUpdateMessage = 1;
 			window.webkitNotifications.createHTMLNotification('/html/notification_updated.html').show();
-		}
+		}*/
 	}
 	
 	// Initialise menu bar options, added in 1.2.0
@@ -1968,7 +1967,7 @@ $(document).ready(function(){
 	}, 100);
 
 	// When user clicks browser action button, open Fauxbar somewhere
-	if (!localStorage.launchFauxbar) {
+	if (!localStorage.option_launchFauxbar) {
 		localStorage.option_launchFauxbar = "newTab";
 	}
 	chrome.browserAction.onClicked.addListener(function(tab) {
