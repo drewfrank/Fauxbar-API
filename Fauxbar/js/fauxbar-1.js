@@ -561,7 +561,9 @@ $("*").bind("keydown", function(){
 
 function removeContextMenu() {
 	$("#contextMenu").remove();
-	$(".glow").removeClass("glow");
+	setTimeout(function(){
+		$(".glow").removeClass("glow");
+	}, 1);
 	$(".rightClickedTile").removeClass("rightClickedTile");
 	$(".rightClickedResult").removeClass("rightClickedResult");
 	$(".rightClickedApp").removeClass("rightClickedApp");
@@ -777,7 +779,7 @@ function showContextMenu(e) {
 	$("#contextMenu").animate({opacity:1},100);
 }
 
-$(".superselect").live("mousedown",function(e){
+$(".superselect").live("mouseup",function(e){
 	if (localStorage.indexComplete == 1) {
 		if ($("#super_triangle .triangle.glow").length) {
 			removeContextMenu();
@@ -1094,22 +1096,23 @@ $("#contextMenu .menuOption").live("mousedown", function(){
 				}
 				break;
 
+			// Search engines
 			default:
 				if ($(this).hasClass("engine")) {
-					if ($("#awesomeinput:focus").length || $(".supercontext").length) {
+					var doAddressBoxEngineStuff = function(el) {
 						if (!window.keywordEngine) {
-							if ($(this).attr("keyword").length) {
-								$("#awesomeinput").val($(this).attr("keyword")+" "+$("#awesomeinput").val()).focus();
+							if ($(el).attr("keyword").length) {
+								$("#awesomeinput").val($(el).attr("keyword")+" "+$("#awesomeinput").val()).focus();
 								setTimeout(getResults,1);
 							}
 						} else {
-							var en = window.keywordEngine;
-							var newKeyword = $(this).attr("keyword");
+							var newKeyword = $(el).attr("keyword");
 							$("#awesomeinput").blur().val(newKeyword+" "+$("#awesomeinput").val()).focus();
-							setTimeout(function(){
-								getResults();
-							},1);
+							setTimeout(getResults,1);
 						}
+					};
+					if ($("#awesomeinput:focus").length || $(".supercontext").length) {
+						doAddressBoxEngineStuff(this);
 					} else if ($("#opensearchinput:focus").length || $("#opensearch_triangle .glow").length) {
 						$("#opensearch_results").css("display","none").html("");
 						selectOpenSearchType($('.menuitem[shortname="'+str_replace('"','&quot;',$(this).attr("shortname"))+'"]'), true);
@@ -1119,6 +1122,8 @@ $("#contextMenu .menuOption").live("mousedown", function(){
 						if ($("#opensearchinput").val().trim().length) {
 							setTimeout(getSearchSuggestions,1);
 						}
+					} else {
+						doAddressBoxEngineStuff(this);
 					}
 				}
 				break;

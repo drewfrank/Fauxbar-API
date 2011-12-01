@@ -569,7 +569,7 @@ function index() {
 				}
 			} else {
 				toInsert.searchEngines = [
-					{shortname:"Google", iconurl:"google.ico", searchurl:"http://www.google.com/search?q={searchTerms}", xmlurl:"", xml:"", isdefault:1, method:"get", suggestUrl:"http://suggestqueries.google.com/complete/search?json&q={searchTerms}", keyword:"g"},
+					{shortname:"Google", iconurl:"google.ico", searchurl:"http://www.google.com/search?q={searchTerms}", xmlurl:"", xml:"", isdefault:1, method:"get", suggestUrl:"http://suggestqueries.google.com/complete/search?output=firefox&q={searchTerms}", keyword:"g"},
 					{shortname:"Yahoo!", iconurl:"yahoo.ico", searchurl:"http://search.yahoo.com/search?p={searchTerms}", xmlurl:"", xml:"", isdefault:0, method:"get", suggestUrl:"http://ff.search.yahoo.com/gossip?output=fxjson&amp;command={searchTerms}", keyword:"y"},
 					{shortname:"Bing", iconurl:"bing.ico", searchurl:"http://www.bing.com/search?q={searchTerms}", xmlurl:"", xml:"", isdefault:0, method:"get", suggestUrl:"http://api.bing.com/osjson.aspx?query={searchTerms}", keyword:"b"}
 				];
@@ -881,12 +881,13 @@ $(document).ready(function(){
 	});
 
 	// New version info
-	var currentVersion = "1.2.2";
+	var currentVersion = "1.2.3";
 	if (
 		(!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) ||
 		(localStorage.currentVersion && localStorage.currentVersion != currentVersion) ||
 		(localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)
 	) {
+		// Enable for big updates, disable for small. Don't need to annoy the user about a minor defect fix.
 		/*if (localStorage.currentVersion != '1.2.0') {
 			localStorage.readUpdateMessage = 1;
 			window.webkitNotifications.createHTMLNotification('/html/notification_updated.html').show();
@@ -1102,6 +1103,12 @@ $(document).ready(function(){
 				};
 				deleteThumb(window.thumbsToDelete.pop());
 			}
+		});
+		
+		// Update the Google search suggestions URL, changed in 1.2.3
+		window.db.transaction(function(tx){
+			tx.executeSql('UPDATE opensearches SET suggestUrl = ? WHERE suggestUrl = ?',
+				['http://suggestqueries.google.com/complete/search?output=firefox&q={searchTerms}', 'http://suggestqueries.google.com/complete/search?json&q={searchTerms}']);
 		});
 	}
 
