@@ -1235,13 +1235,29 @@ function microtime (get_as_float) {
 
 // Focus Address Box or Search Box if allowed, stealing from Chrome's Omnibox (shortcut keys)
 $("*").live("keydown", function(e){
-	if ((e.keyCode == 68 && e.altKey == true && !e.ctrlKey && localStorage.option_altd == 1) || (e.keyCode == 76 && e.ctrlKey == true && !e.altKey && localStorage.option_ctrll == 1)) {
-		$("#awesomeinput").focus().select();
-		return false;
+	if (e.keyCode == 68 && e.altKey == true && !e.ctrlKey) {
+		if (localStorage.option_altd == 1) {
+			$("#awesomeinput").focus().select();
+			return false;
+		} else {
+			$(this).blur();
+		}
 	}
-	else if (e.keyCode == 75 && e.ctrlKey == true && !e.altKey && localStorage.option_ctrlk == 1) {
-		$("#opensearchinput").focus().select();
-		return false;
+	if (e.keyCode == 76 && e.ctrlKey == true && !e.altKey) {
+		if (localStorage.option_ctrll == 1) {
+			$("#awesomeinput").focus().select();
+			return false;
+		} else {
+			$(this).blur();
+		}
+	}
+	else if (e.keyCode == 75 && e.ctrlKey == true && !e.altKey) {
+		if (localStorage.option_ctrlk == 1) {
+			$("#opensearchinput").focus().select();
+			return false;
+		} else {
+			$(this).blur();
+		}
 	}
 });
 
@@ -1427,13 +1443,30 @@ $("#awesomeinput").bind("keydown", function(e){
 
 	// Ctrl+K
 	else if (e.keyCode == 75 && e.ctrlKey == true && !e.altKey) {
-		$("#opensearchinput").focus();
-		return false;
+		if (localStorage.option_ctrlk == 1) {
+			$("#opensearchinput").focus();
+			return false;
+		} else {
+			$(this).blur();
+		}
 	}
 
-	//  Ctrl+L, Alt+D
-	else if ((e.keyCode == 76 && e.ctrlKey == true && !e.altKey) || (e.keyCode == 68 && e.altKey == true && !e.ctrlKey)) {
-		return false;
+	//  Ctrl+L
+	else if (e.keyCode == 76 && e.ctrlKey == true && !e.altKey) {
+		if (localStorage.option_ctrll == 1) {
+			return false;
+		} else {
+			$(this).blur();
+		}
+	}
+	
+	// Alt+D
+	else if (e.keyCode == 68 && e.altKey == true && !e.ctrlKey) {
+		if (localStorage.option_altd == 1) {
+			return false;
+		} else {
+			$(this).blur();
+		}
 	}
 
 	// Alt+Return
@@ -1466,13 +1499,31 @@ $("#awesomeinput").bind("keydown", function(e){
 $("#opensearchinput").bind("keydown", function(e){
 	// Ctrl+K
 	if (e.keyCode == 75 && e.ctrlKey == true && !e.altKey) {
-		return false;
+		if (localStorage.option_ctrlk == 1) {
+			return false;
+		} else {
+			$(this).blur();
+		}
 	}
 
-	// Ctrl+L, Alt+D
-	else if ((e.keyCode == 76 && e.ctrlKey == true && !e.altKey) || (e.keyCode == 68 && e.altKey == true && !e.ctrlKey)) {
-		$("#awesomeinput").focus();
-		return false;
+	// Ctrl+L
+	else if (e.keyCode == 76 && e.ctrlKey == true && !e.altKey) {
+		if (localStorage.option_ctrll == 1) {
+			$("#awesomeinput").focus();
+			return false;
+		} else {
+			$(this).blur();
+		}
+	}
+	
+	// Alt+D
+	else if (e.keyCode == 68 && e.altKey == true && !e.ctrlKey) {
+		if (localStorage.option_altd == 1) {
+			$("#awesomeinput").focus();
+			return false;
+		} else {
+			$(this).blur();
+		}
 	}
 
 	// Alt+Return

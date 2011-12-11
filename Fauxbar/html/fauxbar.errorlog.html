@@ -69,12 +69,19 @@
 
 	$(document).ready(function(){
 
+		var chromeVersion = '?';
+		if (strstr(window.navigator.appVersion, 'Chrome')) {
+			chromeVersion = parseInt(window.navigator.appVersion.match(/Chrome\/(\d+)\./)[1], 10);
+		} else if (strstr(window.navigator.appVersion, 'Chromium')) {
+			chromeVersion = parseInt(window.navigator.appVersion.match(/Chromium\/(\d+)\./)[1], 10);
+		}
+
 		window.OS = "Unknown";
 		if (navigator.appVersion.indexOf("Win")!=-1) window.OS="Windows";
 		if (navigator.appVersion.indexOf("Mac")!=-1) window.OS="Mac";
 		if (navigator.appVersion.indexOf("X11")!=-1) window.OS="UNIX";
 		if (navigator.appVersion.indexOf("Linux")!=-1) window.OS="Linux";
-		$("table").prepend("\n<!-- Operating system: "+window.OS+" -->");
+		$("table").prepend("\n<!-- Operating system: "+window.OS+"; Chrome version: "+chromeVersion+" -->");
 
 		if (localStorage.latestError && localStorage.latestError.length) {
 			var e = jQuery.parseJSON(localStorage.latestError);

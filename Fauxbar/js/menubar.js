@@ -2,6 +2,14 @@
 
 var clearingMenus = false;
 
+// http://stackoverflow.com/questions/4900436/detect-version-of-chrome-installed
+var chromeVersion = 0;
+if (strstr(window.navigator.appVersion, 'Chrome')) {
+	chromeVersion = parseInt(window.navigator.appVersion.match(/Chrome\/(\d+)\./)[1], 10);
+} else if (strstr(window.navigator.appVersion, 'Chromium')) {
+	chromeVersion = parseInt(window.navigator.appVersion.match(/Chromium\/(\d+)\./)[1], 10);
+}
+
 function clearMenus() {
 	$('#menubar menu').removeClass('selected');
 	$('#menubar item.expanded').removeClass('expanded');
@@ -77,7 +85,7 @@ function refreshChromeMenu() {
 			(localStorage.option_chromeMenu_showExtensions == 1 ?
 				'<item style="background-image:url(chrome://favicon/chrome://plugins/)"><a href="chrome://settings/extensions">Extensions</a></item>' : '') +
 			(localStorage.option_chromeMenu_showHistory == 1 ?
-				'<item style="background-image:url(chrome://favicon/chrome://history/)"><a href="chrome://history'+(localStorage.option_menuBar_useHistory2==1?'2':'')+'">History</a></item>' : '') +
+				'<item style="background-image:url(chrome://favicon/chrome://history/)"><a href="chrome://history'+(chromeVersion<17&&localStorage.option_menuBar_useHistory2==1?'2':'')+'">History</a></item>' : '') +
 			(localStorage.option_chromeMenu_showOptions == 1 ?
 				'<item style="background-image:url(chrome://favicon/chrome://settings/)">' +
 					'<items>' +
@@ -455,7 +463,7 @@ function refreshHistoryMenu() {
 			}
 		}
 		if (localStorage.option_historyMenu_showHistoryPageLink == 1) {
-			$('menu[history] group').append('<item style="background-image:url(chrome://favicon/chrome://history)"><a href="chrome://history'+(localStorage.option_menuBar_useHistory2==1?'2':'')+'">View full history</a></item>');
+			$('menu[history] group').append('<item style="background-image:url(chrome://favicon/chrome://history)"><a href="chrome://history'+(chromeVersion<17&&localStorage.option_menuBar_useHistory2==1?'2':'')+'">View full history</a></item>');
 		}
 		if (localStorage.option_historyMenu_showClearDataLink == 1) {
 			$('menu[history] group').append('<item style="background-image:url(chrome://favicon/chrome://settings)"><a href="chrome://settings/clearBrowserData">Clear browsing data...</a></item>');

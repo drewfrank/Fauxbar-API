@@ -262,15 +262,17 @@ function resetMenuBarOptions() {
 window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;
 function fileErrorHandler(e) {
   var msg = '';
+  var securityErr = 0;
   switch (e.code) {
     case FileError.QUOTA_EXCEEDED_ERR:
       msg = 'Fauxbar\'s thumbnail file storage limit has been reached.';
       break;
     case FileError.NOT_FOUND_ERR:
-      msg = 'Fauxbar is unable to access one or more thumbnail files.\n\nYou may need to reinstall Fauxbar.\n\nSorry!';
+      msg = 'Fauxbar is unable to access one or more thumbnail files.\n\nYou may need to reinstall Fauxbar and/or Chrome.';
       break;
     case FileError.SECURITY_ERR:
-      msg = 'Fauxbar has encountered a security error. Unable to access thumbnail files.';
+      //msg = 'Fauxbar has encountered a security error. Unable to access thumbnail files.';
+	  securityErr = 1;
       break;
     case FileError.INVALID_MODIFICATION_ERR:
       msg = 'Fauxbar is unable to modify its thumbnail files.';
@@ -281,6 +283,10 @@ function fileErrorHandler(e) {
     default:
       msg = 'Fauxbar has encountered an unknown thumbnail file error.';
       break;
+  }
+  if (securityErr == 1) {
+	  window.webkitNotifications.createHTMLNotification('/html/notification_fileSecurityErr.html').show();
+	  return;
   }
   if (localStorage.option_alert == 1) {
   	alert(msg);
