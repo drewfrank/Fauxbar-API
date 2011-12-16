@@ -1,18 +1,27 @@
 $('#awesomeinput').ready(function(){
-	localStorage.option_openfauxbarfocus == 'addressbox' && $('#awesomeinput').focus();
+	if (localStorage.option_openfauxbarfocus == 'addressbox') {
+		$('#awesomeinput:focus').live('focus', function(){
+			$(this).attr('placeholder', 'Go to a web site');
+		});
+		$('#awesomeinput').focus();
+	}
 });
 $('#opensearchinput').ready(function(){
-	localStorage.option_openfauxbarfocus == 'searchbox' && $('#opensearchinput').focus();
+	if (localStorage.option_openfauxbarfocus == 'searchbox') {
+		$('#opensearchinput:focus').live('focus', function(){
+			$(this).attr('placeholder', str_replace('"', '&quot;', localStorage.osshortname));
+		});
+		$('#opensearchinput').focus();
+	}
 });
 
-$("#awesomeinput_cell").html('<input type="text" id="awesomeinput" '+
-	' spellcheck="false" placeholder="Go to a web site" autocomplete="off" '+
-	speech+' />');
-	
-$("#opensearchinput_cell").html('<input type="text" id="opensearchinput" '+
-	' spellcheck="false" autocomplete="off" placeholder="'+
-	str_replace('"', '&quot;', localStorage.osshortname)+'" '+
-	speech+' />');
+$("#awesomeinput_cell").html('<input type="text" id="awesomeinput" spellcheck="false" autocomplete="off" '+speech+
+	(localStorage.option_openfauxbarfocus != 'addressbox' ? ' placeholder="Go to a web site" ' : '') +
+	' />');
+
+$("#opensearchinput_cell").html('<input type="text" id="opensearchinput" spellcheck="false" autocomplete="off" '+speech+
+	(localStorage.option_openfauxbarfocus != 'searchbox' ? ' placeholder="'+str_replace('"', '&quot;', localStorage.osshortname)+'" ' : '') +
+	' />');
 
 if (localStorage.osiconsrc) {
 	var ico = localStorage.osiconsrc == "google.ico" || localStorage.osiconsrc == "yahoo.ico" || localStorage.osiconsrc == "bing.ico" ? "/img/"+localStorage.osiconsrc : localStorage.osiconsrc;

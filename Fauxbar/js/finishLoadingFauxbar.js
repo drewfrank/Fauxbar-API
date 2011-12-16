@@ -9,11 +9,6 @@ try {
 					newScript.setAttribute('src', '/js/'+scriptsToLoad[s]);
 					head.appendChild(newScript);
 				}
-//				jQuery.getScript("/js/md5-min.js");
-//				jQuery.getScript("/js/fauxbar-2.js");
-//				jQuery.getScript("/js/common-1.js");
-//				jQuery.getScript("/js/fauxbar-1.js");
-//				jQuery.getScript("/js/menubar.js");
 			});
 		});
 		window.currentTabId = tab.id;

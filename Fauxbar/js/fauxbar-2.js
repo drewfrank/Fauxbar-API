@@ -197,8 +197,6 @@ $(document).ready(function(){
 	$("#customstyle").append("#contextMenu .menuOption:hover { background-color:"+localStorage.option_selectedresultbgcolor+"; color:"+localStorage.option_selectedtitlecolor+"; }");
 	$("#customstyle").append("#contextMenu .disabled:hover { color:"+localStorage.option_titlecolor+"; background:none; }");
 
-
-
 	// If enabled to show...
 	if (localStorage.option_showapps == 1 && !getHashVar("options")) {
 
@@ -245,7 +243,6 @@ $(document).ready(function(){
 			// Create their HTML
 			apps = apps2;
 			var appHtml = '';
-			var spanOpen = false;
 			for (var a in apps) {
 				if (apps[a].isApp == true && apps[a].enabled) {
 					appHtml += '<a class="app app'+apps[a].id+'" href="'+apps[a].appLaunchUrl+'" appname="'+str_replace('"','&quot;',apps[a].name)+'" appid="'+apps[a].id+'">';
@@ -257,8 +254,11 @@ $(document).ready(function(){
 
 			// Get ready to display them
 			appHtml += '<a class="app" href="https://chrome.google.com/webstore"><img src="/img/webstore.png" style="height:128px;width:128px;" /><br />Web Store</a>';
-			$("#apps").css("max-width",localStorage.option_maxwidth+"px").append(appHtml);
-			$("#apps").css("position","relative").css("opacity",0).css("display","block");
+			$("#apps").css("max-width",localStorage.option_maxwidth+"px")
+					  .css("position","relative")
+					  .css("opacity",0)
+					  .css("display","block")
+					  .append(appHtml);
 
 			// Truncate names if they're too long
 			var origTitle = '';
@@ -284,6 +284,7 @@ $(document).ready(function(){
 
 	if (localStorage.option_showapps == 1 && localStorage.option_showtopsites == 1 && localStorage.indexComplete == 1) {
 		window.sapped = false;
+		
 		window.sapps = function(s) {
 			var trans = window.sapped ? 130 : 0;
 			if (s == 1) {
@@ -312,9 +313,9 @@ $(document).ready(function(){
 			}
 			window.sapped = true;
 		}
+		
 		setTimeout(function(){
-			$("#sapps").css("opacity",0).css("margin-left","-"+(Math.ceil($("#sapps").outerWidth()/2))+"px");
-			$("#sapps").css("opacity",1);
+			$("#sapps").css("opacity",0).css("margin-left","-"+(Math.ceil($("#sapps").outerWidth()/2))+"px").css("opacity",1);
 		},50);
 		sapps(localStorage.sapps);
 		$('#sapps1').live('click', function() {

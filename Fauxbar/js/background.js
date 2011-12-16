@@ -1092,7 +1092,7 @@ $(document).ready(function(){
 				var deleteThumb = function(url) {
 					window.requestFileSystem(window.PERSISTENT, 50*1024*1024, function(fs) {
 						fs.root.getFile('/thumbs/'+hex_md5(url)+".png", {create:false}, function(fileEntry) {
-							fileEntry.remove();
+							fileEntry.remove(function(){}, function(){});
 						});
 					});
 					if (window.thumbsToDelete && window.thumbsToDelete.length) {
@@ -1927,6 +1927,7 @@ $(document).ready(function(){
 		if (app.isApp) {
 			localStorage.option_showapps = 1;
 			localStorage.sapps = 2;
+			console.log(app.name + ' has been installed; localStorage.option_showapps has been enabled.');
 		}
 	});
 
