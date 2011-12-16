@@ -1830,6 +1830,8 @@ $("#awesomeinput").live("blur", function(){
 // If we're reindexing the database, display the progress box
 if (localStorage.indexComplete != 1) {
 	$.get("/html/indexinginfo.html", function(response){
+		window.curProgress = 0;
+		$("#maindiv").after(response);
 		
 		if (localStorage.extensionName == "Fauxbar Lite") {
 			window.document.title = "Fauxbar Lite";
@@ -1843,10 +1845,7 @@ if (localStorage.indexComplete != 1) {
 		if (window.OS == "Mac") {
 			$("button").css("font-family", "Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif");
 		}
-
-		window.curProgress = 0;
 		
-		$("#maindiv").after(response);
 		$("#addresswrapper").css("cursor","wait");
 		$("#apps").remove();
 		if (localStorage.reindexForMaintenance == 1) {
