@@ -894,6 +894,11 @@ $(document).ready(function(){
 		}*/
 	}
 	
+	// Reset CSS cache, 1.2.5
+	if (currentVersion == "1.2.5" && localStorage.currentVersion != "1.2.5") {
+		delete localStorage.customStyles;
+	}
+	
 	// Initialise menu bar options, added in 1.2.0
 	if (!localStorage.option_showMenuBar) {
 		localStorage.option_useAjaxToDetectIntranetUrls = 1;

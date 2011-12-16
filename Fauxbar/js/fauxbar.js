@@ -244,7 +244,7 @@ $(document).ready(function(){
 
 		// Apply the user's global font name, if selected
 		if (localStorage.option_font && localStorage.option_font.length) {
-			$("#customstyle").append("#thefauxbar *, #options .resultpreview *, #menubar { font-family:"+localStorage.option_font+", Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; }");
+			$("#customstyle").append("#thefauxbar *, #options .resultpreview *, #menubar, #results *, #opensearch_results, #opensearch_results *, #contextMenu * { font-family:"+localStorage.option_font+", Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; }");
 		}
 
 		// Apply the user's specified font size for the Address Box and Search Box

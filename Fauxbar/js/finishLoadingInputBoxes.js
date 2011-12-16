@@ -1,17 +1,25 @@
 $('#awesomeinput').ready(function(){
-	if (localStorage.option_openfauxbarfocus == 'addressbox') {
+	if (getHashVar('options') == 1) {
+		$('#awesomeinput').attr('placeholder', 'Go to a web site');
+	} else if (localStorage.option_openfauxbarfocus == 'addressbox') {
 		$('#awesomeinput:focus').live('focus', function(){
 			$(this).attr('placeholder', 'Go to a web site');
 		});
-		$('#awesomeinput').focus();
+		$('#awesomeinput').focus().live('blur', function(){
+			$(this).attr('placeholder', 'Go to a web site');
+		});
 	}
 });
 $('#opensearchinput').ready(function(){
-	if (localStorage.option_openfauxbarfocus == 'searchbox') {
+	if (getHashVar('options') == 1) {
+		$('#opensearchinput').attr('placeholder', str_replace('"', '&quot;', localStorage.osshortname));
+	} else if (localStorage.option_openfauxbarfocus == 'searchbox') {
 		$('#opensearchinput:focus').live('focus', function(){
 			$(this).attr('placeholder', str_replace('"', '&quot;', localStorage.osshortname));
 		});
-		$('#opensearchinput').focus();
+		$('#opensearchinput').focus().live('blur', function(){
+			$(this).attr('placeholder', str_replace('"', '&quot;', localStorage.osshortname));
+		});
 	}
 });
 

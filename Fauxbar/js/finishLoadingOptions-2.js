@@ -209,10 +209,10 @@ $("#option_inputboxdisplayorder").live("change", function() {
 $("#option_font").live("change", function(){
 	var newFont = $(this).val().trim();
 	if (newFont) {
-		$("#customstyle").append('#thefauxbar *, #options .resultpreview *, #menubar { font-family:'+newFont+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; }');
+		$("#customstyle").append('#thefauxbar *, #options .resultpreview *, #menubar, #results *, #opensearch_results, #opensearch_results *, #contextMenu * { font-family:'+newFont+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; }');
 	} else {
 		var lucida = window.OS == "Mac" ? "Lucida Grande, " : "";
-		$("#customstyle").append('#thefauxbar *, #options .resultpreview *, #menubar { font-family:'+lucida+' Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; }');
+		$("#customstyle").append('#thefauxbar *, #options .resultpreview *, #menubar, #results *, #opensearch_results, #opensearch_results *, #contextMenu * { font-family:'+lucida+' Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; }');
 	}
 });
 
