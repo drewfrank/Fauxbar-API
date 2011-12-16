@@ -471,7 +471,7 @@ function submitOpenSearch(query) {
 }
 
 // Listen to either the background page, or the Memory Helper...
-chrome.extension.onRequest.addListener(function (request, sender) {
+chrome.extension.onRequest.addListener(function (request) {
 
 	// If Fauxbar has finished indexing history and bookmarks, reload the Fauxbar page to get rid of the progress div
 	if (request == "DONE INDEXING") {
@@ -514,6 +514,16 @@ chrome.extension.onRequest.addListener(function (request, sender) {
 		if (request.step) {
 			window.newProgress = (request.step-1) * 100;
 			window.curProgress = $("progress").attr("value");
+			if (!increaseProgress) {
+				function increaseProgress() {
+					$("button").last().html("Please Wait...");
+					if (window.curProgress < window.newProgress) {
+						window.curProgress++;
+						$("progress").attr("value",window.curProgress);
+						setTimeout(increaseProgress, 1);
+					}
+				}
+			}
 			increaseProgress();
 		}
 	}
@@ -544,7 +554,9 @@ chrome.extension.onRequest.addListener(function (request, sender) {
 });
 
 function enterTileEditMode() {
-	jQuery.getScript("/js/tilemode.js");
+	var newScript = document.createElement("script");
+	newScript.setAttribute('src', '/js/tilemode.js');
+	document.getElementById('head').appendChild(newScript);
 }
 
 $("body").live("mousedown", function(e){
@@ -1818,6 +1830,22 @@ $("#awesomeinput").live("blur", function(){
 // If we're reindexing the database, display the progress box
 if (localStorage.indexComplete != 1) {
 	$.get("/html/indexinginfo.html", function(response){
+		
+		if (localStorage.extensionName == "Fauxbar Lite") {
+			window.document.title = "Fauxbar Lite";
+			$(".fauxbar").html('Fauxbar Lite');
+		}
+
+		// Focus the button for usability reasons
+		setTimeout(function(){
+			$("button").focus();
+		}, 50);
+		if (window.OS == "Mac") {
+			$("button").css("font-family", "Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif");
+		}
+
+		window.curProgress = 0;
+		
 		$("#maindiv").after(response);
 		$("#addresswrapper").css("cursor","wait");
 		$("#apps").remove();
@@ -2250,7 +2278,9 @@ if (localStorage.option_iconcolor && localStorage.option_iconcolor.length) {
 // And I decided to show the Options page inline with the normal Fauxbar page, because a lot of the options alter the Fauxbar on the fly, so wanted to have both visible at once,
 // rather than making a whole new options page by itself.
 if (getHashVar("options") == 1 && localStorage.indexComplete == 1) {
-	jQuery.getScript("/js/options.js");
+	var newScript = document.createElement("script");
+	newScript.setAttribute("src", "/js/options.js");
+	document.getElementById('head').appendChild(newScript);
 }
 
 //////// END OPTIONS ////////
@@ -2267,7 +2297,7 @@ function changeOptionPage(el) {
 		window.clickedSupportMenu = true;
 
 		// Twitter follow button
-		$("head").append('<script src="http://platform.twitter.com/widgets.js" type="text/javascript"></script>');
+		$("head").append('<script src="https://platform.twitter.com/widgets.js" type="text/javascript"></script>');
 
 		// Facebook Like button
 		$("#likeBox").html('<iframe src="http://www.facebook.com/plugins/like.php?app_id=112814858817841&amp;href=http%3A%2F%2Fwww.facebook.com%2Fpages%2FFauxbar%2F147907341953576&amp;send=false&amp;layout=standard&amp;width=450&amp;show_faces=false&amp;action=like&amp;colorscheme=light&amp;font=arial&amp;height=35" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:450px; height:35px;" allowTransparency="true"></iframe>');
@@ -2574,10 +2604,10 @@ function getResults(noQuery) {
 						var newHref = '';
 
 						if (window.tileEditMode) {
-							var resultOnClick = 'addTile(this); return false';
+							var resultOnClick = 'addTileThis';
 							var addTileText = 'Add tile: ';
 						} else {
-							var resultOnClick = 'return window.clickResult(this)';
+							var resultOnClick = 'clickResultThis';
 							var addTileText = '';
 						}
 
@@ -2768,7 +2798,7 @@ function getResults(noQuery) {
 											newHref = hI.url;
 										}
 
-										resultHtml += '<a class="result '+arrowedClass+'" url="'+hI.url+'" href="'+newHref+'" origtitle="'+str_replace('"','&quot;',hI.title)+'" number="'+(currentRows+1)+'" onclick="'+resultOnClick+'" bmid="'+hI.id+'" keyword="'+hI.tag+'">';
+										resultHtml += '<a class="result '+arrowedClass+'" url="'+hI.url+'" href="'+newHref+'" origtitle="'+str_replace('"','&quot;',hI.title)+'" number="'+(currentRows+1)+'" '+resultOnClick+' bmid="'+hI.id+'" keyword="'+hI.tag+'">';
 										if (hI.isBookmark) {
 											resultHtml += '<img class="favstar" style="position:absolute;" />';
 										}
@@ -2953,6 +2983,16 @@ function getResults(noQuery) {
 		hideResults();
 	}
 }
+
+// resultOnClick
+$('[addTileThis]').live('click', function(){
+	addTile(this);
+	return false;
+});
+$('[clickResultThis]').live('click', function(){
+	return window.clickResult(this);
+});
+
 
 // Hide the Address Box's currently displayed results.
 function hideResults() {

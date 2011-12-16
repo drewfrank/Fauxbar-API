@@ -4,12 +4,7 @@
 <script type="text/javascript" src="/js/common.js"></script>
 <script type="text/javascript" src="/js/common-1.js"></script>
 <script type="text/javascript" src="/js/logerror.js"></script>
-<script type="text/javascript">
-var url = window.location.hash.substr(1);
-chrome.tabs.getCurrent(function(tab){
-	chrome.tabs.update(tab.id, {url:url});
-});
-</script>
+<script type="text/javascript" src="/js/loadFile.js"></script>
 </head>
 <body></body>
 </html>

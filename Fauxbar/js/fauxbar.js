@@ -14,8 +14,9 @@ if (localStorage.option_iconcolor.toLowerCase() != "#3374ab" || localStorage.opt
 		$("#fauxstar").addClass("filter-tint");
 	}
 	delete processFilters;
-	jQuery.getScript("/js/mezzoblue-PaintbrushJS-098389a/common.js");
-	jQuery.getScript("/js/mezzoblue-PaintbrushJS-098389a/paintbrush.js");
+	var newScript = document.createElement("script");
+	newScript.setAttribute('src', '/js/mezzoblue-PaintbrushJS-098389a/paintbrush.js');
+	document.getElementById('head').appendChild(newScript);
 	processFilters();
 }
 // If user has default colors set, load darkened icons
@@ -57,12 +58,12 @@ function renderPageTile(url, title, startHidden) {
 		var newHref = url;
 	}
 
-	var onClick = !window.tileEditMode && localStorage.option_pagetilearrangement == "frecency" ? 'onclick="return addTypedVisitId($(this).attr(\'href\'));"' : '';
+	var onClick = !window.tileEditMode && localStorage.option_pagetilearrangement == "frecency" ? 'tileAddTypedVisit' : '';
 
 	thumbs += '<a class="sitetile" href="'+newHref+'" style="opacity:0" url="'+url+'" origtitle="'+title+'" '+onClick+'>';
 
 	if (startHidden == true) {
-		thumbs += '<span class="tileCross" title="Remove tile" onclick="removeTile(this); return false"><img src="/img/cross.png" /></span>';
+		thumbs += '<span class="tileCross" title="Remove tile"><img src="/img/cross.png" /></span>';
 	}
 
 	var height = window.tileEditMode && $("div.thumb").length ? ' style="height:'+$("div.thumb").first().innerHeight()+'px"' : '';
@@ -75,6 +76,9 @@ function renderPageTile(url, title, startHidden) {
 	thumbs += '</a>';
 	return thumbs;
 }
+$('.sitetile[tileAddTypedVisit]').live('click', function(){
+	return addTypedVisitId($(this).attr('href'));
+});
 
 
 

@@ -1,5 +1,23 @@
-
 // Fauxbar error handling
+
+if (!strstr) {
+	// http://phpjs.org/functions/strstr:551
+	function strstr (haystack, needle, bool) {
+		var pos = 0;
+
+		haystack += '';
+		pos = haystack.indexOf(needle);
+		if (pos == -1) {
+			return false;
+		} else {
+			if (bool) {
+				return haystack.substr(0, pos);
+			} else {
+				return haystack.slice(pos);
+			}
+		}
+	}
+}
 
 function date (format, timestamp) {
     var that = this,
@@ -262,7 +280,7 @@ function logError(msg, file, line) {
 			}
 		} else {
 			console.log('Unable to open Fauxbar\'s database.');
-			alert("Unable to open Fauxbar's database.\n\nPlease try disabling and re-enabling Fauxbar to resolve this.\n\nAdditionally, Fauxbar's error log and/or background console may contain useful information to report.");
+			webkitNotifications.createNotification('/img/fauxbar48sad.png', 'Unable to open Fauxbar\'s database.', 'Please try disabling and re-enabling Fauxbar to resolve this.\n\nAdditionally, Fauxbar\'s error log and/or background console may contain useful information to report.').show();
 		}
 	}
 }

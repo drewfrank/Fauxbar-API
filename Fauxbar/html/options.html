@@ -34,7 +34,7 @@
 
 			<!-- Tile options -->
 			<div id="tilesoptions" class="optionbox">
-				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<img src="/img/cross.png" class="closeoptions" title="Close" />
 				<h1>
 					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Tile Options
@@ -102,7 +102,7 @@
 									</label>
 								</div>
 								<div id="siteTileEditInfo" style="margin-top:6px" style="display:none;">
-									<button onclick="editSiteTiles()" style="font-size:12px">Edit Tiles...</button>
+									<button editSiteTiles style="font-size:12px">Edit Tiles...</button>
 									<div class="optionstip" style="margin-top:0px">
 										Site tiles can also be edited by right-clicking <span class="extensionName" style="font-size:12px">Fauxbar</span>'s background (when the Options aren't open).
 									</div>
@@ -135,7 +135,7 @@
 
 			<!-- Address Box options -->
 			<div id="addressoptions" class="optionbox">
-				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<img src="/img/cross.png" class="closeoptions" title="Close" />
 				<h1>
 					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Address Box Options
@@ -157,10 +157,10 @@
 								</select>
 							</label>
 							<label class="legend">
-								Retrieve up to <input name="option_maxaddressboxresults" id="option_maxaddressboxresults" class="upto inputoption" type="number" min="0" max="100" step="1" value="" maxlength="3" size="4" style="text-align:center; padding:0" /> results at a time
+								Retrieve up to <input title="Default: 16" name="option_maxaddressboxresults" id="option_maxaddressboxresults" class="upto inputoption" type="number" min="0" max="100" step="1" value="" maxlength="3" size="4" style="text-align:center; padding:0" /> results at a time
 							</label>
 							<label class="legend">
-								Display up to <input name="option_maxaddressboxresultsshown" id="option_maxaddressboxresultsshown" class="upto inputoption" type="number" min="0" max="100" step="1" value="" maxlength="3" size="4" style="text-align:center; padding:0" /> retrieved results without needing to scroll
+								Display up to <input title="Default: 8" name="option_maxaddressboxresultsshown" id="option_maxaddressboxresultsshown" class="upto inputoption" type="number" min="0" max="100" step="1" value="" maxlength="3" size="4" style="text-align:center; padding:0" /> retrieved results without needing to scroll
 							</label>
 							<label class="legend">
 								<input name="option_showmatchinghistoryitems" id="option_showmatchinghistoryitems" type="checkbox" /> Show matching results from my browsing history
@@ -245,15 +245,15 @@ Then, if you type the same query in the future, Fauxbar will ask Chrome to start
 								<input name="option_fallbacksearchurl" id="option_fallbacksearchurl" class="http" type="text" spellcheck="false" style="width:95%" />
 							</label>
 							Change to:
-							<button class="fallback google" url="http://www.google.com/search?btnI=&q={searchTerms}" style="font-size:12px; padding:2px 4px 2px 3px;" onclick="$('#option_fallbacksearchurl').val('http://www.google.com/search?btnI=&q={searchTerms}').change()">
+							<button class="fallback google" url="http://www.google.com/search?btnI=&q={searchTerms}" style="font-size:12px; padding:2px 4px 2px 3px;">
 								<img src="/img/google.ico" style="vertical-align:middle; margin-top:-3px;" />
 								Google.com
 							</button>
-							<button class="fallback yahoo" url="http://search.yahoo.com/search?p={searchTerms}" style="font-size:12px; padding:2px 4px 2px 3px;" onclick="$('#option_fallbacksearchurl').val('http://search.yahoo.com/search?p={searchTerms}').change()">
+							<button class="fallback yahoo" url="http://search.yahoo.com/search?p={searchTerms}" style="font-size:12px; padding:2px 4px 2px 3px;">
 								<img src="/img/yahoo.ico" style="vertical-align:middle; margin-top:-3px;" />
 								Yahoo.com
 							</button>
-							<button class="fallback bing" url="http://www.bing.com/search?q={searchTerms}" style="font-size:12px; padding:2px 4px 2px 3px;" onclick="$('#option_fallbacksearchurl').val('http://www.bing.com/search?q={searchTerms}').change()">
+							<button class="fallback bing" url="http://www.bing.com/search?q={searchTerms}" style="font-size:12px; padding:2px 4px 2px 3px;">
 								<img src="/img/bing.ico" style="vertical-align:middle; margin-top:-3px;" />
 								Bing.com
 							</button>
@@ -317,7 +317,7 @@ But if you don't normally visit local intranet sites that use custom domain name
 
 			<!-- Search Box options -->
 			<div id="searchoptions" class="optionbox">
-				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<img src="/img/cross.png" class="closeoptions" title="Close" />
 				<h1>
 					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Search Engine Options
@@ -333,7 +333,7 @@ But if you don't normally visit local intranet sites that use custom domain name
 							<div class="optionstip" style="line-height:150%; margin-top:-3px; margin-bottom:10px">
 								<span class="extensionName" style="font-size:12px">Fauxbar</span>'s search engines are separate from Chrome's search engines.<br />
 								Keywords let you access search engines from both the Address Box and Search Box.<br />
-								Drag an icon to rearrange the display order, or <a onclick="javascript:sortSearchEnginesAlphabetically()" style="text-decoration:underline; cursor:pointer">sort alphabetically</a>.
+								Drag an icon to rearrange the display order, or <a sortSearchEnginesAlphabetically style="text-decoration:underline; cursor:pointer">sort alphabetically</a>.
 							</div>
 							<div id="opensearchengines" style="margin-top:-3px">You haven't added any search engines to Fauxbar yet.</div>
 							<div id="restorebig3" style="margin-top:10px">
@@ -365,7 +365,7 @@ But if you don't normally visit local intranet sites that use custom domain name
 								When you visit a webpage that has a search field, right-click the field.
 								If <span class="extensionName" style="font-size:12px">Fauxbar</span> is able to interpret the field's code,&nbsp;<b style="white-space:nowrap"><span class="extensionName" style="font-size:12px">Fauxbar</span>: Add as search engine</b> will appear on the context menu.
 							</div>
-							Or: <button style="font-size:12px;font-family:inherit" onclick="addEngineManually()">Add Manually...</button>
+							Or: <button addManually style="font-size:12px;font-family:inherit">Add Manually...</button>
 						</td>
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
@@ -413,7 +413,7 @@ But if you don't normally visit local intranet sites that use custom domain name
 
 			<!-- Results & Suggestions options -->
 			<div id="resultoptions" class="optionbox">
-				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<img src="/img/cross.png" class="closeoptions" title="Close" />
 				<h1>
 					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Color &amp; Styling Options
@@ -428,13 +428,13 @@ But if you don't normally visit local intranet sites that use custom domain name
 								Apply a preset color scheme:
 
 								<span style="white-space:nowrap; display:inline-block">
-									<button style="font-size:12px; padding:2px 4px 2px 3px;" onclick="applyColors('chrome')">
+									<button style="font-size:12px; padding:2px 4px 2px 3px;" applyColorsChrome>
 										<img src="/img/chrome.png" style="vertical-align:middle; margin-top:-3px; height:16px; width:16px;" />
 										"Chrome"
-									</button>&nbsp;<button style="font-size:12px; padding:2px 4px 2px 3px;" onclick="applyColors('firefox')">
+									</button>&nbsp;<button style="font-size:12px; padding:2px 4px 2px 3px;" applyColorsFirefox>
 										<img src="/img/firefox.png" style="vertical-align:middle; margin-top:-3px; height:16px; width:16px;" />
 										"Firefox"
-									</button>&nbsp;<button style="font-size:12px; padding:2px 4px 2px 3px;" onclick="applyColors('fauxbar')">
+									</button>&nbsp;<button style="font-size:12px; padding:2px 4px 2px 3px;" applyColorsFauxbar>
 										<img src="/img/fauxbar16.png" style="vertical-align:middle; margin-top:-3px; height:16px; width:16px;" />
 										"Fauxbar"
 									</button>
@@ -510,7 +510,7 @@ But if you don't normally visit local intranet sites that use custom domain name
 					<tr>
 						<th>Result Preview</th>
 						<td>
-							<div id="resultpreview" class="resultpreview" onmouseover="$(this).addClass('arrowed');" onmouseout="$(this).removeClass('arrowed');" style="box-shadow:3px 3px 3px rgba(0,0,0,.3); border:1px solid #666; width:75%;">
+							<div id="resultpreview" class="resultpreview" style="box-shadow:3px 3px 3px rgba(0,0,0,.3); border:1px solid #666; width:75%;">
 								<img class="favstar" />
 								<div class="result_title"><img class="result_favicon" src="chrome://favicon/null" />Example Title</div><br />
 								<div class="result_url">http://example.url.com/</div>
@@ -580,7 +580,7 @@ But if you don't normally visit local intranet sites that use custom domain name
 
 			<!-- Page Background options -->
 			<div id="backgroundoptions" class="optionbox">
-				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<img src="/img/cross.png" class="closeoptions" title="Close" />
 				<h1>
 					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Page Background Options
@@ -602,7 +602,7 @@ But if you don't normally visit local intranet sites that use custom domain name
 						<td>
 							<label class="legend" style="width:100%; margin-top:1px">
 								<input placeholder="http://" name="option_bgimg" id="option_bgimg" class="http" type="text" value="http://" style="width:80%" spellcheck="false" autocomplete="on" />
-								<button style="font-size:12px" onclick="$('#option_bgimg').val('').change(); return false">Clear</button>
+								<button clearBackgroundImage style="font-size:12px">Clear</button>
 							</label>
 							<label class="legend">
 								Enter an image URL above, or:
@@ -666,7 +666,7 @@ But if you don't normally visit local intranet sites that use custom domain name
 
 			<!-- General options -->
 			<div id="generaloptions" class="optionbox">
-				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<img src="/img/cross.png" class="closeoptions" title="Close" />
 				<h1>
 					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					General Options
@@ -722,16 +722,16 @@ But if you don't normally visit local intranet sites that use custom domain name
 									<option value="searchonly">Search Box only</option>
 								</select>
 							</label>
-							<label class="legend">
+							<label class="legend" style="display:inline-block">
 								<!--
 									Although most checkbox options can be applied instantly without needing to reload the page, Chrome/WebKit's HTML5 speech input icons don't seem to be able to be changed on the fly.
 									So the page has to actually be reloaded for the user to see the page, so display a link to get the user to click to reload the page so they can see the change.
 								-->
-								<input name="option_speech" id="option_speech" type="checkbox" onchange="$('#speechtip').css('display','inline-block')" /> Show speech input icons
-								<span id="speechtip" style="display:none">
-									&ndash; <a onclick="javascript:window.location.reload(); return false" style="text-decoration:underline; cursor:pointer; color:#06c">Reload this page</a> to apply
-								</span>
+								<input name="option_speech" id="option_speech" type="checkbox" /> Show speech input icons
 							</label>
+							<span id="speechtip" style="display:none">
+								&ndash; <a reloadThisPage style="text-decoration:underline; cursor:pointer; color:#06c">Reload this page</a> to apply
+							</span>
 						</td>
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
@@ -761,7 +761,7 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 								To use <span class="extensionName" style="font-size:12px">Fauxbar</span> from Chrome's Omnibox, focus the Omnibox and press <b>F</b>+<b>Spacebar</b>
 							</div>
 							<div class="optionstip">
-								Certain <span style="text-decoration:underline; cursor:pointer; font-size:12px" class="fakelink" onmouseup='$("#option_menu div").removeClass("section_selected"); $("#option_section_addressbox").addClass("section_selected"); $("div.optionbox").css("display","none"); $("#addressoptions").css("display","block"); localStorage.option_optionpage = "option_section_addressbox";'>Address Box options</span>
+								Certain <span style="text-decoration:underline; cursor:pointer; font-size:12px" class="fakelink" addressBoxOptions>Address Box options</span>
 								also apply to <span class="extensionName" style="font-size:12px">Fauxbar</span>'s Omnibox results.
 							</div>
 						</td>
@@ -771,12 +771,12 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 
 			<!-- Management options -->
 			<div id="managementoptions" class="optionbox">
-				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<img src="/img/cross.png" class="closeoptions" title="Close" />
 				<h1>
 					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px;" />
 					Management
 				</h1>
-				<span class="extensionName">Fauxbar</span> version 1.2.4 &nbsp;<span style="opacity:.5">(12 Dec 2011)</span>
+				<span class="extensionName">Fauxbar</span> version 1.2.5 &nbsp;<span style="opacity:.5">(16 Dec 2011)</span>
 				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
@@ -794,10 +794,10 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 								&nbsp;&bull; <span id="stats_inputurls">?</span> pre-renderable <span id="inputurlsplural">URLs</span>
 							</label>
 							<br />
-							<button onclick="confirm('Reindex '+(localStorage.extensionName?localStorage.extensionName:'Fauxbar')+'\'s history items and bookmarks?\n\nIf '+(localStorage.extensionName?localStorage.extensionName:'Fauxbar')+'\'s Address Box results seem stale, or if you\'ve just altered the frecency options, click OK - reindexing will ensure '+(localStorage.extensionName?localStorage.extensionName:'Fauxbar')+'\'s database is up to date.\n\nOtherwise, click Cancel - reindexing probably won\'t accomplish much.\n') ? tellBgToReindex() : ''" style="font-size:95%">Reindex...</button>
-							<button id="button_clearsearchhistory" style="font-size:95%; position:relative;" onclick="confirm('Clear '+(localStorage.extensionName?localStorage.extensionName:'Fauxbar')+'\'s Search Box queries?') ? clearSearchHistory() : null">Clear Search Queries...</button>
-							<button id="button_clearinputurls" style="font-size:95%; position:relative;" onclick="confirm('Clear '+(localStorage.extensionName?localStorage.extensionName:'Fauxbar')+'\'s list of pre-renderable URLs?') ? clearUsageHabits() : null">Clear Usage Habits...</button>
-							<button id="button_rebuild" style="font-size:95%; position:relative;" onclick="confirm('Rebuild '+(localStorage.extensionName?localStorage.extensionName:'Fauxbar')+'\'s database?\n\nThis should only be used if '+(localStorage.extensionName?localStorage.extensionName:'Fauxbar')+' feels like it\'s become completely broken.') ? rebuildDatabase() : null">Rebuild...</button>
+							<button reindex style="font-size:95%">Reindex...</button>
+							<button id="button_clearsearchhistory" style="font-size:95%; position:relative;">Clear Search Queries...</button>
+							<button id="button_clearinputurls" style="font-size:95%; position:relative;">Clear Usage Habits...</button>
+							<button id="button_rebuild" style="font-size:95%; position:relative;">Rebuild...</button>
 						</td>
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
@@ -805,18 +805,18 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 						<th>Options</th>
 						<td>
 							<div class="legend" style="margin-top:-4px">
-								<button style="font-size:12px;" onclick="showBackupInfo()">
+								<button showBackupInfo style="font-size:12px;">
 									Export...
 								</button>
-								<button style="font-size:12px;" onclick="showRestoreInfo()">
+								<button showRestoreInfo style="font-size:12px;">
 									Import...
 								</button>
-								<button style="font-size:12px;" onclick="$('#restoreinfo').css('display','none'); $('#backupinfo').css('display','none'); confirm('Reset '+(localStorage.extensionName?localStorage.extensionName:'Fauxbar')+'\'s options back to their default values?\n\nYour history items, bookmarks, search engines, search queries and keywords will remain intact.\n') ? resetOptions() + window.location.reload() : null">
+								<button resetButton style="font-size:12px;">
 									Reset...
 								</button>
 							</div>
 							<div style="clear:both"></div>
-							<div class="legend" id="backupinfo" style="display:none" onclick="$('#backup').select()">
+							<div class="legend" id="backupinfo" style="display:none">
 								<div style="line-height:180%">
 									To export your <span class="extensionName">Fauxbar</span> options:<br />
 									1. Copy all the text in the box below to your clipboard.<br />
@@ -834,7 +834,7 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 									1. Open the document containing the exported options text.<br />
 									2. Select all the text, then copy it to your clipboard.<br />
 									3. Paste the text into the box below.<br />
-									4. Click <button id="applyrestore" style="font-size:12px" onclick="restoreOptions()">Apply</button>
+									4. Click <button id="applyrestore" style="font-size:12px">Apply</button>
 								</div>
 								<textarea id="restore" style="font-size:12px; width:90%; height:200px; margin-top:10px"></textarea>
 								<div class="optionstip" style="margin-top:6px">
@@ -881,7 +881,7 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 			
 			<!-- Menu Bar options -->
 			<div id="menubaroptions" class="optionbox">
-				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<img src="/img/cross.png" class="closeoptions" title="Close" />
 				<h1>
 					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Menu Bar Options
@@ -1111,7 +1111,7 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 			
 			<!-- Frecency Scoring options -->
 			<div id="frecencyoptions" class="optionbox">
-				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<img src="/img/cross.png" class="closeoptions" title="Close" />
 				<h1>
 					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Frecency Scoring Options
@@ -1253,7 +1253,7 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 
 			<!-- Support links -->
 			<div id="supportoptions" class="optionbox">
-				<img src="/img/cross.png" class="closeoptions" title="Close" onclick="closeOptions()" />
+				<img src="/img/cross.png" class="closeoptions" title="Close" />
 				<h1>
 					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Support
@@ -1363,19 +1363,3 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 		</td>
 	</tr>
 </table>
-
-<!-- Initialize the color pickers and input box validators -->
-<script type="text/javascript" src="/js/jscolor/jscolor.js"></script>
-<script type="text/javascript" src="/js/jquery.maskedinput-1.3.min.js"></script>
-<script type="text/javascript">
-	setTimeout(jscolor.init, 1);
-
-	// Update Fauxbar / Fauxbar Lite name texts
-	$(document).ready(function(){
-		if (localStorage.extensionName && localStorage.extensionName.length) {
-			$(".extensionName").html(localStorage.extensionName);
-			$('select#option_openfauxbarfocus option[value="addressbox"]').text(localStorage.extensionName+"'s Address Box");
-			$('select#option_openfauxbarfocus option[value="searchbox"]').text(localStorage.extensionName+"'s Search Box");
-		}
-	});
-</script>

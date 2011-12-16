@@ -1,22 +1,7 @@
 <html>
 	<head>
 		<script src="/js/jquery-1.7.min.js"></script>
-		<script>
-			$(document).ready(function(){
-				$('.fauxbar').html(localStorage.extensionName);
-				$('style').append('* { font-family:'+localStorage.option_font+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; }');
-				
-				if (navigator.appVersion.indexOf("Mac")!=-1) { // OS is Mac
-					$('*:not(h1)').css('font-size','11px');
-					$('h1, h1 *').css('font-size','12px');
-				}
-			});
-			function closeWindow() {
-				setTimeout(function(){
-					window.close();
-				}, 1);
-			}
-		</script>
+		<script src="/js/notification.js"></script>
 		<style type="text/css">
 			* { font-size:12px; color:#000; background-color:#fff; }
 			h1, h1 * { padding:0; margin:0; font-size:13px; }
@@ -33,7 +18,7 @@
 				<td style="vertical-align:top;">
 					<h1><span class="fauxbar">Fauxbar</span> is having trouble displaying site&nbsp;thumbnails.</h1>
 					<div>For instructions on how to fix this,
-					<a href="http://code.google.com/p/fauxbar/wiki/Help#Trouble_displaying_site_thumbnails" target="_new" style="cursor:pointer; color:#06c" onclick="closeWindow(); return true;">click&nbsp;here</a>.
+					<a href="http://code.google.com/p/fauxbar/wiki/Help#Trouble_displaying_site_thumbnails" target="_new" style="cursor:pointer; color:#06c">click&nbsp;here</a>.
 				</td>
 			</tr>
 		</table>

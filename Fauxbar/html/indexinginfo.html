@@ -1,5 +1,4 @@
 <!-- This is the "Welcome to Fauxbar" / "Fauxbar is Reindexing" box that comes up when the database needs to be rebuilt -->
-
 <div id="indexinginfo">
 	<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; margin-top:-7px; margin-left:-1px; padding-right:3px" />
 	<b style="font-size:16px">Welcome to <span class="fauxbar">Fauxbar</span></b><br />
@@ -12,38 +11,8 @@
 	<span id="currentstatus">Click <b>Start Indexing</b> to begin.</span><Br />
 	<progress value="0" max="700"></progress>
 	<div style="text-align:right; margin-top:7px">
-		<button style="font-size:12px; font-family:Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; position:relative; z-index:999; margin-right:-1px" onclick="chrome.extension.sendRequest({action:'reindex'}); $(this).prop('disabled',true).html('Please Wait...')">
+		<button startIndexing style="font-size:12px; font-family:Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif; position:relative; z-index:999; margin-right:-1px">
 			Start Indexing
 		</button>
 	</div>
-
-	<script type="text/javascript">
-
-		$(document).ready(function(){
-			if (localStorage.extensionName == "Fauxbar Lite") {
-				window.document.title = "Fauxbar Lite";
-				$(".fauxbar").html('Fauxbar Lite');
-			}
-
-			// Focus the button for usability reasons
-			setTimeout(function(){
-				$("button").focus();
-			}, 50);
-			if (window.OS == "Mac") {
-				$("button").css("font-family", "Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif");
-			}
-		});
-
-		window.curProgress = 0;
-
-		// Progress the progress bar
-		function increaseProgress() {
-			$("button").last().html("Please Wait...");
-			if (window.curProgress < window.newProgress) {
-				window.curProgress++;
-				$("progress").attr("value",window.curProgress);
-				setTimeout(increaseProgress, 1);
-			}
-		}
-	</script>
 </div>

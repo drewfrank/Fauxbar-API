@@ -152,7 +152,6 @@ $("#addresswrapper").parent().css("display","table-cell");
 $("#searchwrapper").parent().css("display","none");
 $(".wrapper").css("max-width",maxWidth+"px");
 $("#editmodeContainer").remove();
-console.log($('#menubar').css('display'));
 $("#maindiv").before('<div id="editmodeContainer" style="opacity:0; box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="/img/fauxbar48.png" style="margin-top:'+
 						($('#menubar').css('display') == 'none' ? '1' : $('#menubar').outerHeight()+1)+'px" /> <b>Tile editing enabled.</b> Add sites as tiles using the modified Address Box below. Drag tiles to rearrange. Right-click to rename.&nbsp;'
 						+' <div style="display:inline; white-space:nowrap">Maximum tiles per row: <select style="position:relative; z-index:999; font-family:inherit; margin-bottom:-2px">'
@@ -165,13 +164,17 @@ $('option[value="'+localStorage.option_topsitecols+'"]').prop("selected",true);
 $("select").bind("change", function(){
 	setMaxTilesPerRow($(this).val());
 });
-$("#editmodeContainer").prepend('<div id="editModeButtons"><button onclick="saveSiteTiles()" style="font-family:'+localStorage.option_font+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">Save</button>&nbsp;<button onclick="cancelTiles()" style="font-family:'+localStorage.option_font+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">Cancel</button></div>');
+$("#editmodeContainer").prepend('<div id="editModeButtons"><button saveSiteTiles style="font-family:'+localStorage.option_font+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">Save</button>&nbsp;' +
+	'<button cancelTiles style="font-family:'+localStorage.option_font+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">Cancel</button></div>');
 $("#editmodeContainer").animate({opacity:1}, 325);
 chrome.tabs.getCurrent(function(tab){
 	chrome.tabs.update(tab.id, {selected:true}, function(){
 		$("#awesomeinput").focus();
 	});
 });
+
+$('button[saveSiteTiles]').live('click', saveSiteTiles);
+$('button[cancelTiles]').live('click', cancelTiles);
 
 $("#sapps").remove();
 $("#apps").remove();
@@ -268,3 +271,8 @@ function removeTile(el) {
         return c;
  }
 })(jQuery);
+
+$('.tileCross').live('click', function(){
+	removeTile(this);
+	return false;
+});

@@ -412,7 +412,7 @@ $('a[reloadAllTabs]').live('mousedown', function(){
 	clearingMenus = true;
 	clearMenus();
 	$('menu[tabs] a[switchToTab]').each(function(){
-		chrome.tabs.executeScript(parseInt($(this).attr('tabId')), {code:'window.location.reload();'});
+		chrome.tabs.reload(parseInt($(this).attr('tabId')));
 	});
 	setTimeout(function(){
 		clearingMenus = false;
