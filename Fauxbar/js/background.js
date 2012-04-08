@@ -276,10 +276,10 @@ function captureScreenshot(sender) {
 								// Take a screenshot and save the image
 								chrome.tabs.captureVisibleTab(null, {format:"png"}, function(dataUrl){
 									if (dataUrl != "") {
-										var myCanvas = document.createElement("canvas");
-										var context = myCanvas.getContext('2d');
 										var img = new Image;
 										img.onload = function(){
+											var myCanvas = document.createElement("canvas");
+											var context = myCanvas.getContext('2d');
 											var width = 430; // Double width than the actual displayed tile size, so that it gets shrunk and looks nice.
 											var height = Math.round(img.height * width / img.width);
 											myCanvas.width = width;
@@ -881,7 +881,7 @@ $(document).ready(function(){
 	});
 
 	// New version info
-	var currentVersion = "1.2.5";
+	var currentVersion = "1.2.8";
 	if (
 		(!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) ||
 		(localStorage.currentVersion && localStorage.currentVersion != currentVersion) ||

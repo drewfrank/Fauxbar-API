@@ -3,6 +3,6 @@ $(document).ready(function(){
 	setTimeout(function(){
 		var newScript = document.createElement("script");
 		newScript.setAttribute("src", "/js/background.js");
-		document.getElementById('head').appendChild(newScript);
+		document.head.appendChild(newScript);
 	}, 500);
 });

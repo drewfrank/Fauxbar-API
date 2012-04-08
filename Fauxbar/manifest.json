@@ -1,22 +1,36 @@
 {
-	//// Comments in this file must be prefixed with "////"
+	//// Comments in this file must be prefixed with "////" and must be removed when packaging for Chrome Web Store
+
+	//// Remember to update:
+	//// 	background.js:	var currentVersion = "1.x.x";
+	//// 	options.html:	version 1.x.x and date
 
 	//// When packaging Fauxbar Lite, change:
-	//// 1. Manifest name
-	//// 2. Manifest description
-	//// 3. Manifest new tab override
-	//// 4. Manifest browser action title
-	//// 5. fauxbar.html title
-	//// 6. fauxbar.html menubar item
+	//// 	1. Manifest name
+	//// 	2. Manifest description
+	//// 	3. Manifest new tab override
+	//// 	4. Manifest browser action title
+	//// 	5. fauxbar.html title
+	//// 	6. fauxbar.html menubar item
+	
 
 	"name": "Fauxbar", //// Rename for Fauxbar Lite
 
-	"version": "1.2.5",
+	"version": "1.2.8",
 	"description": "An alternative to Chrome's Omnibox. Replaces the New Tab page.", //// Remove last sentence for Fauxbar Lite
 
-	"minimum_chrome_version": "16",
+	"minimum_chrome_version": "18",
 
-	"background_page": "html/fauxbar.background.html",
+	"background": {
+		"scripts": [
+			"/js/jquery-1.7.min.js",
+			"/js/common.js",
+			"/js/common-1.js",
+			"/js/logerror.js",
+			"/js/md5-min.js",
+			"/js/loadBackground.js"
+		]
+	},
 
 	"options_page": "html/launchoptions.html",
 
