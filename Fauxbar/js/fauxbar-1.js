@@ -779,12 +779,14 @@ function showContextMenu(e) {
 	html += '</div>';
 	$("body").append(html);
 
+	// Position the context menu
+
 	if ($("#contextMenu").offset().left + $("#contextMenu").outerWidth() > window.innerWidth) {
-		$("#contextMenu").css("left",window.innerWidth - $("#contextMenu").outerWidth() + "px");
+		$("#contextMenu").css("left", window.innerWidth - $("#contextMenu").outerWidth() + "px");
 	}
 
-	if ($("#contextMenu").offset().top + $("#contextMenu").outerHeight() > window.innerHeight) {
-		$("#contextMenu").css("top",window.innerHeight - $("#contextMenu").outerHeight() + "px");
+	if ($("#contextMenu").offset().top + $("#contextMenu").outerHeight() - $(window).scrollTop() > window.innerHeight) {
+		$("#contextMenu").css("top", window.innerHeight - $("#contextMenu").outerHeight() + $(window).scrollTop() + "px");
 	}
 
 	$(".menuOption.fauxbar16").first().css("background-image","url(/img/fauxbar16.png)").css("background-repeat","no-repeat").css("background-position",window.OS == "Mac" ? "4px 1px" : "4px 2px");

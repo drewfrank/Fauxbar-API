@@ -8,30 +8,32 @@ function addTypedUrl(url) {
 }
 
 function processUpdatedTab(tabId, tab) {
-// Refresh results for "Switch to tab" texts
+
 	if (tab.status == "complete") {
+		
+		// Refresh results for "Switch to tab" texts
 		refreshResults();
-	}
+	
+		// If URL is a web page...
+		if (tab.url.substr(0,7) == 'http://' || tab.url.substr(0,8) == 'https://') {
 
-	// If URL is a web page...
-	if (tab.url.substr(0,7) == 'http://' || tab.url.substr(0,8) == 'https://') {
+			// If user has opted to enable Alt+D, Ctrl+L or Ctrl+L functionality, make it so
+			if ((localStorage.option_altd && localStorage.option_altd == 1) || (localStorage.option_ctrll && localStorage.option_ctrll == 1) || (localStorage.option_ctrlk && localStorage.option_ctrlk == 1)) {
+				if (localStorage.option_altd && localStorage.option_altd == 1) {
+					chrome.tabs.executeScript(tabId, {file:"/js/alt-d.js"});
+				}
+				if (localStorage.option_ctrll && localStorage.option_ctrll == 1) {
+					chrome.tabs.executeScript(tabId, {file:"/js/ctrl-l.js"});
+				}
+				if (localStorage.option_ctrlk && localStorage.option_ctrlk == 1) {
+					chrome.tabs.executeScript(tabId, {file:"/js/ctrl-k.js"});
+				}
+			}
 
-		// If user has opted to enable Alt+D, Ctrl+L or Ctrl+L functionality, make it so
-		if ((localStorage.option_altd && localStorage.option_altd == 1) || (localStorage.option_ctrll && localStorage.option_ctrll == 1) || (localStorage.option_ctrlk && localStorage.option_ctrlk == 1)) {
-			if (localStorage.option_altd && localStorage.option_altd == 1) {
-				chrome.tabs.executeScript(tabId, {file:"/js/alt-d.js"});
+			// Generate thumbnail if page is a top site
+			if (tab.selected) {
+				chrome.tabs.executeScript(tab.id, {file:"/js/getscrolltop.js"});
 			}
-			if (localStorage.option_ctrll && localStorage.option_ctrll == 1) {
-				chrome.tabs.executeScript(tabId, {file:"/js/ctrl-l.js"});
-			}
-			if (localStorage.option_ctrlk && localStorage.option_ctrlk == 1) {
-				chrome.tabs.executeScript(tabId, {file:"/js/ctrl-k.js"});
-			}
-		}
-
-		// Generate thumbnail if page is a top site
-		if (tab.selected && tab.status == "complete") {
-			chrome.tabs.executeScript(tab.id, {file:"/js/getscrolltop.js"});
 		}
 	}
 }
@@ -881,7 +883,7 @@ $(document).ready(function(){
 	});
 
 	// New version info
-	var currentVersion = "1.2.8";
+	var currentVersion = "1.2.9";
 	if (
 		(!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) ||
 		(localStorage.currentVersion && localStorage.currentVersion != currentVersion) ||

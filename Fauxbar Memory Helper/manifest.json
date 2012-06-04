@@ -1,11 +1,17 @@
 {
 	"name": "Fauxbar Memory Helper",
-	"version": "1.0.1",
-	"description": "Reloads Fauxbar (or Fauxbar Lite) when your computer becomes idle.",
+	"version": "1.0.2",
+	"description": "Reloads Fauxbar (or Fauxbar Lite) when your computer has been idle for 10 minutes, to minimize memory usage.",
 
-	"minimum_chrome_version": "14",
+	"manifest_version": 2,
 
-	"background_page": "helper.html",
+	"minimum_chrome_version": "19",
+
+	"background": {
+		"scripts": [
+			"helper.js"
+		]
+	},
 
 	"permissions": [
 		"management",

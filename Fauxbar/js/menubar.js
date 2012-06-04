@@ -87,13 +87,13 @@ function refreshChromeMenu() {
 			(localStorage.option_chromeMenu_showHistory == 1 ?
 				'<item style="background-image:url(chrome://favicon/chrome://history/)"><a href="chrome://history'+(chromeVersion<17&&localStorage.option_menuBar_useHistory2==1?'2':'')+'">History</a></item>' : '') +
 			(localStorage.option_chromeMenu_showOptions == 1 ?
-				'<item style="background-image:url(chrome://favicon/chrome://settings/)">' +
+				'<item style="background-image:url(chrome://theme/IDR_SETTINGS_FAVICON)">' +
 					'<items>' +
-						'<item><a href="chrome://settings/browser">Basics</a></item>' +
+						/*'<item><a href="chrome://settings/browser">Basics</a></item>' +
 						'<item><a href="chrome://settings/personal">Personal stuff</a></item>' +
 						'<item><a href="chrome://settings/advanced">Under the hood</a></item>' +
 						'<item><a href="chrome://settings/extensions">Extensions</a></item>' +
-						'<hr/>' +
+						'<hr/>' +*/
 						'<item><a href="chrome://settings/clearBrowserData">Clear browsing data...</a></item>' +
 						'<item><a href="chrome://settings/importData">Import bookmarks and settings...</a></item>' +
 						'<hr/>' +
@@ -113,7 +113,7 @@ function refreshChromeMenu() {
 						'<item><a href="chrome://settings/contentExceptions#popups">Pop-up exceptions</a></item>' +
 						'<item><a href="chrome://settings/handlers">Protocol handlers</a></item>' +*/
 					'</items>' +
-					'<a href="chrome://settings"><arrow>&#x25BC;</arrow>Options</a>' +
+					'<a href="chrome://settings"><arrow>&#x25BC;</arrow>Settings</a>' +
 				'</item>' : '') +
 			(localStorage.option_chromeMenu_showExperiments == 1 || localStorage.option_chromeMenu_showPlugins == 1 ? '<hr/>' : '') +
 			(localStorage.option_chromeMenu_showExperiments == 1 ? '<item style="background-image:url(chrome://favicon/chrome://flags)"><a href="chrome://flags">Experiments</a></item>' : '') +
@@ -223,7 +223,7 @@ function refreshAppAndExtensionMenus() {
 						'<items>' +
 							(e.appLaunchUrl && e.appLaunchUrl.length ? '<item><a href="'+e.appLaunchUrl+'">Launch app</a></item><hr/>' : '') +
 							(e.homepageUrl && e.homepageUrl.length ? '<item><a href="'+e.homepageUrl+'">Visit website</a></item><hr />' : '') +
-							(e.optionsUrl && e.optionsUrl.length && e.enabled ? '<item style="background-image:url(chrome://favicon/chrome://settings)"><a href="'+e.optionsUrl+'">Options</a></item>' : '') +
+							(e.optionsUrl && e.optionsUrl.length && e.enabled ? '<item style="background-image:url(chrome://theme/IDR_SETTINGS_FAVICON)"><a href="'+e.optionsUrl+'">Options</a></item>' : '') +
 							(e.enabled ? '<item><a disable extensionId="'+e.id+'">Disable</a></item>' : '<item><a enable extensionId="'+e.id+'">Enable</a></item>') +
 							'<item><a uninstall extensionId="'+e.id+'">Uninstall</a></item><hr />' +
 							'<item faded><a>Version '+e.version+'</a></item>' +
@@ -466,7 +466,7 @@ function refreshHistoryMenu() {
 			$('menu[history] group').append('<item style="background-image:url(chrome://favicon/chrome://history)"><a href="chrome://history'+(chromeVersion<17&&localStorage.option_menuBar_useHistory2==1?'2':'')+'">View full history</a></item>');
 		}
 		if (localStorage.option_historyMenu_showClearDataLink == 1) {
-			$('menu[history] group').append('<item style="background-image:url(chrome://favicon/chrome://settings)"><a href="chrome://settings/clearBrowserData">Clear browsing data...</a></item>');
+			$('menu[history] group').append('<item style="background-image:url(chrome://theme/IDR_SETTINGS_FAVICON)"><a href="chrome://settings/clearBrowserData">Clear browsing data...</a></item>');
 		}
 		repositionMenus();
 	});
@@ -562,7 +562,7 @@ chrome.bookmarks.onRemoved.addListener(refreshBookmarkMenu);
 
 function refreshFauxbarMenu() {
 	var options = window.location.href != chrome.extension.getURL("/html/fauxbar.html#options=1") ?
-		'<item style="background-image:url(chrome://favicon/chrome://settings)" '+(localStorage.indexComplete==1?'':'faded')+'><a '+(localStorage.indexComplete==1?'options':'')+'>Options</a></item>' : '';
+		'<item style="background-image:url(chrome://theme/IDR_SETTINGS_FAVICON)" '+(localStorage.indexComplete==1?'':'faded')+'><a '+(localStorage.indexComplete==1?'options':'')+'>Options</a></item>' : '';
 	$('menu[fauxbar]').html('<menuName>'+localStorage.extensionName+'</menuName><items><group>' +
 		options +
 		'<item faded><a>'+'Version '+localStorage.currentVersion+'</a></item><hr/>' +
