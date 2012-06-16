@@ -883,23 +883,32 @@ $(document).ready(function(){
 	});
 
 	// New version info
-	var currentVersion = "1.2.9";
+	var currentVersion = "1.2.10";
 	if (
 		(!localStorage.currentVersion && localStorage.indexComplete && localStorage.indexComplete == 1) ||
 		(localStorage.currentVersion && localStorage.currentVersion != currentVersion) ||
 		(localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0)
 	) {
 		// Enable for big updates, disable for small. Don't need to annoy the user about a minor defect fix.
-		/*if (localStorage.currentVersion != '1.2.0') {
+		if (localStorage.currentVersion != '1.2.10') {
 			localStorage.readUpdateMessage = 1;
 			window.webkitNotifications.createHTMLNotification('/html/notification_updated.html').show();
-		}*/
+		}
+	}
+	
+	// New Auto Assist option, added in 1.2.10
+	if (!localStorage.option_autoAssist) {
+		localStorage.option_autoAssist = localStorage.option_autofillurl == 1 ? 'autoFillUrl' : 'dontAssist';
+	}
+	
+	if (!localStorage.option_showNewlyInstalledApps) {
+		localStorage.option_showNewlyInstalledApps = 1;
 	}
 	
 	// Reset CSS cache, 1.2.5
-	if (currentVersion == "1.2.5" && localStorage.currentVersion != "1.2.5") {
+	/*if (currentVersion == "1.2.5" && localStorage.currentVersion != "1.2.5") {
 		delete localStorage.customStyles;
-	}
+	}*/
 	
 	// Initialise menu bar options, added in 1.2.0
 	if (!localStorage.option_showMenuBar) {
@@ -1160,18 +1169,28 @@ $(document).ready(function(){
 		chrome.tabs.getAllInWindow(null, function(tabs){
 			window.currentTabs = tabs;
 		});
-		chrome.omnibox.setDefaultSuggestion({description:"Open Fauxbar"});
+		if (localStorage.option_autoAssist != 'autoSelectFirstResult') {
+			chrome.omnibox.setDefaultSuggestion({description:"Open Fauxbar"});
+		}
 	});
-	chrome.omnibox.setDefaultSuggestion({description:"Open Fauxbar"});
+	if (localStorage.option_autoAssist == 'autoSelectFirstResult') {
+		chrome.omnibox.setDefaultSuggestion({description:" "});
+	} else {
+		chrome.omnibox.setDefaultSuggestion({description:"Open Fauxbar"});
+	}
 
 	// When user types something into Omnibox+Fauxbar, get some results and display them...
 	chrome.omnibox.onInputChanged.addListener(function(text, suggest){
 		var origText = text;
 		window.currentOmniboxText = text;
-		if (text.length) {
-			chrome.omnibox.setDefaultSuggestion({description:"<dim>%s</dim>"});
-		} else {
-			chrome.omnibox.setDefaultSuggestion({description:"Open Fauxbar"});
+		if (localStorage.option_autoAssist != 'autoSelectFirstResult') {
+			if (text.length) {
+				chrome.omnibox.setDefaultSuggestion({description:"<dim>%s</dim>"});
+			} else {
+				chrome.omnibox.setDefaultSuggestion({description:"Open Fauxbar"});
+			}
+		} else if (!text.length) {
+			chrome.omnibox.setDefaultSuggestion({description:" "});
 		}
 		chrome.tabs.getAllInWindow(null, function(tabs){
 			window.currentTabs = tabs;
@@ -1250,17 +1269,25 @@ $(document).ready(function(){
 					tx.executeSql(selectStatement, urltitleWords, function (tx, results) {
 						var len = results.rows.length, i;
 						var newItem = {};
+						var lastUrl = '';
+						window.omniboxFirstUrl = null;
 
 						// Create each result as a new object
 						for (var i = 0; i < len; i++) {
-							newItem = {};
-							newItem.url = results.rows.item(i).url;
-							newItem.title = results.rows.item(i).title;
-							newItem.tag = results.rows.item(i).tag;
-							if (results.rows.item(i).type == 2) {
-								newItem.isBookmark = true;
+							if (results.rows.item(i).url != lastUrl) {
+								if (!lastUrl.length) {
+									window.omniboxFirstUrl = results.rows.item(i).url;
+								}
+								lastUrl = results.rows.item(i).url;
+								newItem = {};
+								newItem.url = results.rows.item(i).url;
+								newItem.title = results.rows.item(i).title;
+								newItem.tag = results.rows.item(i).tag;
+								if (results.rows.item(i).type == 2) {
+									newItem.isBookmark = true;
+								}
+								sortedHistoryItems[i] = newItem;
 							}
-							sortedHistoryItems[i] = newItem;
 						}
 
 						maxRows = resultLimit / 2;
@@ -1456,8 +1483,20 @@ $(document).ready(function(){
 								}
 							}
 						}
+						
+						if (!resultObjects || !resultObjects.length) {
+							chrome.omnibox.setDefaultSuggestion({description:"No results matched your query"});
+						}
+						
 						// Give the results to Chrome to display
-						suggest(resultObjects);
+						if (localStorage.option_autoAssist == 'autoSelectFirstResult' && resultObjects[0]) {
+							chrome.omnibox.setDefaultSuggestion({description:resultObjects[0].description});
+							resultObjects.shift();
+							suggest(resultObjects);
+						} else {
+							suggest(resultObjects);
+						}
+						
 					});
 				}
 			}, function(t){
@@ -1471,6 +1510,11 @@ $(document).ready(function(){
 		var url = text.trim();
 		if (url.length == 0) {
 			url = chrome.extension.getURL("/html/fauxbar.html");
+		}
+		
+		// Auto Assist first result check
+		if (localStorage.option_autoAssist == 'autoSelectFirstResult' && window.currentOmniboxText == text && window.omniboxFirstUrl && window.omniboxFirstUrl.length) {
+			url = window.omniboxFirstUrl;
 		}
 
 		// Switch to tab if needed
@@ -1801,15 +1845,23 @@ $(document).ready(function(){
 							3. When page gets loaded (title fetched using manifest-listed injected content script)
 							4. Momentarily after page gets visited (if it's blank)
 					*/
-					if (!historyItem.title || !historyItem.title.length) {
-						chrome.tabs.getSelected(null, function(tab){
-							window.db.transaction(function(tx){
-								tx.executeSql('UPDATE urls SET title = ? WHERE type = 1 AND url = ?', [tab.title, tab.url]);
-								tx.executeSql('UPDATE thumbs SET title = ? WHERE url = ?', [tab.title, tab.url]);
-							}, function(t){
-								errorHandler(t, getLineInfo());
+					try {
+						if ((!historyItem.title || !historyItem.title.length) && tab && tab.title && tab.url) {
+							chrome.tabs.getSelected(null, function(tab){
+								window.db.transaction(function(tx){
+									tx.executeSql('UPDATE urls SET title = ? WHERE type = 1 AND url = ?', [tab.title, tab.url]);
+									tx.executeSql('UPDATE thumbs SET title = ? WHERE url = ?', [tab.title, tab.url]);
+								}, function(t){
+									errorHandler(t, getLineInfo());
+								}, function(){
+									console.log('done updating title');
+								});
 							});
-						});
+						}/* else {
+							console.log('history item already has title');
+						}*/
+					} catch(e) {
+						//console.log('tab does not have a title');
 					}
 				});
 			};
@@ -1932,9 +1984,11 @@ $(document).ready(function(){
 
 	chrome.management.onInstalled.addListener(function(app) {
 		if (app.isApp) {
-			localStorage.option_showapps = 1;
-			localStorage.sapps = 2;
-			console.log(app.name + ' has been installed; localStorage.option_showapps has been enabled.');
+			console.log(app.name + ' has been installed.');
+			if (localStorage.option_showNewlyInstalledApps == 1) {
+				localStorage.option_showapps = 1;
+				localStorage.sapps = 2;
+			}
 		}
 	});
 

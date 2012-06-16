@@ -1,4 +1,3 @@
-//$("body").append(response);
 $(window).bind("resize", function(){
 	$("#options").css("position","absolute").css("top",$(".wrapper").offset().top+$(".wrapper").outerHeight()+30+"px").css("margin","0");
 	if (window.innerWidth >= 1100) {
@@ -17,10 +16,17 @@ $("#awesomeinput").blur();
 
 // Apply input masks/restrictions on some of the number-only inputs, as a simple form of form validation.
 // I haven't really enforced any strict form of form validation anywhere, frankly.
-$(".color").mask("#***?***", {placeholder:""});
-$(".fontsize, .upto").mask("9?99", {placeholder:""});
-$("#option_maxwidth").mask("9?999", {placeholder:""});
-$(".opacity").mask("9?99", {placeholder:""});
+function doMasking() {
+	try {
+		$(".color").mask("#***?***", {placeholder:""});
+		$(".fontsize, .upto").mask("9?99", {placeholder:""});
+		$("#option_maxwidth").mask("9?999", {placeholder:""});
+		$(".opacity").mask("9?99", {placeholder:""});
+	} catch(e) {
+		setTimeout(doMasking, 500);
+	}
+}
+doMasking();
 
 // Stop animating the Fauxbar's Address Box and Search Box reordering/fading animation when the user presses a key to change it to something else (so there's no animation queueing)
 $("select").live("keyup", function(){

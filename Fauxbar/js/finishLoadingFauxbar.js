@@ -2,7 +2,7 @@ try {
 	chrome.tabs.getCurrent(function(tab){
 		chrome.tabs.update(tab.id, {selected:localStorage.option_openfauxbarfocus != "chrome"}, function(){
 			$(document).ready(function(){
-				var scriptsToLoad = ['md5-min.js', 'fauxbar-2.js', 'common-1.js', 'fauxbar-1.js', 'menubar.js']
+				var scriptsToLoad = [/*'md5-min.js',*/ 'fauxbar-2.js', 'common-1.js', 'fauxbar-1.js', 'menubar.js']
 				var head = document.getElementById('head');
 				for (var s in scriptsToLoad) {
 					var newScript = document.createElement("script");
@@ -22,7 +22,8 @@ catch (e) {
 		} else {
 			window.location.href += '&reloaded=1';
 		}
-		window.location.reload();
+		//window.location.reload();
+		chrome.tabs.reload({bypassCache:true});
 	} else {
 		console.log(e);
 		webkitNotifications.createNotification('/img/fauxbar48unhappy.png', localStorage.extensionName+' is unable to load.', 'Please view the page\'s developer tools console for details: ' +

@@ -1070,7 +1070,7 @@ $("#contextMenu .menuOption").live("mousedown", function(){
 			case "History & Bookmarks":
 				delete window.keywordEngine;
 				$("#awesomeInsetButton").removeClass("insetButton").addClass("noInsetButton");
-				$("#addressbaricon").attr("src","chrome://favicon/null").css("opacity",.75);
+				$("#addressbaricon").attr("src","chrome://favicon/null");
 				$(".switchtext").html("Switch to tab:").css("display","");
 				$("#awesomeinput").attr("placeholder",window.placeholder).focus();
 				break;
@@ -1148,32 +1148,6 @@ $("#contextMenu .menuOption").live("mousedown", function(){
 		return false;
 	}
 });
-
-// Show update message if it hasn't been read yet
-/*if (localStorage.readUpdateMessage && localStorage.readUpdateMessage == 0) {
-
-	function dismissUpdateMessage(viewChangelog) {
-		localStorage.readUpdateMessage = 1;
-		if (viewChangelog) {
-			chrome.tabs.create({url:"http://code.google.com/p/fauxbar/wiki/Changelog", selected:true}, function(){
-				$("#editmodeContainer").remove();
-			});
-		} else {
-			$("#editmodeContainer").remove();
-		}
-		$(window).resize();
-	}*/
-
-	// Update notification
-	// Disabled in v1.1.2
-	/*$(document).ready(function(){
-		$("#maindiv").before('<div id="editmodeContainer" style="box-shadow:0 2px 2px rgba(0,0,0,.3);"><div id="manualmode"><img src="/img/fauxbar48.png" /> '
-				+(localStorage.extensionName ? localStorage.extensionName : 'Fauxbar')+' has updated itself to version '+localStorage.currentVersion + localStorage.updateBlurb+'</div></div>');
-		$("#editmodeContainer").prepend('<div id="editModeButtons"><button onclick="dismissUpdateMessage(true)" style="font-family:'+localStorage.option_font
-				+', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">View Changelog</button>&nbsp;<button onclick="dismissUpdateMessage()" style="font-family:'+localStorage.option_font+
-				', Ubuntu, Lucida Grande, Segoe UI, Arial, sans-serif;">Dismiss</button></div>');
-	});*/
-/*}*/
 
 // Fill the search engine menu with the engines that have been added to Fauxbar
 function populateOpenSearchMenu(force) {
@@ -1442,8 +1416,35 @@ $("#searchicon_cell").bind("mouseleave", function(){
 
 $("#awesomeinput").bind("keydown", function(e){
 
+	var clearKeywordEngine = function() {
+		delete window.keywordEngine;
+		$("#awesomeInsetButton").removeClass("insetButton").addClass("noInsetButton");
+		$("#addressbaricon").attr("src","chrome://favicon/null");
+		$(".switchtext").html("Switch to tab:").css("display","");
+		$("#awesomeinput").attr("placeholder",window.placeholder);
+	};
+
+	// Ctrl+Up and Ctrl+Down -- Switch to a search engine keyword (38 up, 40 down)
+	if ((e.keyCode == 38 || e.keyCode == 40) && e.ctrlKey && !window.tileEditMode) {
+		var engineToUse;
+		if (!window.keywordEngine) {
+			engineToUse = e.keyCode == 38 ? $('#opensearchmenu > .menuitem').last() : $('#opensearchmenu > .menuitem').first();
+		} else {
+			var currentEngine = $('#opensearchmenu > .menuitem[keyword="'+window.keywordEngine.keyword+'"]');
+			engineToUse = e.keyCode == 38 ? $(currentEngine).prev() : $(currentEngine).next();
+			if (e.keyCode == 38 && !engineToUse.length) {
+				clearKeywordEngine();
+			}
+		}
+		if (engineToUse && $(engineToUse).attr('keyword') && $(engineToUse).attr('keyword').length) {
+			$("#awesomeinput").val( $(engineToUse).attr("keyword")+" "+$("#awesomeinput").val() ).focus();
+			setTimeout(getResults,1);
+		}
+		return false;
+	}
+
 	// Ctrl+Return
-	if (e.keyCode == 13 && e.ctrlKey == true) {
+	else if (e.keyCode == 13 && e.ctrlKey == true) {
 		var thisVal = window.actualUserInput;
 		if (!strstr(thisVal.trim(), ' ') && !strstr(thisVal, '/')) {
 			if (!strstr(thisVal, '.')) {
@@ -1500,11 +1501,7 @@ $("#awesomeinput").bind("keydown", function(e){
 
 	// Pressing Backspace if search engine keyword is being used
 	if (e.keyCode == 8 && window.keywordEngine && !$("#awesomeinput").val().length) {
-		delete window.keywordEngine;
-		$("#awesomeInsetButton").removeClass("insetButton").addClass("noInsetButton");
-		$("#addressbaricon").attr("src","chrome://favicon/null").css("opacity",.75);
-		$(".switchtext").html("Switch to tab:").css("display","");
-		$("#awesomeinput").attr("placeholder",window.placeholder);
+		clearKeywordEngine();
 		getResults();
 		return false;
 	}
@@ -1569,6 +1566,10 @@ $("#awesomeinput").bind("keydown",function(e){
 	// up = 38, down = 40, esc = 27, left = 37, right = 39, enter = 13, tab = 9
 	// 8 = backspace, 46 = delete, tab = 9, shift = 16, ctrl = 17, alt = 18
 
+	if (e.ctrlKey && (e.keyCode == 38 || e.keyCode == 40)) {
+		return false;
+	}
+
 	// Tab, Shift, Ctrl - don't make these keys refresh results, so just return true
 	if (e.keyCode == 9 || e.keyCode == 16 || e.keyCode == 17 ) {
 		return true;
@@ -1615,7 +1616,7 @@ $("#awesomeinput").bind("keydown",function(e){
 			delete window.keywordEngine;
 			$("#awesomeInsetButton").removeClass("insetButton").addClass("noInsetButton");
 			window.actualUserInput = '';
-			$("#addressbaricon").attr("src","chrome://favicon/null").css("opacity",.75);
+			$("#addressbaricon").attr("src","chrome://favicon/null");
 			$(".switchtext").html("Switch to tab:").css("display","");
 			$("#awesomeinput").attr("placeholder",window.placeholder);
 			return false;
@@ -1635,9 +1636,16 @@ $("#awesomeinput").bind("keydown",function(e){
 		return false;
 	}
 
-	// Enter/Return - go to the address entered in the Address Box
+	// Enter/Return - go to the address entered in the Address Box, or the highlighted result...
 	if (e.keyCode == 13) {
-		var aiVal = $(this).val();
+		var aiVal = '';
+		// If user has opted to auto-select first result, use highlighted result's URL (if user isn't pressing Ctrl+Enter)
+		// Else, use Address Box input
+		if (!e.ctrlKey && localStorage.option_autoAssist == 'autoSelectFirstResult' && $('.result.arrowed').length && $('.result.arrowed').attr('number') == 1) {
+			aiVal = $('.result.arrowed').attr('url');
+		} else {
+			aiVal = $(this).val();
+		}
 		if (aiVal.length > 0) {
 			goToUrl(aiVal);
 			if (!window.keywordEngine) {
@@ -1737,6 +1745,30 @@ $('.jsonresult, .historyresult').live("mousedown", function(e){
 $("#opensearchinput").bind("keydown", function(e){
 	// up = 38, down = 40, esc = 27, left = 37, right = 39, enter = 13, tab = 9
 	// 8 = backspace, 46 = delete, tab = 9, shift = 16, ctrl = 17, alt = 18
+	
+	// Check for Ctrl+Up and Ctrl+Down to switch search engines
+	if (e.ctrlKey) {
+		var newSearchEngine;
+		var currentSearchEngine = $('#opensearchmenu > .menuitem.bold');
+		// Up
+		if (e.keyCode == 38) {
+			newSearchEngine = currentSearchEngine.prev('.menuitem');
+		// Down
+		} else if (e.keyCode == 40) {
+			newSearchEngine = currentSearchEngine.next('.menuitem');
+		}
+		if (newSearchEngine && newSearchEngine.length) {
+			window.changeDefaultOpenSearchType = true;
+			selectOpenSearchType($('.menuitem[shortname="'+str_replace('"','&quot;',$(newSearchEngine).attr("shortname"))+'"]'), false);
+			$("#opensearch_results").css("display","none").html("");
+			if ($(this).val().length) {
+				getSearchSuggestions();
+			}
+		}
+		if (e.keyCode == 38 || e.keyCode == 40) {
+			return false;
+		}
+	}
 
 	// Tab, Shift, Ctrl - return true right now, don't let the key go any further
 	if (e.keyCode == 9 || e.keyCode == 16 || e.keyCode == 17) {
@@ -2205,6 +2237,10 @@ function navigateResults(e) {
 // Enter text into the Address Box or Search Box if window.location.hash has input to use.
 // Handy when using Chrome's Back/Forward navigation buttons
 function refillInputs() {
+	if (window.goingToUrl) {
+		return false;
+	}
+	
 	if (window.location.hash == '') {
 		if (localStorage.option_openfauxbarfocus && localStorage.option_openfauxbarfocus != 'chrome') {
 			chrome.tabs.getCurrent(function(currentTab){
@@ -2212,13 +2248,6 @@ function refillInputs() {
 					if (currentTab.id == selectedTab.id) {
 						chrome.tabs.update(currentTab.id, {selected:true}, function(){
 							window.actualUserInput = '';
-							/*if (localStorage.option_openfauxbarfocus == 'addressbox') {
-								$("#opensearchinput").val("").blur();
-								$("#awesomeinput").val("").focus();
-							} else if (localStorage.option_openfauxbarfocus == 'searchbox') {
-								$("#awesomeinput").val("").blur();
-								$("#opensearchinput").val("").focus();
-							}*/
 							hideResults();
 						});
 					}
@@ -2227,10 +2256,15 @@ function refillInputs() {
 		}
 	}
 	else {
+		// Nullify F+Spacebar default value bug
+		var ai = getHashVar('ai');
+		if (ai == 'f ') {
+			ai = '';
+		}
 		// Populate Address Box
-		if (getHashVar('ai')) {
-			$("#awesomeinput").val(getHashVar('ai'));
-			window.actualUserInput = getHashVar('ai');
+		if (ai && ai.length) {
+			$("#awesomeinput").val(ai);
+			window.actualUserInput = ai;
 		}
 		// Populate Search Box
 		if (getHashVar('os')) {
@@ -2239,13 +2273,16 @@ function refillInputs() {
 
 		// Keyword search engine
 		if (getHashVar('ke')) {
-			$("#awesomeinput").val(getHashVar("ke")+" "+getHashVar('ai'));
+			$("#awesomeinput").val(getHashVar("ke")+" "+ai);
 		}
 
 		// Focus/select a Box
 		setTimeout(function(){
 			if (getHashVar("ke")) {
 				setTimeout(getResults, 100);
+			} else if (getHashVar('ai') && !getHashVar('sel')) {
+				$("#awesomeinput").setSelection($("#awesomeinput").val().length);
+				setTimeout(getResults, 1);
 			}
 			if (getHashVar('sel')) {
 				if (getHashVar('sel') == 'ai') { // "if selection == #awesomeinput/AddressBox"
@@ -2256,12 +2293,17 @@ function refillInputs() {
 						$("#awesomeinput").blur();
 						$("#opensearchinput").focus().setSelection(0,$("#opensearchinput").val().length);
 					}, 100);
+				} else if (getHashVar('ai')) {
+					$("#opensearchinput").blur();
+					$("#awesomeinput").focus().setSelection(0,$("#awesomeinput").val().length);
 				}
 			}
 		}, 10);
 	}
 	return true;
 }
+
+$(window).bind('hashchange', refillInputs);
 
 // Load text into the Address Box or Search Box if needed, and if we aren't reindexing the database
 if (localStorage.indexComplete == 1) {
@@ -2382,7 +2424,7 @@ function getResults(noQuery) {
 				}
 			});
 			if (!keywordMatch && !window.keywordEngine) {
-				$("#addressbaricon").attr("src","chrome://favicon/null").css("opacity",.75);
+				$("#addressbaricon").attr("src","chrome://favicon/null");
 				$(".switchtext").html("Switch to tab:").css("display","");
 			}
 		}
@@ -2976,7 +3018,9 @@ function getResults(noQuery) {
 					});
 				}
 			}, function(t){
-				errorHandler(t, getLineInfo());
+				if (!window.goingToUrl) {
+					errorHandler(t, getLineInfo());
+				}
 			});
 		}
 	}
@@ -3213,8 +3257,13 @@ function html_entity_decode (string, quote_style) {
 
 // When typing in the Address Box, this function appends the input box's text with the rest of a matching URL from the results, and selects it.
 // So the user could go to a whole URL by just typing the first few letters, and the rest of the URL will be auto-filled automatically for them.
+// Since v1.2.10, also attempts to auto-select the first result instead if user has opted for this auto-assist option.
 function autofillInput(thisQuery) {
-	if (window.lastKeyCode != 8 && window.lastKeyCode != 46 && $("#awesomeinput").getSelection().length != $('#awesomeinput').val().length) {
+	if (
+		//(!localStorage.option_autofillurl || localStorage.option_autofillurl == 1) && !window.tileEditMode &&
+		(!localStorage.option_autoAssist || localStorage.option_autoAssist == 'autoFillUrl') && !window.tileEditMode &&
+		window.lastKeyCode != 8 && window.lastKeyCode != 46 && $("#awesomeinput").getSelection().length != $('#awesomeinput').val().length
+	) {
 		var ai = $("#awesomeinput").val();
 		var fru = '';
 		var tu = '';
@@ -3234,11 +3283,18 @@ function autofillInput(thisQuery) {
 				newVal = newVal.substr(0, newVal.length-1);
 			}
 			if ($("#awesomeinput").getSelection().length == 0) {
-				if ((!localStorage.option_autofillurl || localStorage.option_autofillurl == 1) && !window.tileEditMode) {
+				//if ((!localStorage.option_autofillurl || localStorage.option_autofillurl == 1) && !window.tileEditMode) {
 					$("#awesomeinput").val(newVal).setSelection(ai.length, $("#awesomeinput").val().length);
-				}
+				//}
 			}
 		}
+	}
+	else if (
+		//(!localStorage.option_autofillurl || localStorage.option_autofillurl == 1) && !window.tileEditMode &&
+		(!localStorage.option_autoAssist || localStorage.option_autoAssist == 'autoSelectFirstResult') && !window.tileEditMode &&
+		window.lastKeyCode != 8 && window.lastKeyCode != 46 && $("#awesomeinput").getSelection().length != $('#awesomeinput').val().length
+	) {
+		$(".result").first().addClass("arrowed");
 	}
 }
 

@@ -125,7 +125,8 @@ function resetOptions() {
 	
 	localStorage.option_alert = 1; 							// Show a message when there's a database error.
 	localStorage.option_altd = localStorage.extensionName == "Fauxbar Lite" ? 0 : 1; // Use Alt+D functionality.
-	localStorage.option_autofillurl = 1; 					// Auto-fill the Address Box's input with a matching URL when typing.
+	localStorage.option_autoAssist = 'autoFillUrl';			// Auto Assist for Address Box. 'autoFillUrl', 'autoSelectFirstResult', or 'dontAssist'
+	//localStorage.option_autofillurl = 1; 					// Auto-fill the Address Box's input with a matching URL when typing.
 	localStorage.option_bgcolor = "#F0F0F0"; 				// Page background color.
 	localStorage.option_bgimg = ""; 						// Page background image.
 	localStorage.option_bgpos = "center"; 					// Page background image position.
@@ -193,6 +194,7 @@ function resetOptions() {
 	localStorage.option_separatorcolor = "#E3E3E3";			// Color of the 1px separator line between results.
 	localStorage.option_shadow = 1;							// Drop shadow for the Fauxbar.
 	localStorage.option_showapps = 1;						// Display app tiles.
+	localStorage.option_showNewlyInstalledApps = 1;			// Re-enable localStorage.option_showapps when an app is installed.
 	localStorage.option_showErrorCount = 1;					// Show an error count on the Options' side menu.
 	localStorage.option_showjsonsuggestions = 1;			// Show Search Box suggestions from the selected search engine when user is typing a query.
 	localStorage.option_showmatchingfavs = 1;				// Search for and display matching bookmarks from the Address Box.

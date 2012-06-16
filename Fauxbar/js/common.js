@@ -59,9 +59,12 @@ function selectOpenSearchType(el, focusToo) {
 	window.openSearchShortname = shortNameHtml;
 	var newTitle = "Search using "+str_replace('"','&quot',shortNameHtml);
 	osi.attr("title",newTitle).attr("realtitle",newTitle);
-	if (focusToo == true) {
-		osi.focus();
-		osi.select();
+	if (focusToo == true || window.changeDefaultOpenSearchType == true) {
+		window.changeDefaultOpenSearchType = null;
+		if (focusToo) {
+			osi.focus();
+			osi.select();
+		}
 		if (openDb()) {
 			window.db.transaction(function (tx) {
 				tx.executeSql('UPDATE opensearches SET isdefault = 0');
@@ -242,36 +245,38 @@ function openDb(force) {
 // transaction contains the SQL error code and message
 // lineInfo contains contains the line number and filename for where the error came from
 function errorHandler(transaction, lineInfo) {
-	if (transaction.message) {
-		var code = '';
-		switch (transaction.code) {
-			case 1:
-				code = "database";
-				break;
-			case 2:
-				code = "version";
-				break;
-			case 3:
-				code = '"too large"';
-				break;
-			case 4:
-				code = "quota";
-				break;
-			case 5:
-				code = "syntax";
-				break;
-			case 6:
-				code = "constraint";
-				break;
-			case 7:
-				code = "timeout";
-				break;
-			default: // case 0:
-				break;
+	if (!window.goingToUrl) {
+		if (transaction.message) {
+			var code = '';
+			switch (transaction.code) {
+				case 1:
+					code = "database";
+					break;
+				case 2:
+					code = "version";
+					break;
+				case 3:
+					code = '"too large"';
+					break;
+				case 4:
+					code = "quota";
+					break;
+				case 5:
+					code = "syntax";
+					break;
+				case 6:
+					code = "constraint";
+					break;
+				case 7:
+					code = "timeout";
+					break;
+				default: // case 0:
+					break;
+			}
+			var errorMsg = 'SQL '+code+' error: "'+transaction.message+'"';
+			logError(errorMsg, lineInfo.file, lineInfo.line);
+		} else {
+			logError('Generic SQL error (no transaction)', lineInfo.file, lineInfo.line);
 		}
-		var errorMsg = 'SQL '+code+' error: "'+transaction.message+'"';
-		logError(errorMsg, lineInfo.file, lineInfo.line);
-	} else {
-		logError('Generic SQL error (no transaction)', lineInfo.file, lineInfo.line);
 	}
 }

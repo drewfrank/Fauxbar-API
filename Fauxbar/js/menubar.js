@@ -575,7 +575,7 @@ function refreshFauxbarMenu() {
 			'<item><a href="https://chrome.google.com/webstore/detail/hibkhcnpkakjniplpfblaoikiggkopka">Fauxbar</a></item>' +
 			'<item><a href="https://chrome.google.com/webstore/detail/bfimmnpbjccjihohjkimphfmmebffbmk">Fauxbar Lite</a></item>' +
 			'<item><a href="https://chrome.google.com/webstore/detail/domhiadbdhomljcdankobiglghedagkm">Fauxbar Memory Helper</a></item>' +
-			'</items><a href="https://chrome.google.com/webstore/search/Fauxbar"><arrow>&#x25BC;</arrow>Chrome Web Store</a></item>' +
+			'</items><a href="https://chrome.google.com/webstore/search/intitle%3AFauxbar"><arrow>&#x25BC;</arrow>Chrome Web Store</a></item>' +
 		'<item style="background-image:url(/img/icon-facebook.png)"><a href="http://facebook.com/Fauxbar">Facebook</a></item>' +
 		'<item style="background-image:url(/img/icon-gplus.png)"><a href="https://plus.google.com/106763880873922603221">Google+</a></item>' +
 		'<item style="background-image:url(/img/icon-twitter.png)"><a href="http://twitter.com/Fauxbar">Twitter</a></item>' +

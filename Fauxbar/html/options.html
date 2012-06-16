@@ -58,6 +58,9 @@
 										<!--<option value="visitcount">By visit count</option>-->
 										<option value="manual">Manually</option>
 									</select>
+									<span style="opacity:.5; cursor:help" title="&bull; Automatically: Fauxbar chooses which site tiles to display based on your browsing behavior.
+
+&bull; Manually: You get to choose which site tiles to display and how they should be arranged. Lets you rename tiles, too.">(?)</span>
 								</label>
 								<table style="width:auto; border-collapse:collapse; margin-top:0px" cellpadding="0" cellspacing="0">
 									<tr>
@@ -118,6 +121,11 @@
 								<input type="checkbox" name="option_showapps" id="option_showapps" />
 								Show my installed Chrome apps as tiles
 							</label>
+							<label class="legend" style="margin-top:1px">
+								<input type="checkbox" name="option_showNewlyInstalledApps" id="option_showNewlyInstalledApps" />
+								Show my app tiles when a new app is installed
+								<span style="opacity:.5; cursor:help" title="Re-enables the above option &quot;Show my installed Chrome apps as tiles&quot; when a new Chrome app is installed.">(?)</span>
+							</label>
 						</td>
 					</tr>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
@@ -140,7 +148,7 @@
 					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px" />
 					Address Box Options
 				</h1>
-				Find your history items, bookmarks and opened tabs by typing into <span class="extensionName">Fauxbar</span>'s Address Box.<br />
+				Find your history items, bookmarks, and opened tabs by typing into <span class="extensionName">Fauxbar</span>'s Address Box.<br />
 				Search engines can also be accessed by typing their keyword and pressing spacebar, or by clicking the
 				<img src="chrome://favicon/null" style="vertical-align:middle; position:relative; top:-3px" />
 				icon.
@@ -212,12 +220,29 @@ Then, if you type the same query in the future, Fauxbar will ask Chrome to start
 							</div>
 						</td>
 					</tr>
-					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
+					<!--<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
 						<th>Auto-fill</th>
 						<td>
 							<label class="legend" style="margin-top:1px">
 								<input name="option_autofillurl" id="option_autofillurl" type="checkbox" /> Auto-fill the Address Box with a matching URL while typing
+							</label>
+						</td>
+					</tr>-->
+					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
+					<tr>
+						<th>Auto Assist</th>
+						<td>
+							<label class="legend">
+								When typing:
+								<select id="option_autoAssist" name="option_autoAssist">
+									<option value="autoFillUrl">Auto-fill the Address Box with a matching URL</option>
+									<option value="autoSelectFirstResult">Auto-highlight the first result</option>
+									<option value="dontAssist">Don't assist me</option>
+								</select>
+								<span style="opacity:.5; cursor:help" title="&bull; Auto-fill: Tries to complete the rest of the URL you're presumably typing.
+
+&bull; Auto-highlight: Saves you from having to press the Down Arrow to select the first result.">(?)</span>
 							</label>
 						</td>
 					</tr>
@@ -258,7 +283,7 @@ Then, if you type the same query in the future, Fauxbar will ask Chrome to start
 								Bing.com
 							</button>
 							<div class="optionstip">
-								&bull; Used when you're not using a search engine keyword and an invalid address is submitted, e.g. when you've entered a search query instead of a URL.
+								&bull; Used when you're not using a search engine keyword and an invalid address is submitted, e.g. when you've entered a search query instead of a URL. Does not work if a URL result is auto-highlighted due to Auto Assist.
 								<div style="margin-top:5px; font-size:12px">&bull; Must contain <b>{searchTerms}</b></div>
 								<div style="margin-top:5px; font-size:12px">&bull; The preset Google URL uses the "I'm Feeling Lucky" feature.</div>
 							</div>
@@ -513,7 +538,7 @@ But if you don't normally visit local intranet sites that use custom domain name
 							<div id="resultpreview" class="resultpreview" style="box-shadow:3px 3px 3px rgba(0,0,0,.3); border:1px solid #666; width:75%;">
 								<img class="favstar" />
 								<div class="result_title"><img class="result_favicon" src="chrome://favicon/null" />Example Title</div><br />
-								<div class="result_url">http://example.url.com/</div>
+								<div class="result_url">http://example.url/</div>
 							</div>
 						</td>
 					</tr>
@@ -776,7 +801,7 @@ If disabled, a hyphen will be displayed between the URL and title.">(?)</span>
 					<img src="/img/fauxbar48.png" style="height:28px; width:28px; vertical-align:middle; position:relative; top:-2px; padding-right:2px;" />
 					Management
 				</h1>
-				<span class="extensionName">Fauxbar</span> version 1.2.9 &nbsp;<span style="opacity:.5">(4 June 2012)</span>
+				<span class="extensionName">Fauxbar</span> version 1.2.10 &nbsp;<span style="opacity:.5">(17 June 2012)</span>
 				<table>
 					<tr><td colspan="2" class="tdhr"><div></div></td></tr>
 					<tr>
