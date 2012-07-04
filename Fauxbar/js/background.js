@@ -1,5 +1,359 @@
 // This file gets loaded into Fauxbar's background page.
 
+// Get suggestions for the Omnibar using the generic suggestion API.
+omnibarSuggest = function(text, suggest) {
+    if (localStorage.option_autoAssist != 'autoSelectFirstResult') {
+        if (text.length) {
+            chrome.omnibox.setDefaultSuggestion({description:"<dim>%s</dim>"});
+        } else {
+            chrome.omnibox.setDefaultSuggestion({description:"Open Fauxbar"});
+        }
+    } else if (!text.length) {
+        chrome.omnibox.setDefaultSuggestion({description:" "});
+    }
+
+    function parseResult(res) {
+        var urlText = res.url
+        var titleText = res.title
+        var tagText = res.tag
+
+        var origUrlText = res.url
+        var words = explode(" ", res.query);
+        var divvy = "";
+        var resultString = "";
+        var truncated = 0;
+        var matchOpen = '<match>';
+        var matchClose = '</match>';
+        if (localStorage.option_bold == 0) {
+            matchOpen = matchClose = '';
+        }
+
+        // Remove "http://" from the beginning of the URL
+        if (urlText.substring(0,7) == 'http://' && localStorage.option_hidehttp && localStorage.option_hidehttp == 1) {
+            urlText = urlText.substr(7);
+            if (substr_count(urlText, '/') == 1 && urlText.substr(urlText.length-1) == '/') {
+                urlText = urlText.substr(0, urlText.length-1);
+            }
+        }
+
+        // Truncate the URL a bit
+        if (localStorage.option_omniboxurltruncate && urlText.length > localStorage.option_omniboxurltruncate && (urlText+titleText).length > localStorage.option_omniboxurltruncate*2) {
+            truncated = 1;
+            urlText = urlText.substring(0,localStorage.option_omniboxurltruncate);
+        }
+
+        // Replace special characters with funky ¸%%%%%%¸ symbols
+        titleText = replaceSpecialChars(titleText);
+        urlText = replaceSpecialChars(urlText);
+        tagText = replaceSpecialChars(tagText);
+
+        // Wrap each word with more funky symbols
+        for (var i in words) {
+            if (words[i] != "") {
+                regEx = new RegExp(words[i], 'gi');
+                titleText = titleText.replace(regEx, '¸%%%%%¸$&¸%%%%¸');
+                urlText = urlText.replace(regEx, '¸%%%%%¸$&¸%%%%¸');
+                tagText = tagText.replace(regEx, '¸%%%%%¸$&¸%%%%¸');
+            }
+        }
+
+        // Replace the previous symbols with their original characters; this was to let all characters work with RegExp
+        titleText = replacePercents(titleText);
+        urlText = replacePercents(urlText);
+        tagText = replacePercents(tagText);
+
+        // Replace <match> and </match> with symbols
+        titleText = str_replace("¸%%%%%¸", matchOpen, titleText);
+        titleText = str_replace("¸%%%%¸", matchClose, titleText);
+        urlText = str_replace("¸%%%%%¸", matchOpen, urlText);
+        urlText = str_replace("¸%%%%¸", matchClose, urlText);
+        tagText = str_replace("¸%%%%%¸", matchOpen, tagText);
+        tagText = str_replace("¸%%%%¸", matchClose, tagText);
+
+        // Replace &
+        titleText = str_replace('&', '&amp;', titleText);
+        urlText = str_replace('&', '&amp;', urlText);
+        tagText = str_replace('&', '&amp;', tagText);
+
+        // Replace symbols back to <match> and </match>
+        titleText = str_replace(matchOpen, "¸%%%%%¸", titleText);
+        titleText = str_replace(matchClose, "¸%%%%¸", titleText);
+        urlText = str_replace(matchOpen, "¸%%%%%¸", urlText);
+        urlText = str_replace(matchClose, "¸%%%%¸", urlText);
+        tagText = str_replace(matchOpen, "¸%%%%%¸", tagText);
+        tagText = str_replace(matchClose, "¸%%%%¸", tagText);
+
+        // Replace opening and closing tags
+        titleText = str_replace(">", "&gt;", titleText);
+        titleText = str_replace("<", "&lt;", titleText);
+
+        urlText = str_replace(">", "&gt;", urlText);
+        urlText = str_replace("<", "&lt;", urlText);
+
+        tagText = str_replace(">", "&gt;", tagText);
+        tagText = str_replace("<", "&lt;", tagText);
+
+        titleText = str_replace("¸%%%%%¸", matchOpen, titleText);
+        titleText = str_replace("¸%%%%¸", matchClose, titleText);
+        urlText = str_replace("¸%%%%%¸", matchOpen, urlText);
+        urlText = str_replace("¸%%%%¸", matchClose, urlText);
+        tagText = str_replace("¸%%%%%¸", matchOpen, tagText);
+        tagText = str_replace("¸%%%%¸", matchClose, tagText);
+
+        // Make URLs say "Switch to tab" if tab is open
+        if (localStorage.option_switchToTab != "disable") {
+            if (res.tabId == "tab") {
+                urlText = localStorage.option_switchToTab == "replace" ? 'Switch to tab' : '</url><dim>Switch to tab:</dim> <url>'+urlText;
+            }
+        }
+
+        // Make a star symbol be the separator if result is a bookmark, otherwise just a dash
+        divvy = res.isBookmark && localStorage.option_showStarInOmnibox && localStorage.option_showStarInOmnibox == 1 ? '&#9733;' : '-';
+
+        // If URL is truncated, add ...
+        if (truncated == 1) {
+            urlText += '...';
+        }
+
+        resultString = "";
+        if (urlText.length > 0) {
+
+            resultString += "<url>"+urlText+"</url> <dim>"+divvy+"</dim> "+titleText;
+        } else {
+            if (res.isBookmark) {
+                resultString += '<dim>&#9733;</dim> ';
+            }
+            resultString += titleText;
+        }
+
+        if (tagText != null && tagText.length) {
+            resultString += ' <dim>- '+tagText+'</dim>';
+        }
+
+        return {
+            content: origUrlText,
+            description: resultString
+        };
+    }
+
+    suggestionApi(text, function(resultObjects) {
+      if (!resultObjects || !resultObjects.length) {
+          chrome.omnibox.setDefaultSuggestion({description:"No results matched your query"});
+      }
+      
+      resultObjects = resultObjects.map(parseResult)
+
+      // Give the results to Chrome to display
+      if (localStorage.option_autoAssist == 'autoSelectFirstResult' && resultObjects[0]) {
+          chrome.omnibox.setDefaultSuggestion({description:resultObjects[0].description});
+          resultObjects.shift();
+          suggest(resultObjects);
+      } else {
+          suggest(resultObjects);
+      }
+    });
+}
+
+suggestionApi = function(text, suggest){
+    var origText = text;
+    window.currentOmniboxText = text;
+    chrome.tabs.getAllInWindow(null, function(tabs){
+        window.currentTabs = tabs;
+    });
+    var sortedHistoryItems = {};
+    var resultObjects = [];
+    if (openDb()) {
+        window.db.readTransaction(function(tx) {
+            // If there is user input, split it into words.
+            if (text.length > 0) { // equivalent to "!noQuery" (see getResults() in fauxbar.js)
+                var words = explode(" ", text);
+                var urltitleWords = new Array();
+                var urltitleQMarks2 = new Array();
+                var modifiers = '';
+                urltitleWords[urltitleWords.length] = text+"%";
+                for (var w in words) {
+                    if (words[w] != "") {
+                        // If word is "is:fav", add it as a modifier to the SQL query statement
+                        if (words[w].toLowerCase() == 'is:fav') {
+                            modifiers += ' AND type = 2 ';
+                        }
+                        else {
+                            urltitleWords[urltitleWords.length] = '%'+str_replace("_","¸_",str_replace("%","¸%",words[w]))+'%';
+                            urltitleQMarks2[urltitleQMarks2.length] = ' urltitletag LIKE ? ESCAPE "¸" ';
+                        }
+                    }
+                }
+            }
+
+            if (text.length == 0 || urltitleWords.length > 0 || modifiers != "") {
+
+                // Show history items and/or bookmarks depending on user's settings
+                var typeOptions = ['type = -1'];
+                if (localStorage.option_showmatchinghistoryitems && localStorage.option_showmatchinghistoryitems == 1) {
+                    typeOptions[typeOptions.length] = ' type = 1 ';
+                }
+                if (localStorage.option_showmatchingfavs && localStorage.option_showmatchingfavs == 1) {
+                    typeOptions[typeOptions.length] = ' type = 2 ';
+                }
+                typeOptions = implode(" OR ", typeOptions);
+
+                var resultLimit = localStorage.option_maxaddressboxresults ? localStorage.option_maxaddressboxresults : 12;
+                resultLimit = resultLimit * 2;
+                if (resultLimit > 20) {
+                    resultLimit = 20;
+                }
+
+                // Ignore titleless results if user has opted. But still keep proper files like .pdf, .json, .js, .php, .html, etc. And also allow untitled URLs ending with "/"
+                var titleless = localStorage.option_ignoretitleless == 1 ? ' AND (title != "" OR urls.url LIKE "%.__" OR urls.url LIKE "%.___" OR urls.url LIKE "%.____" OR urls.url LIKE "%/") ' : "";
+
+                // If there's no input...
+                if (text.length == 0) {
+                    var selectStatement = 'SELECT url, title, type, tag FROM urls WHERE url != "" AND ('+typeOptions+') AND queuedfordeletion = 0 '+titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
+                }
+                // Else, If we have words...
+                else if (urltitleWords.length > 0) {
+                    var selectStatement = ''
+                        + ' SELECT urls.url, title, type, urls.tag, (urls.url||" "||title||" "||urls.tag) AS urltitletag, tags.url*0 as tagscore'
+                        + ' FROM urls '
+                        + ' LEFT JOIN tags '
+                        + ' ON urls.url = tags.url AND tags.tag LIKE ? ' 																  //OR tags.tag LIKE ?
+                        + ' WHERE urls.url != "" AND ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' '+(urltitleQMarks2.length ? ' AND '+implode(" AND ", urltitleQMarks2) : ' ')+' ' + titleless
+                        + ' ORDER BY tagscore DESC, frecency DESC, type DESC LIMIT '+resultLimit;
+                }
+                // Else, this probably doesn't ever get used.
+                else {
+                    var selectStatement = 'SELECT url, title, type, tag FROM urls WHERE url != "" AND ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers + titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
+                }
+
+                // If user text no longer equals the text we're processing, cancel.
+                if (window.currentOmniboxText != origText) {
+                    return false;
+                }
+
+                // Execute the query...
+                tx.executeSql(selectStatement, urltitleWords, function (tx, results) {
+                    var len = results.rows.length, i;
+                    var newItem = {};
+                    var lastUrl = '';
+                    window.omniboxFirstUrl = null;
+
+                    // Create each result as a new object
+                    for (var i = 0; i < len; i++) {
+                        if (results.rows.item(i).url != lastUrl) {
+                            if (!lastUrl.length) {
+                                window.omniboxFirstUrl = results.rows.item(i).url;
+                            }
+                            lastUrl = results.rows.item(i).url;
+                            newItem = {};
+                            newItem.url = results.rows.item(i).url;
+                            newItem.title = results.rows.item(i).title;
+                            newItem.tag = results.rows.item(i).tag;
+                            if (results.rows.item(i).type == 2) {
+                                newItem.isBookmark = true;
+                            }
+                            sortedHistoryItems[i] = newItem;
+                        }
+                    }
+
+                    maxRows = resultLimit / 2;
+                    if (maxRows > 10) {
+                        maxRows = 10;
+                    }
+                    var currentRows = 0;
+                    var hI = "";
+                    var resultIsOkay = true;
+                    var titleText = "";
+                    var urlText = "";
+                    var tagText = "";
+                    var regEx = "";
+                    var urlExplode = "";
+
+                    // Replace any cedillas with a space - it's a special character. Sorry to anyone that actually uses it!
+                    text = str_replace("¸", " ", text);
+
+                    // Replace special characters with funky ¸%%%%%%¸ symbols
+                    text = replaceSpecialChars(text);
+
+                    if (localStorage.option_blacklist && localStorage.option_blacklist.length) {
+                        var blacksites = explode(",", localStorage.option_blacklist);
+                    } else {
+                        var blacksites = new Array;
+                    }
+
+                    // For each result...
+                    for (var i in sortedHistoryItems) {
+                        if (currentRows < maxRows) {
+                            hI = sortedHistoryItems[i];
+                            resultIsOkay = true;
+
+                            // Sort words by longest length to shortest
+                            if (text.length > 0) {
+                                words = explode(" ", text);
+                                if (words) {
+                                    words.sort(compareStringLengths);
+                                }
+                            }
+
+                            // Check to see if site is on the blacklist
+                            if (blacksites.length) {
+                                for (var b in blacksites) {
+                                    var bs = blacksites[b].trim();
+                                    var blackparts = explode("*",bs);
+                                    var partsMatched = 0;
+                                    for (var p in blackparts) {
+                                        if (strstr(hI.url, blackparts[p])) {
+                                            partsMatched++;
+                                        }
+                                    }
+                                    if (partsMatched == blackparts.length) {
+                                        resultIsOkay = false;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (resultIsOkay) {
+
+                                // If result is titleless, make the title be the URL
+                                if (hI.title == "") {
+                                    urlExplode = explode("/", hI.url);
+                                    titleText = urldecode(urlExplode[urlExplode.length-1]);
+                                    if (titleText.length == 0) {
+                                        titleText = urldecode(hI.url);
+                                    }
+                                } else {
+                                    titleText = hI.title;
+                                }
+                                urlText = urldecode(hI.url);
+
+                                var tabId = undefined
+                                for (var ct in window.currentTabs) {
+                                    if (currentTabs[ct].url == urlText) {
+                                        tabId = currentTabs[ct].id
+                                    }
+                                }
+
+                                resultObjects[resultObjects.length] = {
+                                    query: origText,
+                                    url: urlText,
+                                    title: titleText,
+                                    tag: tagText,
+                                    tabId: tabId,
+                                    isBookmark: hI.isBookmark
+                                };
+                                currentRows++;
+                            }
+                        }
+                    }
+                    suggest(resultObjects)
+                });
+            }
+        }, function(t){
+            errorHandler(t, getLineInfo());
+        });
+    }
+}
+
 // Array to hold which URLs to record as "typed" transitions
 window.typedUrls = [];
 function addTypedUrl(url) {
@@ -1179,331 +1533,9 @@ $(document).ready(function(){
 		chrome.omnibox.setDefaultSuggestion({description:"Open Fauxbar"});
 	}
 
+
 	// When user types something into Omnibox+Fauxbar, get some results and display them...
-	chrome.omnibox.onInputChanged.addListener(function(text, suggest){
-		var origText = text;
-		window.currentOmniboxText = text;
-		if (localStorage.option_autoAssist != 'autoSelectFirstResult') {
-			if (text.length) {
-				chrome.omnibox.setDefaultSuggestion({description:"<dim>%s</dim>"});
-			} else {
-				chrome.omnibox.setDefaultSuggestion({description:"Open Fauxbar"});
-			}
-		} else if (!text.length) {
-			chrome.omnibox.setDefaultSuggestion({description:" "});
-		}
-		chrome.tabs.getAllInWindow(null, function(tabs){
-			window.currentTabs = tabs;
-		});
-		var sortedHistoryItems = {};
-		var resultObjects = [];
-		if (openDb()) {
-			window.db.readTransaction(function(tx) {
-				// If there is user input, split it into words.
-				if (text.length > 0) { // equivalent to "!noQuery" (see getResults() in fauxbar.js)
-					var words = explode(" ", text);
-					var urltitleWords = new Array();
-					var urltitleQMarks2 = new Array();
-					var modifiers = '';
-					urltitleWords[urltitleWords.length] = text+"%";
-					for (var w in words) {
-						if (words[w] != "") {
-							// If word is "is:fav", add it as a modifier to the SQL query statement
-							if (words[w].toLowerCase() == 'is:fav') {
-								modifiers += ' AND type = 2 ';
-							}
-							else {
-								urltitleWords[urltitleWords.length] = '%'+str_replace("_","¸_",str_replace("%","¸%",words[w]))+'%';
-								urltitleQMarks2[urltitleQMarks2.length] = ' urltitletag LIKE ? ESCAPE "¸" ';
-							}
-						}
-					}
-				}
-
-				if (text.length == 0 || urltitleWords.length > 0 || modifiers != "") {
-
-					// Show history items and/or bookmarks depending on user's settings
-					var typeOptions = ['type = -1'];
-					if (localStorage.option_showmatchinghistoryitems && localStorage.option_showmatchinghistoryitems == 1) {
-						typeOptions[typeOptions.length] = ' type = 1 ';
-					}
-					if (localStorage.option_showmatchingfavs && localStorage.option_showmatchingfavs == 1) {
-						typeOptions[typeOptions.length] = ' type = 2 ';
-					}
-					typeOptions = implode(" OR ", typeOptions);
-
-					var resultLimit = localStorage.option_maxaddressboxresults ? localStorage.option_maxaddressboxresults : 12;
-					resultLimit = resultLimit * 2;
-					if (resultLimit > 20) {
-						resultLimit = 20;
-					}
-
-					// Ignore titleless results if user has opted. But still keep proper files like .pdf, .json, .js, .php, .html, etc. And also allow untitled URLs ending with "/"
-					var titleless = localStorage.option_ignoretitleless == 1 ? ' AND (title != "" OR urls.url LIKE "%.__" OR urls.url LIKE "%.___" OR urls.url LIKE "%.____" OR urls.url LIKE "%/") ' : "";
-
-					// If there's no input...
-					if (text.length == 0) {
-						var selectStatement = 'SELECT url, title, type, tag FROM urls WHERE url != "" AND ('+typeOptions+') AND queuedfordeletion = 0 '+titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
-					}
-					// Else, If we have words...
-					else if (urltitleWords.length > 0) {
-						var selectStatement = ''
-							+ ' SELECT urls.url, title, type, urls.tag, (urls.url||" "||title||" "||urls.tag) AS urltitletag, tags.url*0 as tagscore'
-							+ ' FROM urls '
-							+ ' LEFT JOIN tags '
-							+ ' ON urls.url = tags.url AND tags.tag LIKE ? ' 																  //OR tags.tag LIKE ?
-							+ ' WHERE urls.url != "" AND ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers+' '+(urltitleQMarks2.length ? ' AND '+implode(" AND ", urltitleQMarks2) : ' ')+' ' + titleless
-							+ ' ORDER BY tagscore DESC, frecency DESC, type DESC LIMIT '+resultLimit;
-					}
-					// Else, this probably doesn't ever get used.
-					else {
-						var selectStatement = 'SELECT url, title, type, tag FROM urls WHERE url != "" AND ('+typeOptions+') AND queuedfordeletion = 0 '+modifiers + titleless+' ORDER BY frecency DESC, type DESC LIMIT '+resultLimit;
-					}
-
-					// If user text no longer equals the text we're processing, cancel.
-					if (window.currentOmniboxText != origText) {
-						return false;
-					}
-
-					// Execute the query...
-					tx.executeSql(selectStatement, urltitleWords, function (tx, results) {
-						var len = results.rows.length, i;
-						var newItem = {};
-						var lastUrl = '';
-						window.omniboxFirstUrl = null;
-
-						// Create each result as a new object
-						for (var i = 0; i < len; i++) {
-							if (results.rows.item(i).url != lastUrl) {
-								if (!lastUrl.length) {
-									window.omniboxFirstUrl = results.rows.item(i).url;
-								}
-								lastUrl = results.rows.item(i).url;
-								newItem = {};
-								newItem.url = results.rows.item(i).url;
-								newItem.title = results.rows.item(i).title;
-								newItem.tag = results.rows.item(i).tag;
-								if (results.rows.item(i).type == 2) {
-									newItem.isBookmark = true;
-								}
-								sortedHistoryItems[i] = newItem;
-							}
-						}
-
-						maxRows = resultLimit / 2;
-						if (maxRows > 10) {
-							maxRows = 10;
-						}
-						var currentRows = 0;
-						var hI = "";
-						var resultIsOkay = true;
-						var titleText = "";
-						var urlText = "";
-						var tagText = "";
-						var regEx = "";
-						var divvy = "";
-						var resultString = "";
-						var urlExplode = "";
-
-						// Replace any cedillas with a space - it's a special character. Sorry to anyone that actually uses it!
-						text = str_replace("¸", " ", text);
-
-						var matchOpen = '<match>';
-						var matchClose = '</match>';
-						if (localStorage.option_bold == 0) {
-							matchOpen = matchClose = '';
-						}
-
-						// Replace special characters with funky ¸%%%%%%¸ symbols
-						text = replaceSpecialChars(text);
-						var truncated = 0;
-
-						if (localStorage.option_blacklist && localStorage.option_blacklist.length) {
-							var blacksites = explode(",", localStorage.option_blacklist);
-						} else {
-							var blacksites = new Array;
-						}
-
-						// For each result...
-						for (var i in sortedHistoryItems) {
-							truncated = 0;
-							if (currentRows < maxRows) {
-								hI = sortedHistoryItems[i];
-								resultIsOkay = true;
-
-								// Sort words by longest length to shortest
-								if (text.length > 0) {
-									words = explode(" ", text);
-									if (words) {
-										words.sort(compareStringLengths);
-									}
-								}
-
-								// Check to see if site is on the blacklist
-								if (blacksites.length) {
-									for (var b in blacksites) {
-										var bs = blacksites[b].trim();
-										var blackparts = explode("*",bs);
-										var partsMatched = 0;
-										for (var p in blackparts) {
-											if (strstr(hI.url, blackparts[p])) {
-												partsMatched++;
-											}
-										}
-										if (partsMatched == blackparts.length) {
-											resultIsOkay = false;
-											break;
-										}
-									}
-								}
-
-								if (resultIsOkay) {
-
-									// If result is titleless, make the title be the URL
-									if (hI.title == "") {
-										urlExplode = explode("/", hI.url);
-										titleText = urldecode(urlExplode[urlExplode.length-1]);
-										if (titleText.length == 0) {
-											titleText = urldecode(hI.url);
-										}
-									} else {
-										titleText = hI.title;
-									}
-									urlText = urldecode(hI.url);
-
-									// Remove "http://" from the beginning of the URL
-									if (urlText.substring(0,7) == 'http://' && localStorage.option_hidehttp && localStorage.option_hidehttp == 1) {
-										urlText = urlText.substr(7);
-										if (substr_count(urlText, '/') == 1 && urlText.substr(urlText.length-1) == '/') {
-											urlText = urlText.substr(0, urlText.length-1);
-										}
-									}
-
-									// Truncate the URL a bit
-									if (localStorage.option_omniboxurltruncate && urlText.length > localStorage.option_omniboxurltruncate && (urlText+titleText).length > localStorage.option_omniboxurltruncate*2) {
-										truncated = 1;
-										urlText = urlText.substring(0,localStorage.option_omniboxurltruncate);
-									}
-
-									tagText = hI.tag;
-
-									// Replace special characters with funky ¸%%%%%%¸ symbols
-									titleText = replaceSpecialChars(titleText);
-									urlText = replaceSpecialChars(urlText);
-									tagText = replaceSpecialChars(tagText);
-
-									// Wrap each word with more funky symbols
-									for (var i in words) {
-										if (words[i] != "") {
-											regEx = new RegExp(words[i], 'gi');
-											titleText = titleText.replace(regEx, '¸%%%%%¸$&¸%%%%¸');
-											urlText = urlText.replace(regEx, '¸%%%%%¸$&¸%%%%¸');
-											tagText = tagText.replace(regEx, '¸%%%%%¸$&¸%%%%¸');
-										}
-									}
-
-									// Replace the previous symbols with their original characters; this was to let all characters work with RegExp
-									titleText = replacePercents(titleText);
-									urlText = replacePercents(urlText);
-									tagText = replacePercents(tagText);
-
-									// Replace <match> and </match> with symbols
-									titleText = str_replace("¸%%%%%¸", matchOpen, titleText);
-									titleText = str_replace("¸%%%%¸", matchClose, titleText);
-									urlText = str_replace("¸%%%%%¸", matchOpen, urlText);
-									urlText = str_replace("¸%%%%¸", matchClose, urlText);
-									tagText = str_replace("¸%%%%%¸", matchOpen, tagText);
-									tagText = str_replace("¸%%%%¸", matchClose, tagText);
-
-									// Replace &
-									titleText = str_replace('&', '&amp;', titleText);
-									urlText = str_replace('&', '&amp;', urlText);
-									tagText = str_replace('&', '&amp;', tagText);
-
-									// Replace symbols back to <match> and </match>
-									titleText = str_replace(matchOpen, "¸%%%%%¸", titleText);
-									titleText = str_replace(matchClose, "¸%%%%¸", titleText);
-									urlText = str_replace(matchOpen, "¸%%%%%¸", urlText);
-									urlText = str_replace(matchClose, "¸%%%%¸", urlText);
-									tagText = str_replace(matchOpen, "¸%%%%%¸", tagText);
-									tagText = str_replace(matchClose, "¸%%%%¸", tagText);
-
-									// Replace opening and closing tags
-									titleText = str_replace(">", "&gt;", titleText);
-									titleText = str_replace("<", "&lt;", titleText);
-
-									urlText = str_replace(">", "&gt;", urlText);
-									urlText = str_replace("<", "&lt;", urlText);
-
-									tagText = str_replace(">", "&gt;", tagText);
-									tagText = str_replace("<", "&lt;", tagText);
-
-									titleText = str_replace("¸%%%%%¸", matchOpen, titleText);
-									titleText = str_replace("¸%%%%¸", matchClose, titleText);
-									urlText = str_replace("¸%%%%%¸", matchOpen, urlText);
-									urlText = str_replace("¸%%%%¸", matchClose, urlText);
-									tagText = str_replace("¸%%%%%¸", matchOpen, tagText);
-									tagText = str_replace("¸%%%%¸", matchClose, tagText);
-
-									// Make URLs say "Switch to tab" if tab is open
-									if (localStorage.option_switchToTab != "disable") {
-										for (var ct in window.currentTabs) {
-											if (currentTabs[ct].url == hI.url) {
-												urlText = localStorage.option_switchToTab == "replace" ? 'Switch to tab' : '</url><dim>Switch to tab:</dim> <url>'+urlText;
-											}
-										}
-									}
-
-									if (resultIsOkay) {
-										resultString = "";
-										if (urlText.length > 0) {
-
-											// Make a star symbol be the separator if result is a bookmark, otherwise just a dash
-											divvy = hI.isBookmark && localStorage.option_showStarInOmnibox && localStorage.option_showStarInOmnibox == 1 ? '&#9733;' : '-';
-
-											// If URL is truncated, add ...
-											if (truncated == 1) {
-												urlText += '...';
-											}
-											resultString += "<url>"+urlText+"</url> <dim>"+divvy+"</dim> "+titleText;
-										} else {
-											if (hI.isBookmark) {
-												resultString += '<dim>&#9733;</dim> ';
-											}
-											resultString += titleText;
-										}
-
-										if (tagText != null && tagText.length) {
-											resultString += ' <dim>- '+tagText+'</dim>';
-										}
-
-										resultObjects[resultObjects.length] = {content:hI.url, description:resultString};
-										currentRows++;
-									}
-								}
-							}
-						}
-						
-						if (!resultObjects || !resultObjects.length) {
-							chrome.omnibox.setDefaultSuggestion({description:"No results matched your query"});
-						}
-						
-						// Give the results to Chrome to display
-						if (localStorage.option_autoAssist == 'autoSelectFirstResult' && resultObjects[0]) {
-							chrome.omnibox.setDefaultSuggestion({description:resultObjects[0].description});
-							resultObjects.shift();
-							suggest(resultObjects);
-						} else {
-							suggest(resultObjects);
-						}
-						
-					});
-				}
-			}, function(t){
-				errorHandler(t, getLineInfo());
-			});
-		}
-	});
+	chrome.omnibox.onInputChanged.addListener(omnibarSuggest);
 
 	// When user selects which Omnibox+Fauxbar result to go to...
 	chrome.omnibox.onInputEntered.addListener(function(text){
